@@ -1,0 +1,1468 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orbit — Private Messaging. No Internet Required.</title>
+  <link rel="icon" type="image/x-icon" href="orbit.ico">
+  <link rel="icon" type="image/png" sizes="256x256" href="orbit_256.png">
+  <meta name="description" content="Orbit is a peer-to-peer messaging app that works over local networks. End-to-end encrypted, cross-platform, and privacy-first.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ============================================
+       NAVIGATION
+  ============================================ -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="container">
+      <a href="#" class="navbar-logo" aria-label="Orbit home">
+        <img src="orbit_256.png" alt="Orbit" class="nav-logo-img">
+        Orbit
+      </a>
+
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#features" class="nav-link">Features</a></li>
+        <li><a href="#how-it-works" class="nav-link">How It Works</a></li>
+        <li><a href="#tech" class="nav-link">Tech</a></li>
+        <li><a href="#download" class="nav-link">Download</a></li>
+        <li>
+          <a href="https://github.com/D4niel-dev/Orbit-beta" target="_blank" rel="noopener noreferrer" class="nav-github" aria-label="View on GitHub">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#AEAEB6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.167 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
+            </svg>
+          </a>
+        </li>
+      </ul>
+
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ============================================
+       HERO
+  ============================================ -->
+  <section class="hero" id="hero">
+    <div class="hero-bg"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="container hero-content">
+      <div class="hero-text fade-up">
+        <h1>Private Messaging.<br>No Internet Required.</h1>
+        <p>
+          Orbit connects you directly to people nearby over a local network — no servers, no cloud, no data collection. Just fast, encrypted conversations wherever you are.
+        </p>
+        <div class="hero-cta-row">
+          <a href="#download" class="btn btn-primary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Download for Windows
+          </a>
+          <a href="https://github.com/D4niel-dev/Orbit-beta" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.167 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
+            </svg>
+            View on GitHub
+          </a>
+        </div>
+        <div class="os-badges">
+          <span class="os-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#AEAEB6" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+            Windows
+          </span>
+          <span class="os-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#AEAEB6" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 2v4m0 12v4"/></svg>
+            macOS
+          </span>
+          <span class="os-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#AEAEB6" stroke-width="2"><path d="M4 8h16M4 16h16"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>
+            Linux
+          </span>
+          <span class="os-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#AEAEB6" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
+            Android
+          </span>
+        </div>
+      </div>
+
+      <!-- Phone Mockups -->
+      <div class="hero-phones fade-up">
+        <div class="hero-mockup" id="phone-mockup" aria-hidden="true">
+          <!-- Populated by JavaScript -->
+        </div>
+        <div class="hero-mockup" id="phone-mockup-2" aria-hidden="true">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       PLATFORMS
+  ============================================ -->
+  <section class="platform-section" id="platforms">
+    <div class="container">
+      <div class="section-header fade-up">
+        <h2>Available on every platform you use</h2>
+        <p>Same Orbit experience. Native feel on every OS.</p>
+      </div>
+
+      <div class="platform-carousel fade-up" id="platformCarousel">
+        <div class="platform-track" id="platformTrack">
+          
+          <!-- Windows -->
+          <div class="platform-panel" data-platform="windows">
+            <div class="platform-panel-header">
+              <div class="platform-badge windows-badge">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F2F2F7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="4" width="16" height="16" rx="2"/>
+                </svg>
+                Windows
+              </div>
+            </div>
+            <div class="platform-panel-body">
+                <div class="platform-panel-screenshot">
+                  <div class="mock-window">
+                    <div class="mock-window-titlebar" style="display:flex;align-items:center;background:#131316;padding:0;border-bottom:1px solid rgba(255,255,255,0.06);height:26px;gap:0;">
+                      <div style="display:flex;align-items:center;gap:4px;padding-left:6px;">
+                        <button style="width:24px;height:24px;border-radius:4px;border:none;background:transparent;color:#636366;cursor:pointer;opacity:0.3;font-size:12px;padding:0;line-height:1;">&#8592;</button>
+                        <button style="width:24px;height:24px;border-radius:4px;border:none;background:transparent;color:#636366;cursor:pointer;opacity:0.3;font-size:12px;padding:0;line-height:1;">&#8594;</button>
+                      </div>
+                      <div style="flex:1;height:100%;"></div>
+                      <div style="display:flex;height:100%;">
+                        <span style="width:46px;height:26px;display:flex;align-items:center;justify-content:center;color:#636366;font-size:14px;cursor:pointer;">&#9472;</span>
+                        <span style="width:46px;height:26px;display:flex;align-items:center;justify-content:center;color:#636366;font-size:12px;cursor:pointer;">&#9633;</span>
+                        <span style="width:46px;height:26px;display:flex;align-items:center;justify-content:center;color:#636366;font-size:16px;cursor:pointer;">&#10005;</span>
+                      </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:44px 200px 1fr;height:340px;background:#0C0C0E;">
+                      <!-- Left rail -->
+                      <div style="background:#131316;display:flex;flex-direction:column;align-items:center;padding:6px 0;gap:2px;">
+                        <div style="width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(10,132,255,0.15);color:#0A84FF;">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                        </div>
+                        <div style="width:20px;height:1px;background:rgba(255,255,255,0.06);margin:4px 0;"></div>
+                        <div style="width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#636366;">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        </div>
+                        <div style="width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#636366;">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+                        </div>
+                        <div style="flex:1;"></div>
+                        <div style="width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#636366;">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        </div>
+                        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#0A84FF,#60b0ff);display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:700;position:relative;margin-top:4px;"><img src="https://i.pravatar.cc/80?u=orbi" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" alt="">
+                          <div style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;border:2px solid #131316;background:#30D158;"></div>
+                        </div>
+                      </div>
+                      <!-- Middle panel -->
+                      <div style="background:#1C1C1E;display:flex;flex-direction:column;overflow:hidden;">
+                        <div style="padding:10px 12px 6px;">
+                          <div style="display:flex;align-items:center;background:#28282B;border-radius:8px;padding:6px 10px;gap:8px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#636366" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <span style="color:#636366;font-size:11px;">Search messages...</span>
+                          </div>
+                        </div>
+                        <div style="display:flex;padding:0 12px;gap:12px;">
+                          <div style="flex:1;text-align:center;padding:8px 0;border-bottom:2px solid transparent;font-size:11px;color:#636366;">Friends</div>
+                          <div style="flex:1;text-align:center;padding:8px 0;border-bottom:2px solid #0A84FF;font-size:11px;font-weight:600;color:#F2F2F7;">Groups</div>
+                        </div>
+                        <div style="flex:1;overflow-y:auto;padding:4px 8px;">
+                          <div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;background:rgba(10,132,255,0.08);cursor:default;">
+                            <div style="width:24px;height:24px;display:grid;grid-template-columns:1fr 1fr;gap:1px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="https://i.pravatar.cc/40?u=dt1" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=dt2" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=dt3" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=dt4" style="width:100%;height:100%;object-fit:cover;" alt=""></div>
+                            <div style="flex:1;overflow:hidden;">
+                              <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-size:11px;font-weight:600;color:#F2F2F7;">Dev Team</span>
+                                <span style="font-size:9px;color:#636366;">3 members</span>
+                              </div>
+                              <div style="font-size:9px;color:#F2F2F7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Good work everyone! 🚀</div>
+                            </div>
+                          </div>
+                          <div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;cursor:default;">
+                            <div style="width:24px;height:24px;display:grid;grid-template-columns:1fr 1fr;gap:1px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="https://i.pravatar.cc/40?u=fg1" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=fg2" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=fg3" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=fg4" style="width:100%;height:100%;object-fit:cover;" alt=""></div>
+                            <div style="flex:1;overflow:hidden;">
+                              <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-size:11px;font-weight:600;color:#F2F2F7;">Family Group</span>
+                                <span style="font-size:9px;color:#636366;">5 members</span>
+                              </div>
+                              <div style="font-size:9px;color:#636366;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">See you at dinner 🍕</div>
+                            </div>
+                          </div>
+                          <div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;cursor:default;">
+                            <div style="width:24px;height:24px;display:grid;grid-template-columns:1fr 1fr;gap:1px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="https://i.pravatar.cc/40?u=gn1" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=gn2" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=gn3" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=gn4" style="width:100%;height:100%;object-fit:cover;" alt=""></div>
+                            <div style="flex:1;overflow:hidden;">
+                              <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-size:11px;font-weight:600;color:#F2F2F7;">Game Night</span>
+                                <span style="font-size:9px;color:#636366;">4 members</span>
+                              </div>
+                              <div style="font-size:9px;color:#636366;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Who's online tonight?</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <!-- Chat area -->
+                      <div style="background:#0C0C0E;display:flex;flex-direction:column;overflow:hidden;">
+                        <div style="height:46px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;padding:0 14px;gap:10px;">
+                          <div style="width:28px;height:28px;display:grid;grid-template-columns:1fr 1fr;gap:1px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="https://i.pravatar.cc/40?u=dt1" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=dt2" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=dt3" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=dt4" style="width:100%;height:100%;object-fit:cover;" alt=""></div>
+                          <div style="flex:1;">
+                            <div style="font-size:12px;font-weight:600;color:#F2F2F7;">Dev Team</div>
+                            <div style="font-size:9px;color:#636366;">3 members • 2 online</div>
+                          </div>
+                          <div style="display:flex;gap:10px;color:#636366;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                          </div>
+                        </div>
+                        <div style="flex:1;padding:10px 14px;display:flex;flex-direction:column;gap:6px;overflow-y:auto;">
+                          <div style="align-self:flex-start;background:#1C1C1E;max-width:75%;padding:10px 14px;border-radius:0 16px 16px 16px;font-size:12px;line-height:1.4;color:#F2F2F7;border:1px solid rgba(255,255,255,0.06);"><span style="color:#0A84FF;font-weight:600;">Alex:</span> PR is ready for review</div>
+                          <div style="align-self:flex-end;background:#0A84FF;max-width:75%;padding:10px 14px;border-radius:16px 16px 0 16px;font-size:12px;line-height:1.4;color:#fff;">On it! Let me check</div>
+                          <div style="align-self:flex-start;background:#1C1C1E;max-width:75%;padding:10px 14px;border-radius:0 16px 16px 16px;font-size:12px;line-height:1.4;color:#F2F2F7;border:1px solid rgba(255,255,255,0.06);"><span style="color:#30D158;font-weight:600;">Sarah:</span> Tests pass locally ✅</div>
+                        </div>
+                        <div style="padding:8px 14px 14px;">
+                          <div style="display:flex;align-items:center;background:#28282B;border-radius:24px;padding:6px 12px;gap:4px;">
+                            <span style="color:#636366;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            </span>
+                            <span style="flex:1;color:#636366;font-size:12px;padding:0 8px;">Message Dev Team...</span>
+                            <span style="color:#636366;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                            </span>
+                            <span style="color:#636366;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                            </span>
+                            <span style="width:28px;height:28px;border-radius:50%;background:#0A84FF;display:flex;align-items:center;justify-content:center;color:white;cursor:pointer;">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <div class="platform-details">
+                <h3>Native Windows Experience</h3>
+                <ul class="platform-features">
+                  <li>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#30D158" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    Full system tray support
+                  </li>
+                  <li>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#30D158" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    Auto-start with Windows
+                  </li>
+                  <li>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#30D158" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    Native Windows notifications
+                  </li>
+                  <li>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#30D158" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    Touch-friendly interface
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- macOS -->
+          <div class="platform-panel" data-platform="macos">
+            <div class="platform-panel-header">
+              <div class="platform-badge macos-badge">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F2F2F7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="8"/><path d="M12 2v4m0 12v4"/>
+                </svg>
+                macOS
+              </div>
+            </div>
+            <div class="platform-panel-body">
+                <div class="platform-panel-screenshot">
+                  <div class="mock-window">
+                    <div class="mock-window-titlebar" style="display:flex;align-items:center;background:#131316;padding:0;border-bottom:1px solid rgba(255,255,255,0.06);height:26px;gap:0;">
+                      <div style="display:flex;align-items:center;gap:4px;padding-left:6px;">
+                        <button style="width:24px;height:24px;border-radius:4px;border:none;background:transparent;color:#636366;cursor:pointer;opacity:0.3;font-size:12px;padding:0;line-height:1;">&#8592;</button>
+                        <button style="width:24px;height:24px;border-radius:4px;border:none;background:transparent;color:#636366;cursor:pointer;opacity:0.3;font-size:12px;padding:0;line-height:1;">&#8594;</button>
+                      </div>
+                      <div style="flex:1;height:100%;"></div>
+                      <div style="display:flex;height:100%;">
+                        <span style="width:46px;height:26px;display:flex;align-items:center;justify-content:center;color:#636366;font-size:14px;cursor:pointer;">&#9472;</span>
+                        <span style="width:46px;height:26px;display:flex;align-items:center;justify-content:center;color:#636366;font-size:12px;cursor:pointer;">&#9633;</span>
+                        <span style="width:46px;height:26px;display:flex;align-items:center;justify-content:center;color:#636366;font-size:16px;cursor:pointer;">&#10005;</span>
+                      </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:44px 200px 1fr;height:340px;background:#0C0C0E;">
+                      <!-- Left rail -->
+                      <div style="background:#131316;display:flex;flex-direction:column;align-items:center;padding:6px 0;gap:2px;">
+                        <div style="width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(10,132,255,0.15);color:#0A84FF;">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                        </div>
+                        <div style="width:20px;height:1px;background:rgba(255,255,255,0.06);margin:4px 0;"></div>
+                        <div style="width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#636366;">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        </div>
+                        <div style="width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#636366;">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+                        </div>
+                        <div style="flex:1;"></div>
+                        <div style="width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#636366;">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        </div>
+                        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#0A84FF,#60b0ff);display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:700;position:relative;margin-top:4px;"><img src="https://i.pravatar.cc/80?u=orbi" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" alt="">
+                          <div style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;border:2px solid #131316;background:#30D158;"></div>
+                        </div>
+                      </div>
+                      <!-- Middle panel -->
+                      <div style="background:#1C1C1E;display:flex;flex-direction:column;overflow:hidden;">
+                        <div style="padding:10px 12px 6px;">
+                          <div style="display:flex;align-items:center;background:#28282B;border-radius:8px;padding:6px 10px;gap:8px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#636366" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <span style="color:#636366;font-size:11px;">Search messages...</span>
+                          </div>
+                        </div>
+                        <div style="display:flex;padding:0 12px;gap:12px;">
+                          <div style="flex:1;text-align:center;padding:8px 0;border-bottom:2px solid transparent;font-size:11px;color:#636366;">Friends</div>
+                          <div style="flex:1;text-align:center;padding:8px 0;border-bottom:2px solid #0A84FF;font-size:11px;font-weight:600;color:#F2F2F7;">Groups</div>
+                        </div>
+                        <div style="flex:1;overflow-y:auto;padding:4px 8px;">
+                          <div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;background:rgba(10,132,255,0.08);cursor:default;">
+                            <div style="width:24px;height:24px;display:grid;grid-template-columns:1fr 1fr;gap:1px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="https://i.pravatar.cc/40?u=dst1" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=dst2" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=dst3" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=dst4" style="width:100%;height:100%;object-fit:cover;" alt=""></div>
+                            <div style="flex:1;overflow:hidden;">
+                              <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-size:11px;font-weight:600;color:#F2F2F7;">Design Team</span>
+                                <span style="font-size:9px;color:#636366;">4 members</span>
+                              </div>
+                              <div style="font-size:9px;color:#F2F2F7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">New mockups ready for review</div>
+                            </div>
+                          </div>
+                          <div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;cursor:default;">
+                            <div style="width:24px;height:24px;display:grid;grid-template-columns:1fr 1fr;gap:1px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="https://i.pravatar.cc/40?u=bc1" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=bc2" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=bc3" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=bc4" style="width:100%;height:100%;object-fit:cover;" alt=""></div>
+                            <div style="flex:1;overflow:hidden;">
+                              <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-size:11px;font-weight:600;color:#F2F2F7;">Book Club</span>
+                                <span style="font-size:9px;color:#636366;">6 members</span>
+                              </div>
+                              <div style="font-size:9px;color:#636366;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Chapter 5 discussion tonight</div>
+                            </div>
+                          </div>
+                          <div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;cursor:default;">
+                            <div style="width:24px;height:24px;display:grid;grid-template-columns:1fr 1fr;gap:1px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="https://i.pravatar.cc/40?u=wh1" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=wh2" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=wh3" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=wh4" style="width:100%;height:100%;object-fit:cover;" alt=""></div>
+                            <div style="flex:1;overflow:hidden;">
+                              <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-size:11px;font-weight:600;color:#F2F2F7;">Weekend Hikers</span>
+                                <span style="font-size:9px;color:#636366;">8 members</span>
+                              </div>
+                              <div style="font-size:9px;color:#636366;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Trail report: Sunny and clear 🏔️</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <!-- Chat area -->
+                      <div style="background:#0C0C0E;display:flex;flex-direction:column;overflow:hidden;">
+                        <div style="height:46px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;padding:0 14px;gap:10px;">
+                          <div style="width:28px;height:28px;display:grid;grid-template-columns:1fr 1fr;gap:1px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="https://i.pravatar.cc/40?u=dst1" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=dst2" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=dst3" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=dst4" style="width:100%;height:100%;object-fit:cover;" alt=""></div>
+                          <div style="flex:1;">
+                            <div style="font-size:12px;font-weight:600;color:#F2F2F7;">Design Team</div>
+                            <div style="font-size:9px;color:#636366;">4 members • 3 online</div>
+                          </div>
+                          <div style="display:flex;gap:10px;color:#636366;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                          </div>
+                        </div>
+                        <div style="flex:1;padding:10px 14px;display:flex;flex-direction:column;gap:6px;overflow-y:auto;">
+                          <div style="align-self:flex-start;background:#1C1C1E;max-width:75%;padding:10px 14px;border-radius:0 16px 16px 16px;font-size:12px;line-height:1.4;color:#F2F2F7;border:1px solid rgba(255,255,255,0.06);"><span style="color:#0A84FF;font-weight:600;">Emma:</span> New icons look clean</div>
+                          <div style="align-self:flex-end;background:#0A84FF;max-width:75%;padding:10px 14px;border-radius:16px 16px 0 16px;font-size:12px;line-height:1.4;color:#fff;">Love the color palette!</div>
+                          <div style="align-self:flex-start;background:#1C1C1E;max-width:75%;padding:10px 14px;border-radius:0 16px 16px 16px;font-size:12px;line-height:1.4;color:#F2F2F7;border:1px solid rgba(255,255,255,0.06);"><span style="color:#30D158;font-weight:600;">Luna:</span> Client approved them ✅</div>
+                        </div>
+                        <div style="padding:8px 14px 14px;">
+                          <div style="display:flex;align-items:center;background:#28282B;border-radius:24px;padding:6px 12px;gap:4px;">
+                            <span style="color:#636366;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            </span>
+                            <span style="flex:1;color:#636366;font-size:12px;padding:0 8px;">Message Design Team...</span>
+                            <span style="color:#636366;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                            </span>
+                            <span style="color:#636366;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                            </span>
+                            <span style="width:28px;height:28px;border-radius:50%;background:#0A84FF;display:flex;align-items:center;justify-content:center;color:white;cursor:pointer;">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <div class="platform-details">
+                <h3>Beautiful on macOS</h3>
+                <ul class="platform-features">
+                  <li>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#30D158" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    Native menu bar app
+                  </li>
+                  <li>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#30D158" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    macOS native vibrancy blur
+                  </li>
+                  <li>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#30D158" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    Trackpad gestures support
+                  </li>
+                  <li>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#30D158" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    Universal binary (Intel & Apple Silicon)
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Linux -->
+          <div class="platform-panel" data-platform="linux">
+            <div class="platform-panel-header">
+              <div class="platform-badge linux-badge">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F2F2F7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 8h16M4 16h16"/><rect x="2" y="4" width="20" height="16" rx="2"/>
+                </svg>
+                Linux
+              </div>
+            </div>
+            <div class="platform-panel-body">
+                <div class="platform-panel-screenshot">
+                  <div class="mock-window">
+                    <div class="mock-window-titlebar" style="display:flex;align-items:center;background:#131316;padding:0;border-bottom:1px solid rgba(255,255,255,0.06);height:26px;gap:0;">
+                      <div style="display:flex;align-items:center;gap:4px;padding-left:6px;">
+                        <button style="width:24px;height:24px;border-radius:4px;border:none;background:transparent;color:#636366;cursor:pointer;opacity:0.3;font-size:12px;padding:0;line-height:1;">&#8592;</button>
+                        <button style="width:24px;height:24px;border-radius:4px;border:none;background:transparent;color:#636366;cursor:pointer;opacity:0.3;font-size:12px;padding:0;line-height:1;">&#8594;</button>
+                      </div>
+                      <div style="flex:1;height:100%;"></div>
+                      <div style="display:flex;height:100%;">
+                        <span style="width:46px;height:26px;display:flex;align-items:center;justify-content:center;color:#636366;font-size:14px;cursor:pointer;">&#9472;</span>
+                        <span style="width:46px;height:26px;display:flex;align-items:center;justify-content:center;color:#636366;font-size:12px;cursor:pointer;">&#9633;</span>
+                        <span style="width:46px;height:26px;display:flex;align-items:center;justify-content:center;color:#636366;font-size:16px;cursor:pointer;">&#10005;</span>
+                      </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:44px 200px 1fr;height:340px;background:#0C0C0E;">
+                      <!-- Left rail -->
+                      <div style="background:#131316;display:flex;flex-direction:column;align-items:center;padding:6px 0;gap:2px;">
+                        <div style="width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(10,132,255,0.15);color:#0A84FF;">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                        </div>
+                        <div style="width:20px;height:1px;background:rgba(255,255,255,0.06);margin:4px 0;"></div>
+                        <div style="width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#636366;">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        </div>
+                        <div style="width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#636366;">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+                        </div>
+                        <div style="flex:1;"></div>
+                        <div style="width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#636366;">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        </div>
+                        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#0A84FF,#60b0ff);display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:700;position:relative;margin-top:4px;"><img src="https://i.pravatar.cc/80?u=orbi" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" alt="">
+                          <div style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;border:2px solid #131316;background:#30D158;"></div>
+                        </div>
+                      </div>
+                      <!-- Middle panel -->
+                      <div style="background:#1C1C1E;display:flex;flex-direction:column;overflow:hidden;">
+                        <div style="padding:10px 12px 6px;">
+                          <div style="display:flex;align-items:center;background:#28282B;border-radius:8px;padding:6px 10px;gap:8px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#636366" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <span style="color:#636366;font-size:11px;">Search messages...</span>
+                          </div>
+                        </div>
+                        <div style="display:flex;padding:0 12px;gap:12px;">
+                          <div style="flex:1;text-align:center;padding:8px 0;border-bottom:2px solid transparent;font-size:11px;color:#636366;">Friends</div>
+                          <div style="flex:1;text-align:center;padding:8px 0;border-bottom:2px solid #0A84FF;font-size:11px;font-weight:600;color:#F2F2F7;">Groups</div>
+                        </div>
+                        <div style="flex:1;overflow-y:auto;padding:4px 8px;">
+                          <div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;background:rgba(10,132,255,0.08);cursor:default;">
+                            <div style="width:24px;height:24px;display:grid;grid-template-columns:1fr 1fr;gap:1px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="https://i.pravatar.cc/40?u=ds1" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=ds2" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=ds3" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=ds4" style="width:100%;height:100%;object-fit:cover;" alt=""></div>
+                            <div style="flex:1;overflow:hidden;">
+                              <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-size:11px;font-weight:600;color:#F2F2F7;">Dev Squad</span>
+                                <span style="font-size:9px;color:#636366;">5 members</span>
+                              </div>
+                              <div style="font-size:9px;color:#F2F2F7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Patch v2.1 merged 🎉</div>
+                            </div>
+                          </div>
+                          <div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;cursor:default;">
+                            <div style="width:24px;height:24px;display:grid;grid-template-columns:1fr 1fr;gap:1px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="https://i.pravatar.cc/40?u=os1" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=os2" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=os3" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=os4" style="width:100%;height:100%;object-fit:cover;" alt=""></div>
+                            <div style="flex:1;overflow:hidden;">
+                              <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-size:11px;font-weight:600;color:#F2F2F7;">Open Source</span>
+                                <span style="font-size:9px;color:#636366;">12 members</span>
+                              </div>
+                              <div style="font-size:9px;color:#636366;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">New contributor guide 📖</div>
+                            </div>
+                          </div>
+                          <div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;cursor:default;">
+                            <div style="width:24px;height:24px;display:grid;grid-template-columns:1fr 1fr;gap:1px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="https://i.pravatar.cc/40?u=lp1" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=lp2" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=lp3" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=lp4" style="width:100%;height:100%;object-fit:cover;" alt=""></div>
+                            <div style="flex:1;overflow:hidden;">
+                              <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-size:11px;font-weight:600;color:#F2F2F7;">LAN Party</span>
+                                <span style="font-size:9px;color:#636366;">7 members</span>
+                              </div>
+                              <div style="font-size:9px;color:#636366;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Server is up! 🎮</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <!-- Chat area -->
+                      <div style="background:#0C0C0E;display:flex;flex-direction:column;overflow:hidden;">
+                        <div style="height:46px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;padding:0 14px;gap:10px;">
+                          <div style="width:28px;height:28px;display:grid;grid-template-columns:1fr 1fr;gap:1px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="https://i.pravatar.cc/40?u=ds1" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=ds2" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=ds3" style="width:100%;height:100%;object-fit:cover;" alt=""><img src="https://i.pravatar.cc/40?u=ds4" style="width:100%;height:100%;object-fit:cover;" alt=""></div>
+                          <div style="flex:1;">
+                            <div style="font-size:12px;font-weight:600;color:#F2F2F7;">Dev Squad</div>
+                            <div style="font-size:9px;color:#636366;">5 members • 2 online</div>
+                          </div>
+                          <div style="display:flex;gap:10px;color:#636366;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                          </div>
+                        </div>
+                        <div style="flex:1;padding:10px 14px;display:flex;flex-direction:column;gap:6px;overflow-y:auto;">
+                          <div style="align-self:flex-start;background:#1C1C1E;max-width:75%;padding:10px 14px;border-radius:0 16px 16px 16px;font-size:12px;line-height:1.4;color:#F2F2F7;border:1px solid rgba(255,255,255,0.06);"><span style="color:#0A84FF;font-weight:600;">Priya:</span> v2.1 is ready for release</div>
+                          <div style="align-self:flex-end;background:#0A84FF;max-width:75%;padding:10px 14px;border-radius:16px 16px 0 16px;font-size:12px;line-height:1.4;color:#fff;">Let me run the tests first</div>
+                          <div style="align-self:flex-start;background:#1C1C1E;max-width:75%;padding:10px 14px;border-radius:0 16px 16px 16px;font-size:12px;line-height:1.4;color:#F2F2F7;border:1px solid rgba(255,255,255,0.06);"><span style="color:#30D158;font-weight:600;">Omar:</span> All green! Ship it 🚀</div>
+                        </div>
+                        <div style="padding:8px 14px 14px;">
+                          <div style="display:flex;align-items:center;background:#28282B;border-radius:24px;padding:6px 12px;gap:4px;">
+                            <span style="color:#636366;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            </span>
+                            <span style="flex:1;color:#636366;font-size:12px;padding:0 8px;">Message Dev Squad...</span>
+                            <span style="color:#636366;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                            </span>
+                            <span style="color:#636366;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                            </span>
+                            <span style="width:28px;height:28px;border-radius:50%;background:#0A84FF;display:flex;align-items:center;justify-content:center;color:white;cursor:pointer;">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <div class="platform-details">
+                <h3>Built for Linux</h3>
+                <ul class="platform-features">
+                  <li>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#30D158" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    Available as .deb, .rpm & AppImage
+                  </li>
+                  <li>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#30D158" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    Wayland & X11 support
+                  </li>
+                  <li>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#30D158" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    Tiling WM friendly
+                  </li>
+                  <li>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#30D158" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    Minimal dependencies
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Dot indicators -->
+        <div class="platform-dots" id="platformDots">
+          <button class="platform-dot active" aria-label="Windows" data-index="0"></button>
+          <button class="platform-dot" aria-label="macOS" data-index="1"></button>
+          <button class="platform-dot" aria-label="Linux" data-index="2"></button>
+        </div>
+
+        <!-- Timer bar -->
+        <div class="platform-timer">
+          <div class="platform-timer-bar" id="platformTimerBar"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       FEATURES
+  ============================================ -->
+  <section class="section" id="features">
+    <div class="container">
+      <div class="section-header fade-up">
+        <h2>Everything you need to chat privately</h2>
+        <p>Orbit connects directly — no accounts, no servers, no logs. Just you and the people you're talking to.</p>
+      </div>
+
+      <div class="features-grid fade-up-stagger">
+        <!-- Peer to Peer -->
+        <article class="feature-card fade-up">
+          <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <h3>Peer-to-Peer</h3>
+          <p>Messages go directly between devices over the local network. No intermediary servers, no central points of failure.</p>
+        </article>
+
+        <!-- End-to-End Encrypted -->
+        <article class="feature-card fade-up">
+          <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <h3>End-to-End Encrypted</h3>
+          <p>Every message is encrypted on your device and decrypted only on your recipient's. Not even we could read them.</p>
+        </article>
+
+        <!-- File Sharing -->
+        <article class="feature-card fade-up">
+          <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+            </svg>
+          </div>
+          <h3>File Sharing</h3>
+          <p>Share photos, documents, and files directly over P2P. No size limits, no upload speed caps — just fast local transfers.</p>
+        </article>
+
+        <!-- Group Chats -->
+        <article class="feature-card fade-up">
+          <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <h3>Group Chats</h3>
+          <p>Create group conversations with everyone on the same network. Collaborate, share, and chat in real-time.</p>
+        </article>
+
+        <!-- Privacy Mode -->
+        <article class="feature-card fade-up">
+          <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <h3>Privacy Mode</h3>
+          <p>Go invisible when you want. No read receipts, no typing indicators, no online status — total control over your presence.</p>
+        </article>
+
+        <!-- Cross-Platform -->
+        <article class="feature-card fade-up">
+          <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </div>
+          <h3>Cross-Platform</h3>
+          <p>Available on Windows, macOS, Linux, and Android. Orbit runs everywhere, so you can chat across all your devices.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       HOW IT WORKS
+  ============================================ -->
+  <section class="section" id="how-it-works">
+    <div class="container">
+      <div class="section-header fade-up">
+        <h2>How It Works</h2>
+        <p>Getting started takes seconds. No account creation, no configuration — just install and connect.</p>
+      </div>
+
+      <div class="steps-row fade-up-stagger">
+        <!-- Step 1 -->
+        <div class="step fade-up">
+          <div class="step-number">1</div>
+          <div class="step-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </div>
+          <h3>Install Orbit</h3>
+          <p>Download the app for your platform from our GitHub releases. Works on Windows, macOS, Linux, and Android.</p>
+        </div>
+
+        <!-- Arrow -->
+        <div class="step-arrow fade-up" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#636366" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step fade-up">
+          <div class="step-number">2</div>
+          <div class="step-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16v16H4z"/>
+              <line x1="4" y1="9" x2="20" y2="9"/>
+              <line x1="9" y1="4" x2="9" y2="20"/>
+            </svg>
+          </div>
+          <h3>Connect to a Network</h3>
+          <p>Join any Wi-Fi or local network. Orbit automatically discovers other users running the app nearby.</p>
+        </div>
+
+        <!-- Arrow -->
+        <div class="step-arrow fade-up" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#636366" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step fade-up">
+          <div class="step-number">3</div>
+          <div class="step-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>
+            </svg>
+          </div>
+          <h3>Start Chatting</h3>
+          <p>Orbit connects you instantly. Send messages, share files, and create group chats — all without internet access.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       TECHNICAL DEEP-DIVE
+  ============================================ -->
+  <section class="section" id="tech">
+    <div class="container">
+      <div class="section-header fade-up">
+        <h2>Built for Speed and Privacy</h2>
+        <p>Engineered from the ground up with performance, security, and offline-first architecture in mind.</p>
+      </div>
+
+      <div class="tech-grid fade-up-stagger">
+        <!-- Node.js + Electron -->
+        <article class="tech-card fade-up">
+          <div class="tech-card-header">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+              <path d="M2 17l10 5 10-5"/>
+              <path d="M2 12l10 5 10-5"/>
+            </svg>
+            <h3>Node.js + Electron</h3>
+          </div>
+          <span class="tech-tag">Desktop</span>
+          <p>Cross-platform desktop app built with Electron and Node.js for native-level performance and a smooth UI experience across all operating systems.</p>
+        </article>
+
+        <!-- Capacitor + Android -->
+        <article class="tech-card fade-up">
+          <div class="tech-card-header">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="4" width="16" height="16" rx="2"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="2" y1="8" x2="22" y2="8"/>
+            </svg>
+            <h3>Capacitor + Android</h3>
+          </div>
+          <span class="tech-tag">Mobile</span>
+          <p>Native Android experience via Capacitor, bringing Orbit to your pocket with full access to device networking capabilities.</p>
+        </article>
+
+        <!-- P2P Protocol -->
+        <article class="tech-card fade-up">
+          <div class="tech-card-header">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="2"/>
+              <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/>
+            </svg>
+            <h3>P2P Protocol</h3>
+          </div>
+          <span class="tech-tag">Core</span>
+          <p>Proprietary lightweight peer-to-peer protocol designed for low-latency local messaging with automatic peer discovery.</p>
+        </article>
+
+        <!-- SQLite Storage -->
+        <article class="tech-card fade-up">
+          <div class="tech-card-header">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="12" cy="5" rx="9" ry="3"/>
+              <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+            </svg>
+            <h3>SQLite Storage</h3>
+          </div>
+          <span class="tech-tag">Data</span>
+          <p>All messages stored locally using SQLite. Your data stays on your device — no cloud backups, no server-side copies.</p>
+        </article>
+
+        <!-- Real-Time -->
+        <article class="tech-card fade-up">
+          <div class="tech-card-header">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <h3>Real-Time</h3>
+          </div>
+          <span class="tech-tag">Performance</span>
+          <p>Sub-millisecond message delivery over local networks. No polling, no latency — just instant P2P communication.</p>
+        </article>
+
+        <!-- Open Source -->
+        <article class="tech-card fade-up">
+          <div class="tech-card-header">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+              <path d="M2 17l10 5 10-5"/>
+              <path d="M2 12l10 5 10-5"/>
+            </svg>
+            <h3>Open Source</h3>
+          </div>
+          <span class="tech-tag">Community</span>
+          <p>Fully open source under an MIT license. Audit the code, contribute features, and trust that there are no backdoors.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       DOWNLOAD
+  ============================================ -->
+  <section class="section" id="download">
+    <div class="container">
+      <div class="section-header fade-up">
+        <h2>Ready to go private?</h2>
+        <p>Download Orbit for your platform and start chatting offline. All releases are signed and verified.</p>
+      </div>
+
+      <div class="download-grid fade-up-stagger">
+        <a href="https://github.com/D4niel-dev/Orbit-beta/releases" target="_blank" rel="noopener noreferrer" class="download-card fade-up">
+          <div class="platform-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="4" width="16" height="16" rx="2"/>
+            </svg>
+          </div>
+          <h3>Windows</h3>
+          <span class="version-note">.exe installer · Win 10+</span>
+        </a>
+
+        <a href="https://github.com/D4niel-dev/Orbit-beta/releases" target="_blank" rel="noopener noreferrer" class="download-card fade-up">
+          <div class="platform-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="8"/>
+              <path d="M12 2v4m0 12v4"/>
+            </svg>
+          </div>
+          <h3>macOS</h3>
+          <span class="version-note">.dmg · macOS 12+</span>
+        </a>
+
+        <a href="https://github.com/D4niel-dev/Orbit-beta/releases" target="_blank" rel="noopener noreferrer" class="download-card fade-up">
+          <div class="platform-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 8h16M4 16h16"/>
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+            </svg>
+          </div>
+          <h3>Linux</h3>
+          <span class="version-note">.AppImage · x86_64</span>
+        </a>
+
+        <a href="https://github.com/D4niel-dev/Orbit-beta/releases" target="_blank" rel="noopener noreferrer" class="download-card fade-up">
+          <div class="platform-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="2" width="14" height="20" rx="2"/>
+              <line x1="12" y1="18" x2="12" y2="18"/>
+            </svg>
+          </div>
+          <h3>Android</h3>
+          <span class="version-note">.apk · Android 8+</span>
+        </a>
+      </div>
+
+      <div class="download-sub fade-up">
+        <p>All releases available on <a href="https://github.com/D4niel-dev/Orbit-beta/releases" target="_blank" rel="noopener noreferrer">GitHub Releases</a> · Signatures and checksums provided for each build.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       FOOTER
+  ============================================ -->
+  <footer class="footer" role="contentinfo">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="#" class="navbar-logo" aria-label="Orbit home">
+            <img src="orbit_256.png" alt="Orbit" class="nav-logo-img">
+            Orbit
+          </a>
+          <p>Private, peer-to-peer messaging that works without the internet. Your conversations stay between you and the people you trust.</p>
+        </div>
+        <div class="footer-links">
+          <div class="footer-links-col">
+            <h4>Links</h4>
+            <ul>
+              <li><a href="https://github.com/D4niel-dev/Orbit-beta" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+              <li><a href="https://github.com/D4niel-dev/Orbit-beta/releases" target="_blank" rel="noopener noreferrer">Releases</a></li>
+              <li><a href="https://github.com/D4niel-dev/Orbit-beta/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a></li>
+            </ul>
+          </div>
+          <div class="footer-links-col">
+            <h4>Support</h4>
+            <ul>
+              <li><a href="https://github.com/D4niel-dev/Orbit-beta/issues" target="_blank" rel="noopener noreferrer">Issues</a></li>
+              <li><a href="https://github.com/D4niel-dev/Orbit-beta/discussions" target="_blank" rel="noopener noreferrer">Discussions</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>Built with <span class="heart">&#10084;</span> by <a href="https://github.com/D4niel-dev" target="_blank" rel="noopener noreferrer">D4niel-dev</a></span>
+        <span>&copy; 2026 Orbit. All rights reserved.</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============================================
+       JAVASCRIPT
+  ============================================ -->
+  <script>
+    (function() {
+      'use strict';
+
+      /* ---------- Mobile Hamburger Toggle ---------- */
+      var hamburger = document.getElementById('hamburger');
+      var navLinks  = document.getElementById('navLinks');
+
+      if (hamburger && navLinks) {
+        hamburger.addEventListener('click', function() {
+          var isOpen = navLinks.classList.toggle('open');
+          hamburger.classList.toggle('active');
+          hamburger.setAttribute('aria-expanded', isOpen);
+        });
+
+        // Close mobile menu when a nav link is clicked
+        navLinks.querySelectorAll('.nav-link').forEach(function(link) {
+          link.addEventListener('click', function() {
+            navLinks.classList.remove('open');
+            hamburger.classList.remove('active');
+            hamburger.setAttribute('aria-expanded', 'false');
+          });
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape' && navLinks.classList.contains('open')) {
+            navLinks.classList.remove('open');
+            hamburger.classList.remove('active');
+            hamburger.setAttribute('aria-expanded', 'false');
+          }
+        });
+      }
+
+      /* ---------- IntersectionObserver for fade-up animations ---------- */
+      var fadeElements = document.querySelectorAll('.fade-up');
+
+      if ('IntersectionObserver' in window) {
+        var observer = new IntersectionObserver(function(entries) {
+          entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+              // Optionally unobserve after reveal for performance
+              // observer.unobserve(entry.target);
+            }
+          });
+        }, {
+          rootMargin: '0px 0px -60px 0px',
+          threshold: 0.1
+        });
+
+        fadeElements.forEach(function(el) {
+          observer.observe(el);
+        });
+      } else {
+        // Fallback: show everything immediately if IntersectionObserver unavailable
+        fadeElements.forEach(function(el) {
+          el.classList.add('visible');
+        });
+      }
+
+      /* ---------- Active Nav Link Highlighting ---------- */
+      var sections = document.querySelectorAll('section[id]');
+      var navLinkEls = document.querySelectorAll('.nav-link');
+
+      function updateActiveNav() {
+        var scrollY = window.scrollY + 120; // offset for fixed nav
+
+        var currentId = '';
+        sections.forEach(function(section) {
+          var sectionTop = section.offsetTop;
+          var sectionBottom = sectionTop + section.offsetHeight;
+          if (scrollY >= sectionTop && scrollY < sectionBottom) {
+            currentId = section.getAttribute('id');
+          }
+        });
+
+        navLinkEls.forEach(function(link) {
+          link.classList.remove('active');
+          if (link.getAttribute('href') === '#' + currentId) {
+            link.classList.add('active');
+          }
+        });
+      }
+
+      // Throttled scroll handler
+      var ticking = false;
+      window.addEventListener('scroll', function() {
+        if (!ticking) {
+          window.requestAnimationFrame(function() {
+            updateActiveNav();
+            ticking = false;
+          });
+          ticking = true;
+        }
+      });
+
+      // Initial call
+      updateActiveNav();
+
+      /* ---------- Phone Mockup: Random Conversations ---------- */
+      (function() {
+        var conversations = [
+          {
+            name: "Alex",
+            avatar: "https://i.pravatar.cc/80?u=alex",
+            status: "● Online",
+            messages: [
+              { type: "incoming", text: "Hey! Are you at the conference?" },
+              { type: "outgoing", text: "Yeah, just arrived. Where are you?" },
+              { type: "incoming", text: "Second floor, by the main hall 👋" },
+              { type: "outgoing", text: "On my way! Connected via Orbit" }
+            ]
+          },
+          {
+            name: "Sarah",
+            avatar: "https://i.pravatar.cc/80?u=sarah",
+            status: "● Online",
+            messages: [
+              { type: "incoming", text: "Did you see the latest release notes?" },
+              { type: "outgoing", text: "Not yet, what's new?" },
+              { type: "incoming", text: "They fixed the frame alignment bug and added the new gallery!" },
+              { type: "outgoing", text: "Finally! That was driving me crazy 😅" },
+              { type: "incoming", text: "Right? Testing it now, works great" }
+            ]
+          },
+          {
+            name: "Marcus",
+            avatar: "https://i.pravatar.cc/80?u=marcus",
+            status: "● Away",
+            messages: [
+              { type: "outgoing", text: "Can you share the project files?" },
+              { type: "incoming", text: "Sure, sending them over P2P now" },
+              { type: "outgoing", text: "Got them! That was fast" },
+              { type: "incoming", text: "320MB in 12 seconds 🔥" }
+            ]
+          },
+          {
+            name: "Emma",
+            avatar: "https://i.pravatar.cc/80?u=emma",
+            status: "● Online",
+            messages: [
+              { type: "incoming", text: "The group chat keeps getting better" },
+              { type: "outgoing", text: "Right? No server needed at all" },
+              { type: "incoming", text: "And it works even when the internet is down" },
+              { type: "outgoing", text: "That's the whole point! P2P is the future" },
+              { type: "incoming", text: "🚀🚀🚀" }
+            ]
+          },
+          {
+            name: "Dev Team",
+            avatar: "https://i.pravatar.cc/80?u=devteam",
+            status: "5 members ● 2 online",
+            messages: [
+              { type: "outgoing", text: "PR for the gallery fix is ready" },
+              { type: "incoming", text: "Nice! I'll review it in a bit" },
+              { type: "incoming", text: "Looks good, just one comment on the null check" },
+              { type: "outgoing", text: "Fixed! Pushed an update" },
+              { type: "incoming", text: "Approved ✅ Let's merge" }
+            ]
+          },
+          {
+            name: "Luna",
+            avatar: "https://i.pravatar.cc/80?u=luna",
+            status: "● Do Not Disturb",
+            messages: [
+              { type: "incoming", text: "Are we still on for tonight?" },
+              { type: "outgoing", text: "Definitely! 7pm at the usual spot?" },
+              { type: "incoming", text: "Perfect. I'll bring the snacks 🍿" },
+              { type: "outgoing", text: "And I'll bring Orbit to show everyone!" }
+            ]
+          },
+          {
+            name: "Omar",
+            avatar: "https://i.pravatar.cc/80?u=omar",
+            status: "● Online",
+            messages: [
+              { type: "incoming", text: "How do I set up privacy mode?" },
+              { type: "outgoing", text: "Settings > Privacy Mode toggle" },
+              { type: "incoming", text: "Found it! So messages don't save?" },
+              { type: "outgoing", text: "Exactly. Everything auto-deletes on close" },
+              { type: "incoming", text: "Love it. Going dark 🤫" }
+            ]
+          },
+          {
+            name: "Nina",
+            avatar: "https://i.pravatar.cc/80?u=nina",
+            status: "● Online",
+            messages: [
+              { type: "incoming", text: "Can you send that photo from yesterday?" },
+              { type: "outgoing", text: "Sure, one sec... sending now" },
+              { type: "incoming", text: "Wow the quality is perfect! No compression?" },
+              { type: "outgoing", text: "Nope! Direct P2P transfer, full quality" },
+              { type: "incoming", text: "This app is incredible" }
+            ]
+          },
+          {
+            name: "Jake",
+            avatar: "https://i.pravatar.cc/80?u=jake",
+            status: "● Online",
+            messages: [
+              { type: "incoming", text: "Did you catch the game last night?" },
+              { type: "outgoing", text: "Missed it! Who won?" },
+              { type: "incoming", text: "We crushed them 42-17 🔥" },
+              { type: "outgoing", text: "No way! Send me the highlights" }
+            ]
+          },
+          {
+            name: "Maya",
+            avatar: "https://i.pravatar.cc/80?u=maya",
+            status: "● Online",
+            messages: [
+              { type: "outgoing", text: "You still on for Saturday?" },
+              { type: "incoming", text: "Absolutely! Train leaves at 8" },
+              { type: "outgoing", text: "Perfect. I'll pack snacks for the ride" },
+              { type: "incoming", text: "Don't forget the Orbit hotspot 😉" },
+              { type: "outgoing", text: "Already charging it!" }
+            ]
+          },
+          {
+            name: "Ryan",
+            avatar: "https://i.pravatar.cc/80?u=ryan",
+            status: "● Away",
+            messages: [
+              { type: "incoming", text: "You have to hear this new album" },
+              { type: "outgoing", text: "Drop the link!" },
+              { type: "incoming", text: "Sent it over Orbit — full quality" },
+              { type: "outgoing", text: "Wow the bass hits different in FLAC" },
+              { type: "incoming", text: "Right? No compression = ❤️" }
+            ]
+          },
+          {
+            name: "Priya",
+            avatar: "https://i.pravatar.cc/80?u=priya",
+            status: "● Online",
+            messages: [
+              { type: "outgoing", text: "Stuck on this React bug for hours" },
+              { type: "incoming", text: "Show me the error" },
+              { type: "outgoing", text: "useEffect dependency hell 😫" },
+              { type: "incoming", text: "Put a console.log in the cleanup" },
+              { type: "outgoing", text: "BRILLIANT. Found it. You're a lifesaver!" }
+            ]
+          },
+          {
+            name: "Zoe",
+            avatar: "https://i.pravatar.cc/80?u=zoe",
+            status: "● Do Not Disturb",
+            messages: [
+              { type: "incoming", text: "Still awake?" },
+              { type: "outgoing", text: "Unfortunately yes 😅" },
+              { type: "incoming", text: "Same. Can't sleep. Wanna chat?" },
+              { type: "outgoing", text: "Always. What's on your mind?" },
+              { type: "incoming", text: "Just thinking about the road trip..." }
+            ]
+          },
+          {
+            name: "Tyler",
+            avatar: "https://i.pravatar.cc/80?u=tyler",
+            status: "● Online",
+            messages: [
+              { type: "outgoing", text: "Gym tomorrow at 6?" },
+              { type: "incoming", text: "I'll be there. Leg day?" },
+              { type: "outgoing", text: "You read my mind 🦵" },
+              { type: "incoming", text: "Bet. I'm trying that new routine" },
+              { type: "outgoing", text: "Sent you the PDF over Orbit" }
+            ]
+          },
+          {
+            name: "Aria",
+            avatar: "https://i.pravatar.cc/80?u=aria",
+            status: "● Online",
+            messages: [
+              { type: "incoming", text: "The study group is meeting in 20" },
+              { type: "outgoing", text: "On my way! Which room?" },
+              { type: "incoming", text: "Library 3rd floor. I saved us seats" },
+              { type: "outgoing", text: "Bringing coffee ☕ See you soon" },
+              { type: "incoming", text: "You're the best 🙏" }
+            ]
+          }
+        ];
+
+        // Pick a random conversation
+        var idx = Math.floor(Math.random() * conversations.length);
+        var convo = conversations[idx];
+
+        // Build the mockup HTML
+        var mockup = document.getElementById('phone-mockup');
+        if (!mockup) return;
+
+        // Header with avatar image
+        var headerHtml =
+          '<div class="mockup-header">' +
+            '<img class="mockup-avatar-img" src="' + convo.avatar + '" alt="' + convo.name + '" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">' +
+            '<div class="mockup-avatar-fallback" style="display:none;">' + convo.name.charAt(0) + '</div>' +
+            '<div>' +
+              '<div class="mockup-name">' + convo.name + '</div>' +
+              '<div class="mockup-status">' + convo.status + '</div>' +
+            '</div>' +
+          '</div>';
+
+        // Messages
+        var chatHtml = '<div class="mockup-chat">';
+        for (var i = 0; i < convo.messages.length; i++) {
+          var m = convo.messages[i];
+          chatHtml += '<div class="mockup-bubble ' + m.type + '" style="animation-delay:' + ((i + 1) * 0.3) + 's">' + m.text + '</div>';
+        }
+        chatHtml += '</div>';
+
+        // Input bar
+        var inputHtml =
+          '<div class="mockup-input">' +
+            '<div class="mockup-input-field" contenteditable="false" data-placeholder="Type a message..."></div>' +
+            '<button class="mockup-send-btn">' +
+              '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                '<line x1="22" y1="2" x2="11" y2="13"/>' +
+                '<polygon points="22 2 15 22 11 13 2 9 22 2"/>' +
+              '</svg>' +
+            '</button>' +
+          '</div>';
+
+        mockup.innerHTML = headerHtml + chatHtml + inputHtml;
+
+        // Render second phone with a different random conversation
+        var mockup2 = document.getElementById('phone-mockup-2');
+        if (mockup2) {
+          var idx2;
+          do {
+            idx2 = Math.floor(Math.random() * conversations.length);
+          } while (idx2 === idx && conversations.length > 1);
+          var convo2 = conversations[idx2];
+
+          var header2 =
+            '<div class="mockup-header">' +
+              '<img class="mockup-avatar-img" src="' + convo2.avatar + '" alt="' + convo2.name + '" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">' +
+              '<div class="mockup-avatar-fallback" style="display:none;">' + convo2.name.charAt(0) + '</div>' +
+              '<div>' +
+                '<div class="mockup-name">' + convo2.name + '</div>' +
+                '<div class="mockup-status">' + convo2.status + '</div>' +
+              '</div>' +
+            '</div>';
+
+          var chat2 = '<div class="mockup-chat">';
+          for (var j = 0; j < convo2.messages.length; j++) {
+            var m2 = convo2.messages[j];
+            chat2 += '<div class="mockup-bubble ' + m2.type + '" style="animation-delay:' + ((j + 1) * 0.3) + 's">' + m2.text + '</div>';
+          }
+          chat2 += '</div>';
+
+          var input2 =
+            '<div class="mockup-input">' +
+              '<div class="mockup-input-field" contenteditable="false" data-placeholder="Type a message..."></div>' +
+              '<button class="mockup-send-btn">' +
+                '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                  '<line x1="22" y1="2" x2="11" y2="13"/>' +
+                  '<polygon points="22 2 15 22 11 13 2 9 22 2"/>' +
+                '</svg>' +
+              '</button>' +
+            '</div>';
+
+          mockup2.innerHTML = header2 + chat2 + input2;
+        }
+      })();
+
+      /* ---------- Platform Carousel ---------- */
+      (function() {
+        var track = document.getElementById('platformTrack');
+        var dots = document.querySelectorAll('.platform-dot');
+        var timerBar = document.getElementById('platformTimerBar');
+        var current = 0;
+        var total = dots.length;
+        var interval;
+        var timerAnim;
+
+        function goTo(index) {
+          if (index === current) return;
+          track.style.transform = 'translateX(-' + (index * 100) + '%)';
+          dots[current].classList.remove('active');
+          dots[index].classList.add('active');
+          current = index;
+          resetTimer();
+        }
+
+        function nextSlide() {
+          goTo((current + 1) % total);
+        }
+
+        function resetTimer() {
+          clearTimeout(timerAnim);
+          timerBar.style.transition = 'none';
+          timerBar.style.width = '0%';
+          // Force reflow
+          void timerBar.offsetWidth;
+          timerBar.style.transition = 'width 5s linear';
+          timerBar.style.width = '100%';
+          timerAnim = setTimeout(nextSlide, 5000);
+        }
+
+        function startAutoplay() {
+          resetTimer();
+        }
+
+        function stopAutoplay() {
+          clearTimeout(timerAnim);
+          timerBar.style.transition = 'none';
+          timerBar.style.width = '0%';
+        }
+
+        // Dot click handlers
+        for (var d = 0; d < dots.length; d++) {
+          (function(idx) {
+            dots[idx].addEventListener('click', function() {
+              stopAutoplay();
+              goTo(idx);
+              startAutoplay();
+            });
+          })(d);
+        }
+
+        // Pause on hover
+        var carousel = document.getElementById('platformCarousel');
+        carousel.addEventListener('mouseenter', stopAutoplay);
+        carousel.addEventListener('mouseleave', startAutoplay);
+        carousel.addEventListener('touchstart', stopAutoplay);
+        carousel.addEventListener('touchend', startAutoplay);
+
+        // Start
+        startAutoplay();
+      })();
+    })();
+
+    /* ---------- Platform Panel Randomizer (Friends vs Groups) ---------- */
+    (function() {
+      'use strict';
+
+      var screenshots = document.querySelectorAll('.platform-panel-screenshot');
+      if (!screenshots.length) return;
+
+      var friends = [
+        // 0: Windows
+        {
+          tabs: '<div style="flex:1;text-align:center;padding:8px 0;border-bottom:2px solid #0A84FF;font-size:11px;font-weight:600;color:#F2F2F7;">Friends</div><div style="flex:1;text-align:center;padding:8px 0;border-bottom:2px solid transparent;font-size:11px;color:#636366;">Groups</div>',
+          contacts: '<div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;background:rgba(10,132,255,0.08);cursor:default;"><div style="width:24px;height:24px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="https://i.pravatar.cc/80?u=sarahchen" style="width:100%;height:100%;object-fit:cover;" alt=""></div><div style="flex:1;overflow:hidden;"><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:11px;font-weight:600;color:#F2F2F7;">Sarah Chen</span></div><div style="font-size:9px;color:#F2F2F7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">See you tomorrow!</div></div></div><div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;cursor:default;"><div style="width:24px;height:24px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="https://i.pravatar.cc/80?u=alexrivera" style="width:100%;height:100%;object-fit:cover;" alt=""></div><div style="flex:1;overflow:hidden;"><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:11px;font-weight:600;color:#F2F2F7;">Alex Rivera</span></div><div style="font-size:9px;color:#636366;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Sounds good &#128077;</div></div></div><div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;cursor:default;"><div style="width:24px;height:24px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="https://i.pravatar.cc/80?u=emilyzhang" style="width:100%;height:100%;object-fit:cover;" alt=""></div><div style="flex:1;overflow:hidden;"><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:11px;font-weight:600;color:#F2F2F7;">Emily Zhang</span></div><div style="font-size:9px;color:#636366;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Thanks!</div></div></div>',
+          avatar: 'https://i.pravatar.cc/80?u=sarahchen',
+          name: 'Sarah Chen',
+          status: 'Online',
+          messages: '<div style="align-self:flex-end;background:#0A84FF;max-width:75%;padding:10px 14px;border-radius:16px 16px 0 16px;font-size:12px;line-height:1.4;color:#fff;">Hey Sarah, how\'s it going?</div><div style="align-self:flex-start;background:#1C1C1E;max-width:75%;padding:10px 14px;border-radius:0 16px 16px 16px;font-size:12px;line-height:1.4;color:#F2F2F7;border:1px solid rgba(255,255,255,0.06);">Hey! Everything\'s great! Want to grab coffee later?</div><div style="align-self:flex-end;background:#0A84FF;max-width:75%;padding:10px 14px;border-radius:16px 16px 0 16px;font-size:12px;line-height:1.4;color:#fff;">Sure! See you at 3pm &#9749;</div>',
+          placeholder: 'Message Sarah...'
+        },
+        // 1: macOS
+        {
+          tabs: '<div style="flex:1;text-align:center;padding:8px 0;border-bottom:2px solid #0A84FF;font-size:11px;font-weight:600;color:#F2F2F7;">Friends</div><div style="flex:1;text-align:center;padding:8px 0;border-bottom:2px solid transparent;font-size:11px;color:#636366;">Groups</div>',
+          contacts: '<div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;background:rgba(10,132,255,0.08);cursor:default;"><div style="width:24px;height:24px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="https://i.pravatar.cc/80?u=emmawilson" style="width:100%;height:100%;object-fit:cover;" alt=""></div><div style="flex:1;overflow:hidden;"><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:11px;font-weight:600;color:#F2F2F7;">Emma Wilson</span></div><div style="font-size:9px;color:#F2F2F7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Let me know!</div></div></div><div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;cursor:default;"><div style="width:24px;height:24px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="https://i.pravatar.cc/80?u=jameslee" style="width:100%;height:100%;object-fit:cover;" alt=""></div><div style="flex:1;overflow:hidden;"><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:11px;font-weight:600;color:#F2F2F7;">James Lee</span></div><div style="font-size:9px;color:#636366;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Done &#10004;&#65039;</div></div></div><div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;cursor:default;"><div style="width:24px;height:24px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="https://i.pravatar.cc/80?u=lunapark" style="width:100%;height:100%;object-fit:cover;" alt=""></div><div style="flex:1;overflow:hidden;"><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:11px;font-weight:600;color:#F2F2F7;">Luna Park</span></div><div style="font-size:9px;color:#636366;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Check your email</div></div></div>',
+          avatar: 'https://i.pravatar.cc/80?u=emmawilson',
+          name: 'Emma Wilson',
+          status: 'Online',
+          messages: '<div style="align-self:flex-end;background:#0A84FF;max-width:75%;padding:10px 14px;border-radius:16px 16px 0 16px;font-size:12px;line-height:1.4;color:#fff;">How\'s the design looking?</div><div style="align-self:flex-start;background:#1C1C1E;max-width:75%;padding:10px 14px;border-radius:0 16px 16px 16px;font-size:12px;line-height:1.4;color:#F2F2F7;border:1px solid rgba(255,255,255,0.06);">Almost done! Finishing the icons</div><div style="align-self:flex-end;background:#0A84FF;max-width:75%;padding:10px 14px;border-radius:16px 16px 0 16px;font-size:12px;line-height:1.4;color:#fff;">Let me know when ready &#127912;</div>',
+          placeholder: 'Message Emma...'
+        },
+        // 2: Linux
+        {
+          tabs: '<div style="flex:1;text-align:center;padding:8px 0;border-bottom:2px solid #0A84FF;font-size:11px;font-weight:600;color:#F2F2F7;">Friends</div><div style="flex:1;text-align:center;padding:8px 0;border-bottom:2px solid transparent;font-size:11px;color:#636366;">Groups</div>',
+          contacts: '<div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;background:rgba(10,132,255,0.08);cursor:default;"><div style="width:24px;height:24px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="https://i.pravatar.cc/80?u=priyapatel" style="width:100%;height:100%;object-fit:cover;" alt=""></div><div style="flex:1;overflow:hidden;"><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:11px;font-weight:600;color:#F2F2F7;">Priya Patel</span></div><div style="font-size:9px;color:#F2F2F7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Deploy at noon?</div></div></div><div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;cursor:default;"><div style="width:24px;height:24px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="https://i.pravatar.cc/80?u=omar_lnx" style="width:100%;height:100%;object-fit:cover;" alt=""></div><div style="flex:1;overflow:hidden;"><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:11px;font-weight:600;color:#F2F2F7;">Omar Hassan</span></div><div style="font-size:9px;color:#636366;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">LGTM!</div></div></div><div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;cursor:default;"><div style="width:24px;height:24px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="https://i.pravatar.cc/80?u=aristhorne" style="width:100%;height:100%;object-fit:cover;" alt=""></div><div style="flex:1;overflow:hidden;"><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:11px;font-weight:600;color:#F2F2F7;">Aris Thorne</span></div><div style="font-size:9px;color:#636366;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Check the logs</div></div></div>',
+          avatar: 'https://i.pravatar.cc/80?u=priyapatel',
+          name: 'Priya Patel',
+          status: 'Online',
+          messages: '<div style="align-self:flex-end;background:#0A84FF;max-width:75%;padding:10px 14px;border-radius:16px 16px 0 16px;font-size:12px;line-height:1.4;color:#fff;">Is the deployment ready?</div><div style="align-self:flex-start;background:#1C1C1E;max-width:75%;padding:10px 14px;border-radius:0 16px 16px 16px;font-size:12px;line-height:1.4;color:#F2F2F7;border:1px solid rgba(255,255,255,0.06);">Just pushed the final commit</div><div style="align-self:flex-end;background:#0A84FF;max-width:75%;padding:10px 14px;border-radius:16px 16px 0 16px;font-size:12px;line-height:1.4;color:#fff;">Deploying now &#128640;</div>',
+          placeholder: 'Message Priya...'
+        }
+      ];
+
+      for (var i = 0; i < screenshots.length; i++) {
+        // 50/50: keep Groups or swap to Friends
+        if (Math.random() < 0.5) continue;
+
+        var panel = screenshots[i];
+        var data = friends[i];
+        if (!data) continue;
+
+        var grid = panel.querySelector('div[style*="grid-template-columns:44px 200px 1fr"]');
+        if (!grid) continue;
+
+        var middle = grid.children[1];
+        var chat = grid.children[2];
+        if (!middle || !chat) continue;
+
+        // Middle panel: swap tabs (child 1) and contact list (child 2)
+        if (middle.children[1]) middle.children[1].innerHTML = data.tabs;
+        if (middle.children[2]) middle.children[2].innerHTML = data.contacts;
+
+        // Chat header: avatar + name + status + icons
+        if (chat.children[0]) {
+          chat.children[0].innerHTML = '<div style="width:28px;height:28px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="' + data.avatar + '" style="width:100%;height:100%;object-fit:cover;" alt=""></div><div style="flex:1;"><div style="font-size:12px;font-weight:600;color:#F2F2F7;">' + data.name + '</div><div style="font-size:9px;color:#636366;">' + data.status + '</div></div><div style="display:flex;gap:10px;color:#636366;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></div>';
+        }
+
+        // Chat messages
+        if (chat.children[1]) chat.children[1].innerHTML = data.messages;
+
+        // Chat input placeholder
+        if (chat.children[2]) {
+          var ps = chat.children[2].querySelector('span[style*="flex:1"][style*="color:#636366"][style*="font-size:12px"]');
+          if (ps) ps.textContent = data.placeholder;
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
