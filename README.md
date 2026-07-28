@@ -135,9 +135,9 @@ Please keep the website lightweight, responsive, and accessible.
 
 ## License
 
-This project is licensed under the **MIT License**.
+Orbit is licensed under the **MIT License**.
 
-See the LICENSE file for more information.
+You are free to use, modify, distribute, and contribute to the project under the terms of the MIT License. See the [LICENSE](LICENSE) file for full details.
 
 ---
 
