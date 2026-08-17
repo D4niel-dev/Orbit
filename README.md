@@ -14,14 +14,14 @@ The Orbit website serves as the central hub for everything related to the projec
 
 It provides:
 
-- 📥 Download links for the latest releases
-- 📚 Documentation and user guides
-- 📝 Release notes and changelog highlights
-- 🗺️ Development roadmap
-- 🔌 Plugin & Module documentation (planned)
-- 👨‍💻 Developer resources
-- ❓ Frequently Asked Questions
-- 🔗 Links to the official GitHub repositories
+- Download links for the latest releases
+- Documentation and user guides
+- Release notes and changelog highlights
+- Development roadmap
+- Plugin & Module documentation (planned)
+- Developer resources
+- Frequently Asked Questions
+- Links to the official GitHub repositories
 
 Unlike the main Orbit repository, this repository **does not contain the desktop or mobile application source code**.
 
@@ -47,7 +47,7 @@ More documentation and interactive pages will be added over time.
 ## Repository Structure
 
 ```text
-Orbit-Website/
+Orbit/
 ├── docs/               # Documentation pages
 ├── README.md
 └── LICENSE
@@ -60,8 +60,8 @@ Orbit-Website/
 Clone the repository:
 
 ```bash
-git clone https://github.com/D4niel-dev/Orbit-Website.git
-cd Orbit-Website
+git clone https://github.com/D4niel-dev/Orbit.git
+cd Orbit-main
 ```
 
 Since the website is completely static, no backend or build tools are required.
@@ -97,7 +97,7 @@ No manual deployment steps are required.
 | Repository | Purpose |
 |------------|---------|
 | **Orbit** | Desktop & Android application |
-| **Orbit Website** | Official website, documentation and downloads |
+| **Orbit (Website)** | Official website, documentation and downloads |
 
 ---
 
