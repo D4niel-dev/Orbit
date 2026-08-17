@@ -126,6 +126,11 @@
               fetchpriority="high"
               decoding="async">
           </div>
+          <div class="hero-phone-mobile" aria-hidden="true">
+            <div class="phone-frame">
+              <img src="images/app/preview-chat-dark-M.png" alt="" width="1080" height="2400" decoding="async">
+            </div>
+          </div>
           <div class="phone-float" aria-hidden="true">
             <div class="phone-frame">
               <img src="images/app/preview-chat-dark-M.png" alt="" width="1080" height="2400" decoding="async">
@@ -500,6 +505,8 @@
           </a>
         </div>
 
+        <a class="btn btn-primary download-mobile-cta" href="https://github.com/D4niel-dev/Orbit-beta/releases" target="_blank" rel="noopener noreferrer">Get Orbit — all platforms on GitHub</a>
+
         <div class="download-sub fade-up">
           <p>All builds on <a href="https://github.com/D4niel-dev/Orbit-beta/releases" target="_blank" rel="noopener noreferrer">GitHub Releases</a> · GPG-signed SHA256SUMS published with every release; installers are unsigned beta builds.</p>
           <p>Windows SmartScreen may show an "unknown publisher" warning — expected for new open-source apps. More info → Run anyway.</p>
@@ -713,7 +720,7 @@
       var mobileCurrent = 0;
       var mobileTimer = null;
       var mobileReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      var MOBILE_AUTO_MS = 5000;
+      var MOBILE_AUTO_MS = 7000;
 
       function mobilePanelVisible() {
         var p = document.getElementById('panel-mobile');
@@ -756,11 +763,48 @@
 
       if (mobilePrev) mobilePrev.addEventListener('click', function () { prevMobileSlide(); startMobileAuto(); });
       if (mobileNext) mobileNext.addEventListener('click', function () { nextMobileSlide(); startMobileAuto(); });
+      var mobilePointerX = null;
+      var mobilePointerActive = false;
+      var mobileWasAuto = false;
+
       if (mobileSlider) {
         mobileSlider.addEventListener('mouseenter', stopMobileAuto);
         mobileSlider.addEventListener('mouseleave', startMobileAuto);
         mobileSlider.addEventListener('focusin', stopMobileAuto);
         mobileSlider.addEventListener('focusout', startMobileAuto);
+
+        mobileSlider.addEventListener('pointerdown', function (e) {
+          mobilePointerX = e.clientX;
+          mobilePointerActive = true;
+          mobileWasAuto = mobileTimer !== null;
+          stopMobileAuto();
+          if (mobileSlider.setPointerCapture && typeof e.pointerId === 'number') {
+            try { mobileSlider.setPointerCapture(e.pointerId); } catch (err) {}
+          }
+        });
+
+        mobileSlider.addEventListener('pointermove', function (e) {
+          if (!mobilePointerActive) return;
+          e.preventDefault();
+        });
+
+        mobileSlider.addEventListener('pointerup', function (e) {
+          if (!mobilePointerActive) return;
+          var dx = e.clientX - mobilePointerX;
+          mobilePointerX = null;
+          mobilePointerActive = false;
+          if (Math.abs(dx) > 40) {
+            if (dx < 0) nextMobileSlide();
+            else prevMobileSlide();
+          }
+          if (mobileWasAuto) startMobileAuto();
+        });
+
+        mobileSlider.addEventListener('pointercancel', function () {
+          mobilePointerX = null;
+          mobilePointerActive = false;
+          if (mobileWasAuto) startMobileAuto();
+        });
       }
 
       goToMobileSlide(0);
