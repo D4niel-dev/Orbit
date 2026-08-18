@@ -137,6 +137,9 @@ html {
   scroll-behavior: smooth;
   scroll-padding-top: calc(var(--nav-h) + 16px);
 }
+html.has-banner {
+  scroll-padding-top: calc(var(--banner-h, 40px) + var(--nav-h) + 16px);
+}
 
 body {
   font-family: var(--font-body);
@@ -224,6 +227,71 @@ a:hover { color: #60b0ff; }
   .orb { animation: none !important; }
   .back-to-top { transition: none; }
   .mobile-slides { transition: none; }
+  .announcement-bar { animation: none; }
+}
+
+/* ---------- Announcement bar ---------- */
+.announcement-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1001;
+  font-size: 0.8125rem;
+  color: var(--text-2);
+  background: linear-gradient(90deg, rgba(10, 132, 255, 0.16) 0%, rgba(10, 132, 255, 0.06) 45%, rgba(48, 209, 88, 0.10) 100%);
+  border-bottom: 1px solid var(--border-strong);
+  animation: announcementFadeIn 0.3s var(--ease);
+}
+body.has-banner .navbar {
+  top: var(--banner-h, 40px);
+}
+.announcement-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 40px;
+  padding: 10px 48px;
+  text-align: center;
+}
+.announcement-text {
+  font-weight: 500;
+}
+.announcement-link {
+  color: var(--accent);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+.announcement-link:hover { color: #60b0ff; }
+.announcement-close {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-2);
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.announcement-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text);
+}
+
+@keyframes announcementFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
 }
 
 /* ---------- Navbar ---------- */
@@ -1543,6 +1611,9 @@ a:hover { color: #60b0ff; }
     border-bottom: 1px solid var(--border);
     padding: 12px 20px 20px;
     gap: 4px;
+  }
+  body.has-banner .nav-links.open {
+    top: calc(var(--banner-h, 40px) + var(--nav-h));
   }
   .nav-links.open .nav-link { padding: 12px 10px; }
   .nav-links.open .nav-mobile-extra {
