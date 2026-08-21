@@ -563,7 +563,7 @@
     <figure class="lightbox-figure">
       <button class="lightbox-close" id="lightboxClose" aria-label="Close preview">✕</button>
       <button class="lightbox-nav prev" id="lightboxPrev" aria-label="Previous theme">‹</button>
-      <img id="lightboxImg" src="" alt="">
+      <img id="lightboxImg" alt="">
       <button class="lightbox-nav next" id="lightboxNext" aria-label="Next theme">›</button>
       <figcaption id="lightboxCaption"></figcaption>
     </figure>
@@ -573,21 +573,28 @@
     (function () {
       'use strict';
 
-      var ORBIT_VERSION = 'v0.4.2-beta';
+      var ORBIT_VERSION = 'v0.5.0-beta';
       document.querySelectorAll('[data-version]').forEach(function (el) {
         el.textContent = ORBIT_VERSION;
       });
 
       function initAnnouncement() {
-        var key = 'orbit_banner_v042';
+        var SEEN_KEY = 'orbit_banner_v050_seen_count';
+        var DISMISSED_KEY = 'orbit_banner_v050_dismissed';
+        var storageOk = true;
+
         try {
-          if (localStorage.getItem(key)) return;
-        } catch (err) { return; }
+          if (localStorage.getItem(DISMISSED_KEY) === '1') return;
+          if (parseInt(localStorage.getItem(SEEN_KEY), 10) >= 1) return;
+        } catch (err) {
+          // localStorage unavailable: treat as first visit, show banner but never persist.
+          storageOk = false;
+        }
 
         var html =
           '<div class="announcement-bar" role="status">' +
             '<div class="announcement-bar-inner">' +
-              '<span class="announcement-text">New: Orbit v0.4.2-beta is now live!</span>' +
+              '<span class="announcement-text">New: Orbit v0.5.0-beta is now live!</span>' +
               '<a class="announcement-link" href="https://github.com/D4niel-dev/Orbit-beta/blob/main/CHANGELOG.md" target="_blank" rel="noopener">What\'s new &rarr;</a>' +
               '<button type="button" class="announcement-close" aria-label="Dismiss announcement">✕</button>' +
             '</div>' +
@@ -598,22 +605,53 @@
         document.body.classList.add('has-banner');
         document.documentElement.classList.add('has-banner');
 
+        var resizeObserver = null;
         function measureBanner() {
+          if (!bar.parentNode) return; // banner already removed
           document.documentElement.style.setProperty('--banner-h', bar.offsetHeight + 'px');
         }
         measureBanner();
         requestAnimationFrame(measureBanner);
-        if (window.ResizeObserver) new ResizeObserver(measureBanner).observe(bar);
+        if (window.ResizeObserver) {
+          resizeObserver = new ResizeObserver(measureBanner);
+          resizeObserver.observe(bar);
+        }
         if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureBanner);
 
-        var closeBtn = bar.querySelector('.announcement-close');
-        closeBtn.addEventListener('click', function () {
-          try { localStorage.setItem(key, '1'); } catch (err) {}
+        // Record this visit so the banner never shows again on any later visit.
+        if (storageOk) {
+          try { localStorage.setItem(SEEN_KEY, '1'); } catch (err) {}
+        }
+
+        var autoHideTimer = null;
+
+        function persistDismissed() {
+          if (!storageOk) return;
+          try { localStorage.setItem(DISMISSED_KEY, '1'); } catch (err) {}
+        }
+
+        function dismiss() {
+          if (!bar.parentNode) return; // already dismissed
+          if (autoHideTimer !== null) {
+            clearTimeout(autoHideTimer);
+            autoHideTimer = null;
+          }
+          if (resizeObserver) {
+            resizeObserver.disconnect();
+            resizeObserver = null;
+          }
           bar.remove();
           document.body.classList.remove('has-banner');
           document.documentElement.classList.remove('has-banner');
           document.documentElement.style.removeProperty('--banner-h');
-        });
+          persistDismissed();
+        }
+
+        var closeBtn = bar.querySelector('.announcement-close');
+        closeBtn.addEventListener('click', dismiss);
+
+        // Auto-hide 10 seconds after the visitor's first entry.
+        autoHideTimer = setTimeout(dismiss, 10000);
       }
       initAnnouncement();
 
