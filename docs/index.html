@@ -573,14 +573,14 @@
     (function () {
       'use strict';
 
-      var ORBIT_VERSION = 'v0.5.0-beta';
+      var ORBIT_VERSION = 'v0.5.1-beta';
       document.querySelectorAll('[data-version]').forEach(function (el) {
         el.textContent = ORBIT_VERSION;
       });
 
       function initAnnouncement() {
-        var SEEN_KEY = 'orbit_banner_v050_seen_count';
-        var DISMISSED_KEY = 'orbit_banner_v050_dismissed';
+        var SEEN_KEY = 'orbit_banner_v051_seen_count';
+        var DISMISSED_KEY = 'orbit_banner_v051_dismissed';
         var storageOk = true;
 
         try {
@@ -594,7 +594,7 @@
         var html =
           '<div class="announcement-bar" role="status">' +
             '<div class="announcement-bar-inner">' +
-              '<span class="announcement-text">New: Orbit v0.5.0-beta is now live!</span>' +
+              '<span class="announcement-text">New: Orbit v0.5.1-beta is now live!</span>' +
               '<a class="announcement-link" href="https://github.com/D4niel-dev/Orbit-beta/blob/main/CHANGELOG.md" target="_blank" rel="noopener">What\'s new &rarr;</a>' +
               '<button type="button" class="announcement-close" aria-label="Dismiss announcement">✕</button>' +
             '</div>' +
