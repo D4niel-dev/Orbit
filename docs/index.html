@@ -22,13 +22,31 @@
   "applicationCategory": "CommunicationApplication",
   "operatingSystem": "Windows, macOS, Linux, Android",
   "description": "Local-first, peer-to-peer encrypted chat app for desktop and Android. No cloud, no signup, no central server.",
-  "softwareVersion": "0.4.2-beta",
+  "softwareVersion": "0.5.2-beta",
   "license": "https://opensource.org/licenses/MIT",
   "codeRepository": "https://github.com/D4niel-dev/Orbit-beta",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
 }
 </script>
   <link rel="preload" as="image" href="images/app/preview-darkmode.png" fetchpriority="high">
+  <script>
+    // Resolve the theme before first paint, so there is never a flash of the
+    // wrong palette. THEME_DEFAULT is the only place the starting preference is
+    // defined — change it to 'dark' or 'light' to pin the first-visit theme.
+    (function () {
+      var THEME_DEFAULT = 'system';
+      var pref = THEME_DEFAULT;
+      try { pref = localStorage.getItem('orbit_theme') || THEME_DEFAULT; } catch (err) {}
+      var prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+      var resolved = (pref === 'light' || pref === 'dark') ? pref : (prefersLight ? 'light' : 'dark');
+      var root = document.documentElement;
+      root.setAttribute('data-theme', resolved);
+      root.setAttribute('data-theme-pref', pref);
+      root.style.colorScheme = resolved;
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', resolved === 'light' ? '#F6F6F8' : '#0C0C0E');
+    })();
+  </script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -49,12 +67,34 @@
         <li><a href="#faq" class="nav-link">FAQ</a></li>
         <li><a href="#download" class="nav-link">Download</a></li>
         <li class="nav-mobile-extra">
+          <div class="theme-switch" role="group" aria-label="Colour theme">
+            <button type="button" data-theme-set="light" aria-pressed="false" title="Light theme" aria-label="Light theme">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+            </button>
+            <button type="button" data-theme-set="dark" aria-pressed="true" title="Dark theme" aria-label="Dark theme">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+            <button type="button" data-theme-set="system" aria-pressed="false" title="Match system" aria-label="Match system theme">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            </button>
+          </div>
           <a href="https://github.com/D4niel-dev/Orbit-beta" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">GitHub</a>
           <a href="#download" class="btn btn-primary">Download</a>
         </li>
       </ul>
 
       <div class="nav-actions">
+        <div class="theme-switch" role="group" aria-label="Colour theme">
+          <button type="button" data-theme-set="light" aria-pressed="false" title="Light theme" aria-label="Light theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          </button>
+          <button type="button" data-theme-set="dark" aria-pressed="true" title="Dark theme" aria-label="Dark theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+          <button type="button" data-theme-set="system" aria-pressed="false" title="Match system" aria-label="Match system theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </button>
+        </div>
         <a href="https://github.com/D4niel-dev/Orbit-beta" target="_blank" rel="noopener noreferrer" class="nav-github" aria-label="View on GitHub">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.167 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
@@ -168,7 +208,7 @@
             </div>
             <div>
               <strong>End-to-end encrypted</strong>
-              <span>ECDH + AES-256-GCM on direct messages.</span>
+              <span>ECDH + AES-256-GCM, desktop and Android alike.</span>
             </div>
           </div>
           <div class="trust-item fade-up">
@@ -304,7 +344,7 @@
               </svg>
             </div>
             <h3>End-to-end encrypted</h3>
-            <p>Direct messages use ECDH key exchange and AES-256-GCM. Only the devices in the conversation can decrypt them.</p>
+            <p>Direct messages use ECDH key exchange and AES-256-GCM, with one key scheme across desktop and Android — an encrypted conversation works in both directions between any two Orbit devices.</p>
           </article>
 
           <article class="feature-card fade-up">
@@ -345,7 +385,37 @@
               </svg>
             </div>
             <h3>Cross-platform</h3>
-            <p>Electron desktop on Windows, macOS, and Linux. Capacitor Android. Same protocol and identity system across desktop and mobile — cross-platform E2EE on the roadmap.</p>
+            <p>Electron desktop on Windows, macOS, and Linux, plus Capacitor Android. One protocol, one identity system, and one encryption scheme across both — desktop and phone talk to each other properly.</p>
+          </article>
+
+          <article class="feature-card fade-up">
+            <div class="feature-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3"/><path d="M21 14v7"/><path d="M14 21h7"/>
+              </svg>
+            </div>
+            <h3>Pair by QR code</h3>
+            <p>Show a QR code, scan it from the other device, and you're connected — identity, address, and encryption key all in one. No typing IP addresses.</p>
+          </article>
+
+          <article class="feature-card fade-up">
+            <div class="feature-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/>
+              </svg>
+            </div>
+            <h3>Voice &amp; video calls</h3>
+            <p>Call one person or the whole group over WebRTC, straight across the LAN. Camera toggle, mute, and per-participant video tiles — no relay server involved.</p>
+          </article>
+
+          <article class="feature-card fade-up">
+            <div class="feature-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/>
+              </svg>
+            </div>
+            <h3>Threads &amp; replies</h3>
+            <p>Reply to any message and the chain stays together — indented with a reply count, and it survives restarts. Open a thread to read it end to end and jump back to the original.</p>
           </article>
         </div>
       </div>
@@ -404,6 +474,10 @@
 
         <div class="spec-panel fade-up">
           <dl class="spec-row">
+            <dt>Encryption</dt>
+            <dd>ECDH key agreement with HKDF-SHA256 and AES-256-GCM, using a single key format on desktop and Android — so a phone and a laptop can hold an encrypted conversation with each other.</dd>
+          </dl>
+          <dl class="spec-row">
             <dt>Discovery</dt>
             <dd>UDP beacon broadcasts on port 45678 — automatic peer discovery, direct LAN sockets, no relay.</dd>
           </dl>
@@ -446,7 +520,7 @@
           </details>
           <details class="faq-item">
             <summary>Is my data really encrypted?</summary>
-            <p>Direct messages use ECDH key exchange with AES-256-GCM, and the protocol is open source so you can audit exactly what happens to your data.</p>
+            <p>Direct messages use ECDH key exchange with AES-256-GCM, and desktop and Android share the same key scheme — so an encrypted conversation works in both directions between a phone and a computer. The protocol is open source, so you can audit exactly what happens to your data.</p>
           </details>
           <details class="faq-item">
             <summary>Can I use Orbit over the internet?</summary>
@@ -573,14 +647,74 @@
     (function () {
       'use strict';
 
-      var ORBIT_VERSION = 'v0.5.1-beta';
+      var ORBIT_VERSION = 'v0.5.2-beta';
       document.querySelectorAll('[data-version]').forEach(function (el) {
         el.textContent = ORBIT_VERSION;
       });
 
+      /* -- Theme switching (light / dark / system) --
+         The palette itself lives in styles.css under [data-theme="light"].
+         This only decides which one applies and remembers the choice; the
+         pre-paint script in <head> has already applied it once. */
+      var THEME_KEY = 'orbit_theme';
+      var themeMedia = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+
+      function themePreference() {
+        try {
+          return localStorage.getItem(THEME_KEY)
+            || document.documentElement.getAttribute('data-theme-pref')
+            || 'system';
+        } catch (err) {
+          return document.documentElement.getAttribute('data-theme-pref') || 'system';
+        }
+      }
+
+      function applyTheme(pref, animate) {
+        var root = document.documentElement;
+        var resolved = (pref === 'light' || pref === 'dark')
+          ? pref
+          : ((themeMedia && themeMedia.matches) ? 'light' : 'dark');
+
+        if (animate && root.getAttribute('data-theme') !== resolved) {
+          root.classList.add('theme-transition');
+          setTimeout(function () { root.classList.remove('theme-transition'); }, 340);
+        }
+
+        root.setAttribute('data-theme', resolved);
+        root.setAttribute('data-theme-pref', pref);
+        root.style.colorScheme = resolved;
+
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', resolved === 'light' ? '#F6F6F8' : '#0C0C0E');
+
+        // Both copies of the switch (navbar + mobile menu) stay in sync.
+        document.querySelectorAll('[data-theme-set]').forEach(function (btn) {
+          btn.setAttribute('aria-pressed', String(btn.getAttribute('data-theme-set') === pref));
+        });
+      }
+
+      document.querySelectorAll('[data-theme-set]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var pref = btn.getAttribute('data-theme-set');
+          try { localStorage.setItem(THEME_KEY, pref); } catch (err) {}
+          applyTheme(pref, true);
+        });
+      });
+
+      // Follow the OS while the page is open, but only while on "system".
+      if (themeMedia) {
+        var onSchemeChange = function () {
+          if (themePreference() === 'system') applyTheme('system', true);
+        };
+        if (themeMedia.addEventListener) themeMedia.addEventListener('change', onSchemeChange);
+        else if (themeMedia.addListener) themeMedia.addListener(onSchemeChange);
+      }
+
+      applyTheme(themePreference(), false);
+
       function initAnnouncement() {
-        var SEEN_KEY = 'orbit_banner_v051_seen_count';
-        var DISMISSED_KEY = 'orbit_banner_v051_dismissed';
+        var SEEN_KEY = 'orbit_banner_v052_seen_count';
+        var DISMISSED_KEY = 'orbit_banner_v052_dismissed';
         var storageOk = true;
 
         try {
@@ -594,7 +728,7 @@
         var html =
           '<div class="announcement-bar" role="status">' +
             '<div class="announcement-bar-inner">' +
-              '<span class="announcement-text">New: Orbit v0.5.1-beta is now live!</span>' +
+              '<span class="announcement-text">New: Orbit v0.5.2-beta — encrypted chat across desktop and Android</span>' +
               '<a class="announcement-link" href="https://github.com/D4niel-dev/Orbit-beta/blob/main/CHANGELOG.md" target="_blank" rel="noopener">What\'s new &rarr;</a>' +
               '<button type="button" class="announcement-close" aria-label="Dismiss announcement">✕</button>' +
             '</div>' +
