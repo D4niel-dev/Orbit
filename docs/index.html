@@ -22,7 +22,7 @@
   "applicationCategory": "CommunicationApplication",
   "operatingSystem": "Windows, macOS, Linux, Android",
   "description": "Local-first, peer-to-peer encrypted chat app for desktop and Android. No cloud, no signup, no central server.",
-  "softwareVersion": "0.5.2-beta",
+  "softwareVersion": "0.5.3-beta",
   "license": "https://opensource.org/licenses/MIT",
   "codeRepository": "https://github.com/D4niel-dev/Orbit-beta",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
@@ -126,7 +126,7 @@
           </div>
           <h1>Private messaging.<br><span class="grad">No internet required.</span></h1>
           <p>
-            Orbit connects devices on your local network — peer-to-peer, end-to-end encrypted, no cloud account. Chat, share files, and stay in control of your conversations.
+            Orbit connects devices on your local network — peer-to-peer, end-to-end encrypted, no cloud account. Chat, share files, make calls, and stay in control of your conversations.
           </p>
           <div class="hero-cta-row">
             <a href="#download" class="btn btn-primary">
@@ -398,14 +398,15 @@
             <p>Show a QR code, scan it from the other device, and you're connected — identity, address, and encryption key all in one. No typing IP addresses.</p>
           </article>
 
-          <article class="feature-card fade-up">
+          <article class="feature-card feature-card-new fade-up">
+            <span class="feature-badge">New in <span data-version></span></span>
             <div class="feature-icon" aria-hidden="true">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/>
               </svg>
             </div>
             <h3>Voice &amp; video calls</h3>
-            <p>Call one person or the whole group over WebRTC, straight across the LAN. Camera toggle, mute, and per-participant video tiles — no relay server involved.</p>
+            <p>Call someone straight from a chat on desktop or Android — accept or decline, mute, toggle the camera, and see how long the last call lasted right in the conversation. Group calls are desktop-only for now. Everything runs peer-to-peer over WebRTC with no relay server.</p>
           </article>
 
           <article class="feature-card fade-up">
@@ -531,6 +532,10 @@
             <p>Orbit discovers nearby peers automatically on the same network. You can also add someone by IP address or share your QR code.</p>
           </details>
           <details class="faq-item">
+            <summary>Can I make voice and video calls?</summary>
+            <p>Yes. Open a chat and choose Voice Call or Video Call — the other person gets a ring they can accept or decline, and the call runs peer-to-peer over WebRTC with no relay server. Calls work between a phone and a computer, and every finished call is logged in the conversation so you can see how long it lasted and call back in one tap. Group calls are desktop-only for now.</p>
+          </details>
+          <details class="faq-item">
             <summary>Is Orbit open source?</summary>
             <p>Yes. MIT licensed, with the full source on GitHub. Read the protocol, audit the crypto, or fork it.</p>
           </details>
@@ -647,7 +652,7 @@
     (function () {
       'use strict';
 
-      var ORBIT_VERSION = 'v0.5.2-beta';
+      var ORBIT_VERSION = 'v0.5.3-beta';
       document.querySelectorAll('[data-version]').forEach(function (el) {
         el.textContent = ORBIT_VERSION;
       });
@@ -713,8 +718,8 @@
       applyTheme(themePreference(), false);
 
       function initAnnouncement() {
-        var SEEN_KEY = 'orbit_banner_v052_seen_count';
-        var DISMISSED_KEY = 'orbit_banner_v052_dismissed';
+        var SEEN_KEY = 'orbit_banner_v053_seen_count';
+        var DISMISSED_KEY = 'orbit_banner_v053_dismissed';
         var storageOk = true;
 
         try {
@@ -728,7 +733,7 @@
         var html =
           '<div class="announcement-bar" role="status">' +
             '<div class="announcement-bar-inner">' +
-              '<span class="announcement-text">New: Orbit v0.5.2-beta — encrypted chat across desktop and Android</span>' +
+              '<span class="announcement-text">New: Orbit v0.5.3-beta — voice and video calls on desktop and Android</span>' +
               '<a class="announcement-link" href="https://github.com/D4niel-dev/Orbit-beta/blob/main/CHANGELOG.md" target="_blank" rel="noopener">What\'s new &rarr;</a>' +
               '<button type="button" class="announcement-close" aria-label="Dismiss announcement">✕</button>' +
             '</div>' +

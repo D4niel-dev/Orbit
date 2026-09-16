@@ -1183,6 +1183,32 @@ html.theme-transition *::after {
   background: var(--card-bg-hover);
 }
 
+/* The card for whatever shipped in the current release. Accent tokens only, so
+   it reads the same in both themes — same convention as .faq-item[open]. */
+.feature-badge {
+  display: inline-flex;
+  align-items: center;
+  /* inline-flex drops the whitespace between the label and the version span,
+     so the gap has to be explicit or it reads "New inv0.5.3-beta". */
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: 999px;
+  padding: 3px 10px;
+  margin-bottom: 14px;
+  white-space: nowrap;
+}
+.feature-card-new {
+  border-color: var(--accent-border);
+}
+.feature-card-new:hover {
+  border-color: var(--accent-border-strong);
+}
+
 .feature-icon {
   width: 42px;
   height: 42px;
