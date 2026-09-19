@@ -243,7 +243,12 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  /* clip, not hidden: overflow-x:hidden forces overflow-y to compute to
+     auto, which makes <body> a scroll container. That hijacks
+     animation-timeline: view() (and position: sticky) for everything
+     inside it, leaving elements frozen at their starting keyframe.
+     clip blocks horizontal overflow without creating a scroll container. */
+  overflow-x: clip;
 }
 
 ::selection {
@@ -296,33 +301,707 @@ a:hover { color: var(--link-hover); }
 }
 
 /* ---------- Motion ---------- */
+/* ==================================================================
+   MOTION SYSTEM
+   ------------------------------------------------------------------
+   Previously every one of the 35 revealed elements ran the same
+   fade + 24px rise, and the stagger stopped at the sixth child — so
+   the 12-card features grid visibly lost its rhythm halfway through.
+
+   Variety is now derived from ELEMENT TYPE in CSS rather than from
+   new markup, so the existing HTML needs no per-element classes:
+   section headers come in from the side, cards scale up as they
+   arrive, everything else rises.
+   ================================================================== */
+
 .fade-up {
   opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+  transform: translateY(26px);
+  transition:
+    opacity 0.72s var(--ease),
+    transform 0.72s var(--ease),
+    filter 0.72s var(--ease);
+  will-change: opacity, transform;
 }
+
 .fade-up.visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
 }
-.fade-up-stagger > .fade-up:nth-child(1) { transition-delay: 0.04s; }
-.fade-up-stagger > .fade-up:nth-child(2) { transition-delay: 0.10s; }
-.fade-up-stagger > .fade-up:nth-child(3) { transition-delay: 0.16s; }
-.fade-up-stagger > .fade-up:nth-child(4) { transition-delay: 0.22s; }
-.fade-up-stagger > .fade-up:nth-child(5) { transition-delay: 0.28s; }
-.fade-up-stagger > .fade-up:nth-child(6) { transition-delay: 0.34s; }
+
+/* Section headers lead, arriving from the side rather than rising —
+   gives each section an entrance beat instead of a uniform lift. */
+.section-header.fade-up {
+  transform: translateX(-30px);
+  transition-duration: 0.8s;
+}
+
+/* Cards arrive by settling into place: a small scale with the rise.
+   Reads as "landing" and separates them from text blocks. */
+.feature-card.fade-up,
+.step-card.fade-up,
+.faq-item.fade-up {
+  transform: translateY(22px) scale(0.975);
+  transition-duration: 0.66s;
+}
+
+/* Any imagery that reveals gets a slight blur burn-off, which hides
+   the flatness of a pure opacity fade on photographic content. */
+.fade-up.visible { filter: none; }
+.fade-up:not(.visible) { filter: blur(2px); }
+
+/* ------------------------------------------------------------------
+   Stagger — now unlimited.
+   `--stagger-i` is set per child by the reveal script, so a group of
+   any length cascades evenly. The nth-child rules below stay as a
+   no-JS fallback and are overridden when the variable is present.
+   ------------------------------------------------------------------ */
+.fade-up-stagger > .fade-up {
+  transition-delay: calc(var(--stagger-i, 0) * 58ms);
+}
+
+.fade-up-stagger > .fade-up:nth-child(1) { --stagger-i: 0; }
+.fade-up-stagger > .fade-up:nth-child(2) { --stagger-i: 1; }
+.fade-up-stagger > .fade-up:nth-child(3) { --stagger-i: 2; }
+.fade-up-stagger > .fade-up:nth-child(4) { --stagger-i: 3; }
+.fade-up-stagger > .fade-up:nth-child(5) { --stagger-i: 4; }
+.fade-up-stagger > .fade-up:nth-child(6) { --stagger-i: 5; }
+.fade-up-stagger > .fade-up:nth-child(7) { --stagger-i: 6; }
+.fade-up-stagger > .fade-up:nth-child(8) { --stagger-i: 7; }
+.fade-up-stagger > .fade-up:nth-child(9) { --stagger-i: 8; }
+.fade-up-stagger > .fade-up:nth-child(10) { --stagger-i: 9; }
+.fade-up-stagger > .fade-up:nth-child(11) { --stagger-i: 10; }
+.fade-up-stagger > .fade-up:nth-child(12) { --stagger-i: 11; }
+.fade-up-stagger > .fade-up:nth-child(n+13) { --stagger-i: 12; }
+
+/* ------------------------------------------------------------------
+   Scroll-linked depth.
+   `--scroll-y` is set on :root by the reveal script. Section backdrop
+   art drifts against the scroll so the page has parallax instead of
+   moving as one flat sheet.
+   ------------------------------------------------------------------ */
+.section-bg {
+  transform: translate3d(0, calc(var(--scroll-y, 0px) * var(--parallax, -0.06)), 0);
+  will-change: transform;
+}
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .fade-up {
+
+  .fade-up,
+  .section-header.fade-up,
+  .feature-card.fade-up,
+  .step-card.fade-up,
+  .faq-item.fade-up {
     opacity: 1;
     transform: none;
+    filter: none;
     transition: none;
+    transition-delay: 0s;
   }
+
+  .section-bg { transform: none; }
   .orb { animation: none !important; }
   .back-to-top { transition: none; }
   .mobile-slides { transition: none; }
   .announcement-bar { animation: none; }
+}
+
+
+/* ==================================================================
+   HERO CHOREOGRAPHY
+   ------------------------------------------------------------------
+   The hero is above the fold, so it must not wait for a scroll — it
+   plays on load. Each piece arrives on its own beat, and the two
+   headline lines come in from opposite sides.
+   ================================================================== */
+
+.hero-line {
+  display: inline-block;
+  opacity: 0;
+}
+
+.hero-line-l { --hero-from: -58px; }
+.hero-line-r { --hero-from: 58px; }
+
+@keyframes heroLineIn {
+  from { opacity: 0; transform: translateX(var(--hero-from, 0)); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* The rest of the hero copy rises, so the headline is the only thing
+   moving sideways and the eye follows it. */
+@keyframes heroRiseIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-copy { opacity: 1; transform: none; }   /* the container does not animate */
+
+  .hero-line {
+    animation: heroLineIn 0.9s var(--ease) both;
+  }
+  .hero-line-l { animation-delay: 0.12s; }
+  .hero-line-r { animation-delay: 0.26s; }
+
+  .hero-copy > .eyebrow,
+  .hero-copy > p,
+  .hero-copy > .hero-cta-row,
+  .hero-copy > .os-badges {
+    animation: heroRiseIn 0.8s var(--ease) both;
+  }
+  .hero-copy > .eyebrow        { animation-delay: 0.04s; }
+  .hero-copy > p               { animation-delay: 0.42s; }
+  .hero-copy > .hero-cta-row   { animation-delay: 0.56s; }
+  .hero-copy > .os-badges      { animation-delay: 0.68s; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-line,
+  .hero-copy > .eyebrow,
+  .hero-copy > p,
+  .hero-copy > .hero-cta-row,
+  .hero-copy > .os-badges {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
+}
+
+/* ==================================================================
+   SCROLL-DRIVEN ANIMATION
+   ------------------------------------------------------------------
+   The difference that matters: the old reveals were TRIGGERED by scroll
+   (fire once, play for 0.7s, done). These are DRIVEN by it — the
+   animation's progress IS the scroll position, so they run forward and
+   backward at exactly the speed you scroll, and they run on the
+   compositor instead of in a JS handler.
+
+   Progressive enhancement: browsers without animation-timeline keep the
+   existing transition + IntersectionObserver path untouched, so nothing
+   regresses and content is never hidden.
+   ================================================================== */
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+
+    @keyframes sdRevealUp {
+      from { opacity: 0; transform: translateY(30px); filter: blur(2px); }
+      to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+    }
+    @keyframes sdRevealLeft {
+      from { opacity: 0; transform: translateX(-34px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes sdCardIn {
+      from { opacity: 0; transform: translateY(26px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0)    scale(1); }
+    }
+
+    /* Hand these elements over to the scroll timeline entirely — the
+       transition path must be switched off or the two fight. */
+    .fade-up {
+      transition: none;
+      opacity: 1;                 /* the animation owns opacity now */
+      transform: none;
+      animation: sdRevealUp linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 85%;
+    }
+
+    .section-header.fade-up {
+      animation-name: sdRevealLeft;
+      animation-range: entry 0% entry 88%;
+    }
+
+    .feature-card.fade-up,
+    .step-card.fade-up,
+    .faq-item.fade-up {
+      animation-name: sdCardIn;
+      animation-range: entry 0% entry 82%;
+    }
+
+    /* Stagger along the timeline rather than in seconds: each child
+       starts slightly earlier, so a grid ripples regardless of length. */
+    .fade-up-stagger > .fade-up { animation-delay: calc(var(--stagger-i, 0) * -1.6%); }
+
+    /* Section backdrop art drifts as the section crosses the viewport.
+       Complements the JS parallax and takes over where supported. */
+    .section-bg {
+      animation: sdParallax linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+      transform: none;
+    }
+    @keyframes sdParallax {
+      from { transform: translateY(-4%); }
+      to   { transform: translateY(4%); }
+    }
+  }
+}
+
+
+/* ==================================================================
+   READING PROGRESS + TOP BAR MOTION
+   ================================================================== */
+
+@keyframes growWidth {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+.progress-bar {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 2px;
+  z-index: 1005;
+  pointer-events: none;
+  transform-origin: 0 50%;
+  transform: scaleX(0);           /* default for browsers without a scroll timeline */
+  background: linear-gradient(90deg, var(--accent-primary, #3b82f6), var(--accent-secondary, #8b5cf6));
+}
+
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .progress-bar {
+      animation: growWidth linear both;
+      animation-timeline: scroll(root block);
+    }
+  }
+}
+
+/* The navbar now reacts to scroll direction: it steps aside when you
+   read downward and comes straight back when you scroll up, so the top
+   of the page is never permanently occupied. */
+.navbar {
+  transition:
+    transform 0.36s var(--ease),
+    background 0.3s var(--ease),
+    box-shadow 0.3s var(--ease),
+    border-color 0.3s var(--ease);
+}
+
+.navbar.is-hidden {
+  /* Must clear the sticky announcement bar as well as its own height.
+     translateY(-100%) alone moved the nav from 42..114 to -30..42 — landing exactly
+     behind the banner, so the two rendered on top of each other. Adding the banner
+     height (plus a small margin) takes it fully off-screen instead. */
+  transform: translateY(calc(-100% - var(--banner-h, 0px) - 4px));
+}
+
+.navbar.is-scrolled {
+  background: color-mix(in srgb, var(--glass) 88%, transparent);
+  border-bottom: 1px solid var(--border-subtle);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+}
+
+/* Nav links get a sweep underline instead of a colour flip. */
+.nav-link {
+  position: relative;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  bottom: -5px;
+  height: 1.5px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent-primary, #3b82f6), var(--accent-secondary, #8b5cf6));
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 0.32s var(--ease);
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+  transform: scaleX(1);
+}
+
+/* The announcement bar drops in rather than simply appearing. */
+@keyframes bannerDrop {
+  from { opacity: 0; transform: translateY(-100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .announcement-bar {
+    animation: bannerDrop 0.5s var(--ease) both;
+  }
+}
+
+/* ==================================================================
+   CARD + BUTTON MICRO-INTERACTIONS
+   Guarded behind (hover: hover) so touch devices never get a stuck
+   hover state after a tap.
+   ================================================================== */
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .feature-card,
+  .step-card,
+  .faq-item {
+    transition:
+      transform 0.3s var(--ease),
+      border-color 0.3s var(--ease),
+      box-shadow 0.3s var(--ease);
+  }
+
+  .feature-card:hover,
+  .step-card:hover,
+  .faq-item:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent-border-strong, var(--border-strong));
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.26);
+  }
+
+  /* Icon lifts a touch more than the card, so the card reads as a
+     surface and the icon as something resting on it. */
+  .feature-card:hover .feature-icon {
+    transform: translateY(-2px) scale(1.06);
+  }
+  .feature-icon {
+    transition: transform 0.3s var(--ease);
+  }
+
+  /* Sheen across the primary CTA. */
+  .btn-primary {
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(105deg, transparent 32%, rgba(255, 255, 255, 0.3) 50%, transparent 68%);
+    transform: translateX(-130%);
+  }
+  .btn-primary:hover::after {
+    transform: translateX(130%);
+    transition: transform 0.75s var(--ease);
+  }
+
+  .os-badge {
+    transition: transform 0.25s var(--ease), border-color 0.25s var(--ease);
+  }
+  .os-badge:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-border, var(--border-strong));
+  }
+}
+
+/* ==================================================================
+   PER-SECTION SCROLL PROGRESS
+   A hairline under each section that fills as that section passes.
+   Elements are injected by the page script.
+   ================================================================== */
+
+/* NOTE: per-section progress hairlines were removed here.
+   They were injected as each section's first child, so they rendered above the heading
+   looking like a stray rule, and the bar was wider than the text beneath it. The reading
+   progress bar at the top of the page already covers scroll feedback. */
+
+/* Back-to-top gains a proper entrance instead of popping in. */
+.back-to-top {
+  transition:
+    opacity 0.3s var(--ease),
+    transform 0.3s var(--ease),
+    background 0.25s var(--ease);
+}
+.back-to-top:not(.visible):not(.show) {
+  opacity: 0;
+  transform: translateY(12px) scale(0.94);
+  pointer-events: none;
+}
+.back-to-top.visible,
+.back-to-top.show {
+  opacity: 1;
+  transform: none;
+}
+
+/* ==================================================================
+   Reduced motion: switch all of the above off.
+   ================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-bar { transform: scaleX(1); animation: none; }
+  .navbar,
+  .navbar.is-hidden { transform: none; transition: none; }
+  .nav-link::after,
+  .btn-primary::after { display: none; }
+  .feature-card:hover,
+  .step-card:hover,
+  .faq-item:hover,
+  .os-badge:hover { transform: none; }
+  .back-to-top { opacity: 1; transform: none; }
+  .announcement-bar { animation: none; }
+}
+
+
+/* ==================================================================
+   ELEMENT-LEVEL MOTION
+   ------------------------------------------------------------------
+   The audit found these still completely static: spec-row, walkthrough-
+   step/num, faq-item, section-kicker, phone-frame, preview-panel,
+   mobile-slide, theme-card, platform-icon.
+
+   Everything below animates elements that are ALREADY there — no new
+   visual parts, no decorative rules. Only opacity and transform, so
+   nothing can read as a stray artefact.
+   ================================================================== */
+
+/* ---- Section kickers ---- */
+@keyframes kickerIn {
+  from { opacity: 0; transform: translateY(8px); letter-spacing: 0.22em; }
+  to   { opacity: 1; transform: translateY(0);   letter-spacing: 0.14em; }
+}
+
+/* ---- Spec rows: label in from the left, value from the right ----
+   The row is a 2-column grid, so each half can travel toward the other
+   and meet. Reads as the row assembling itself rather than fading in. */
+@keyframes specFromLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes specFromRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ---- Walkthrough steps ---- */
+@keyframes stepNumPop {
+  0%   { opacity: 0; transform: scale(0.6); }
+  60%  { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes stepCardIn {
+  from { opacity: 0; transform: translateY(26px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- FAQ items ---- */
+@keyframes faqIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Device frames breathe, at slightly different rates ----
+   Two durations a little apart read as depth: the eye cannot tell the
+   difference consciously, but the pair stops looking like one flat
+   image. */
+@keyframes deviceFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-9px); }
+}
+
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(18px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+
+  /* Kickers */
+  .section-kicker { animation: kickerIn 0.7s var(--ease) both; }
+
+  /* Walkthrough */
+  .walkthrough-step {
+    animation: stepCardIn 0.7s var(--ease) both;
+    animation-delay: calc(var(--step-i, 0) * 0.1s);
+  }
+  .walkthrough-num { animation: stepNumPop 0.6s var(--ease) both; }
+  .walkthrough-step:nth-child(1) { --step-i: 0; }
+  .walkthrough-step:nth-child(2) { --step-i: 1; }
+  .walkthrough-step:nth-child(3) { --step-i: 2; }
+  .walkthrough-num { animation-delay: 0.12s; }
+
+  /* FAQ — a short cascade so a long list still feels responsive */
+  .faq-item {
+    animation: faqIn 0.55s var(--ease) both;
+    animation-delay: calc(var(--faq-i, 0) * 0.07s);
+  }
+  .faq-item:nth-child(1) { --faq-i: 0; }
+  .faq-item:nth-child(2) { --faq-i: 1; }
+  .faq-item:nth-child(3) { --faq-i: 2; }
+  .faq-item:nth-child(4) { --faq-i: 3; }
+  .faq-item:nth-child(5) { --faq-i: 4; }
+  .faq-item:nth-child(6) { --faq-i: 5; }
+  .faq-item:nth-child(n+7) { --faq-i: 6; }
+
+  /* Device frames */
+  .phone-frame {
+    animation: deviceFloat 7s ease-in-out infinite;
+    will-change: transform;
+  }
+  .mobile-slide .phone-frame { animation-duration: 8.6s; }
+  .mobile-slide:nth-child(odd) .phone-frame { animation-duration: 9.4s; }
+
+  /* Preview panel */
+  .preview-panel { animation: panelIn 0.6s var(--ease) both; }
+}
+
+/* ---- Scroll-driven half: spec rows, where supported ---- */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+
+    .spec-row > :first-child {
+      animation: specFromLeft linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 85%;
+    }
+    .spec-row > :last-child {
+      animation: specFromRight linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 85%;
+    }
+
+    /* Each kicker rides in with its own section rather than on a timer. */
+    .section-kicker {
+      animation: kickerIn linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 90%;
+    }
+
+    .walkthrough-step {
+      animation: stepCardIn linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 85%;
+    }
+    .walkthrough-num {
+      animation: stepNumPop linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 82%;
+    }
+
+    .faq-item {
+      animation: faqIn linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 80%;
+    }
+  }
+}
+
+/* ---- Platform icons react on hover ---- */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .platform-icon {
+    transition: transform 0.3s var(--ease);
+  }
+  .download-card:hover .platform-icon {
+    transform: translateY(-3px) scale(1.08);
+  }
+}
+
+/* ---- Reduced motion: switch all of the above off ---- */
+@media (prefers-reduced-motion: reduce) {
+  .section-kicker,
+  .walkthrough-step,
+  .walkthrough-num,
+  .faq-item,
+  .preview-panel,
+  .spec-row > :first-child,
+  .spec-row > :last-child {
+    opacity: 1;
+    animation: none;
+    transform: none;
+    letter-spacing: 0.14em;
+  }
+  .phone-frame { animation: none; }
+  .download-card:hover .platform-icon { transform: none; }
+}
+
+
+/* ==================================================================
+   DESKTOP PREVIEW
+   ------------------------------------------------------------------
+   The large screenshot swapped instantly when a thumbnail was clicked —
+   a hard cut from one 1440x900 image to another. It now eases in, which
+   mirrors how the mobile carousel slides.
+   ================================================================== */
+
+@keyframes shotSwap {
+  from { opacity: 0; transform: scale(0.985); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .preview-stage.swapping #desktopShot {
+    animation: shotSwap 0.45s var(--ease) both;
+  }
+}
+
+/* The stage lifts slightly under the pointer, so the preview reads as an
+   object on the page rather than a flat picture of one. */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .preview-stage {
+    transition: transform 0.4s var(--ease), box-shadow 0.4s var(--ease), border-color 0.4s var(--ease);
+  }
+  .preview-stage:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent-border, var(--border-strong));
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preview-stage.swapping #desktopShot { animation: none; }
+  .preview-stage:hover { transform: none; }
+}
+
+
+/* ==================================================================
+   NAVBAR ENTRANCE
+   ------------------------------------------------------------------
+   The bar simply existed on load. Animating the navbar itself would fight the
+   hide-on-scroll transform, so the motion goes on its inner container and the
+   links inside it.
+   ================================================================== */
+
+@keyframes navBarIn {
+  from { opacity: 0; transform: translateY(-14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes navItemIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .navbar > .container {
+    animation: navBarIn 0.55s var(--ease) both;
+  }
+
+  /* Each link arrives on its own beat, so the bar assembles left to right. */
+  .navbar .nav-link,
+  .navbar .nav-actions > * {
+    animation: navItemIn 0.5s var(--ease) both;
+  }
+  .navbar .nav-link:nth-child(1) { animation-delay: 0.10s; }
+  .navbar .nav-link:nth-child(2) { animation-delay: 0.16s; }
+  .navbar .nav-link:nth-child(3) { animation-delay: 0.22s; }
+  .navbar .nav-link:nth-child(4) { animation-delay: 0.28s; }
+  .navbar .nav-link:nth-child(5) { animation-delay: 0.34s; }
+  .navbar .nav-link:nth-child(6) { animation-delay: 0.40s; }
+  .navbar .nav-actions > *:nth-child(1) { animation-delay: 0.46s; }
+  .navbar .nav-actions > *:nth-child(2) { animation-delay: 0.52s; }
+  .navbar .nav-actions > *:nth-child(3) { animation-delay: 0.58s; }
+
+  .navbar-logo {
+    animation: navBarIn 0.6s var(--ease) both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navbar > .container,
+  .navbar .nav-link,
+  .navbar .nav-actions > *,
+  .navbar-logo {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
 }
 
 /* ---------- Announcement bar ---------- */
@@ -332,7 +1011,12 @@ a:hover { color: var(--link-hover); }
   z-index: 1001;
   font-size: 0.8125rem;
   color: var(--text-2);
-  background: var(--banner-bg);
+  /* The tint is a translucent gradient, so on its own the bar is see-through —
+     and the navbar, which slides up behind it when hiding, showed straight
+     through during the transition. A solid page background underneath makes the
+     bar opaque while keeping the tint. */
+  background-color: var(--bg);
+  background-image: var(--banner-bg);
   border-bottom: 1px solid var(--border-strong);
   animation: announcementFadeIn 0.3s var(--ease);
 }
@@ -969,7 +1653,43 @@ html.theme-transition *::after {
 }
 
 .preview-panel { display: none; }
-.preview-panel.active { display: block; }
+
+/* display:none -> block is not a transitionable change, so the swap used to be
+   instant. An animation on .active replays each time the element is displayed,
+   which gives a real transition without needing allow-discrete. */
+.preview-panel.active {
+  display: block;
+  animation: panelIn 0.42s var(--ease) both;
+}
+
+/* Thumbnails: the active one lifts and the rest recede, so switching reads as a
+   change of selection rather than a swap. */
+.preview-thumb {
+  transition:
+    opacity 0.3s var(--ease),
+    transform 0.3s var(--ease),
+    border-color 0.3s var(--ease);
+}
+.preview-thumb:not(.active) { opacity: 0.55; }
+.preview-thumb:hover { opacity: 1; transform: translateY(-2px); }
+.preview-thumb.active { opacity: 1; transform: translateY(-2px); }
+
+/* Tab buttons get the same sweep underline as the nav. */
+.preview-tab { position: relative; }
+.preview-tab::after {
+  content: '';
+  position: absolute;
+  left: 12px; right: 12px;
+  bottom: 4px;
+  height: 1.5px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent-primary, #3b82f6), var(--accent-secondary, #8b5cf6));
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 0.32s var(--ease);
+}
+.preview-tab.active::after,
+.preview-tab:hover::after { transform: scaleX(1); }
 
 .preview-stage {
   border-radius: 16px;
@@ -1772,20 +2492,27 @@ html.theme-transition *::after {
 
   .nav-links.open {
     display: flex;
-    position: fixed;
-    top: var(--nav-h);
+    /* absolute, not fixed.
+       The navbar carries backdrop-filter, which makes it the containing block for
+       fixed-position descendants. `position: fixed; top: var(--nav-h)` was therefore
+       measured from the navbar instead of the viewport and the panel landed ~354px
+       down the page, overlapping the hero. Absolute positioning against the fixed
+       navbar is unambiguous, and `top: 100%` keeps it directly beneath the bar
+       whether or not the announcement banner is present. */
+    position: absolute;
+    top: 100%;
     left: 0;
     right: 0;
     flex-direction: column;
     align-items: stretch;
-    background: var(--glass-strong);
-    backdrop-filter: blur(24px);
+    /* Opaque, not translucent. At 0.88 alpha the large hero headline still bled
+       through enough to read behind the links. */
+    background: var(--bg-elevated, #141416);
     border-bottom: 1px solid var(--border);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
     padding: 12px 20px 20px;
     gap: 4px;
-  }
-  body.has-banner .nav-links.open {
-    top: calc(var(--banner-h, 40px) + var(--nav-h));
+    z-index: 1002;
   }
   .nav-links.open .nav-link { padding: 12px 10px; }
   .nav-links.open .nav-mobile-extra {
@@ -1796,12 +2523,21 @@ html.theme-transition *::after {
   }
   /* The switch takes its own row so the three states stay a comfortable tap
      target, and the two buttons share the row below. */
+  /* The switch spanned the full row but its three buttons were fixed at 46px and
+     centred, leaving dead space either side and a solid blue block floating in the
+     middle — it read as three loose icons rather than one control. Equal-width
+     segments fill the row and make the selection obvious. */
   .nav-links.open .theme-switch {
     width: 100%;
-    justify-content: center;
+    justify-content: stretch;
     padding: 4px;
   }
-  .nav-links.open .theme-switch button { width: 46px; height: 38px; }
+  .nav-links.open .theme-switch button {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    height: 38px;
+  }
   .nav-links.open .nav-mobile-extra .btn { flex: 1; justify-content: center; }
 
   .hamburger { display: flex; }
