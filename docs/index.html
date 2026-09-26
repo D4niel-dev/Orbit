@@ -22,7 +22,7 @@
   "applicationCategory": "CommunicationApplication",
   "operatingSystem": "Windows, macOS, Linux, Android",
   "description": "Local-first, peer-to-peer encrypted chat app for desktop and Android. No cloud, no signup, no central server.",
-  "softwareVersion": "0.7.0-beta",
+  "softwareVersion": "0.7.2-beta",
   "license": "https://opensource.org/licenses/MIT",
   "codeRepository": "https://github.com/D4niel-dev/Orbit-beta",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
@@ -66,6 +66,7 @@
         <li><a href="#preview" class="nav-link">Preview</a></li>
         <li><a href="#features" class="nav-link">Features</a></li>
         <li><a href="#how-it-works" class="nav-link">How it works</a></li>
+        <li><a href="#security" class="nav-link">Security</a></li>
         <li><a href="#tech" class="nav-link">Tech</a></li>
         <li><a href="#faq" class="nav-link">FAQ</a></li>
         <li><a href="#download" class="nav-link">Download</a></li>
@@ -453,6 +454,36 @@
             <h3>Back up everything</h3>
             <p>The Local Vault saves your messages, attachments and settings to one encrypted file on your own device — and writes it in chunks, so even a large history backs up without running out of memory. Save a copy to Downloads or share it, and delete old ones when you are done.</p>
           </article>
+
+          <article class="feature-card fade-up">
+            <div class="feature-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="4"/><line x1="9" y1="15" x2="15" y2="9"/>
+              </svg>
+            </div>
+            <h3>Slash commands and polls</h3>
+            <p>Nineteen commands in any group chat &mdash; <code>/help</code>, <code>/me</code>, <code>/shrug</code>, <code>/tableflip</code> and the rest. <code>/poll</code> opens a visual builder instead of asking you to type the syntax by hand.</p>
+          </article>
+
+          <article class="feature-card fade-up">
+            <div class="feature-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/>
+              </svg>
+            </div>
+            <h3>Voice notes</h3>
+            <p>Hold the mic to record and release to send. It arrives as a playable bubble you can scrub, on desktop and on Android.</p>
+          </article>
+
+          <article class="feature-card fade-up">
+            <div class="feature-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+              </svg>
+            </div>
+            <h3>Folders, pins and mute</h3>
+            <p>Sort conversations into folders, pin the ones you return to, and mute a chat without losing its place. Unread counts respect all three.</p>
+          </article>
         </div>
       </div>
     </section>
@@ -534,6 +565,56 @@
           The protocol is in the open — read it in
           <a href="https://github.com/D4niel-dev/Orbit-beta/blob/main/shared/network/protocol.js" target="_blank" rel="noopener noreferrer">shared/network/protocol.js</a>.
         </p>
+      </div>
+    </section>
+
+    <section class="section" id="security">
+      <div class="container">
+        <div class="section-header fade-up">
+          <span class="section-kicker">Security</span>
+          <h2>What Orbit protects &mdash; and what it does not</h2>
+          <p class="section-sub">A messenger that only tells you the good parts is not telling you much. Here is the whole picture, gaps included.</p>
+        </div>
+
+        <div class="security-grid">
+          <article class="security-card fade-up">
+            <h3><span class="security-dot security-dot--on" aria-hidden="true"></span>Encrypted end to end</h3>
+            <ul>
+              <li>Direct messages use ECDH key agreement with HKDF-SHA256 and AES-256-GCM.</li>
+              <li>Desktop and Android share one key format, so a phone and a laptop can hold an encrypted conversation with each other.</li>
+              <li>Group messages are encrypted pairwise &mdash; per member, so there is no shared group secret to leak.</li>
+              <li>Keys are pinned on first use when you pair by QR code.</li>
+            </ul>
+          </article>
+
+          <article class="security-card security-card--gaps fade-up">
+            <h3><span class="security-dot security-dot--off" aria-hidden="true"></span>Not covered yet</h3>
+            <ul>
+              <li><strong>No key-change warning.</strong> Keys are pinned when you pair, but Orbit does not warn you if a peer&rsquo;s key later changes, and there is no fingerprint to compare out of band. For an app built on end-to-end encryption that is a real gap &mdash; it is the next thing on the list.</li>
+              <li><strong>Local networks only.</strong> Peers must be reachable on the same network; there is no NAT traversal and no relay, so this is not a drop-in replacement for a cloud messenger.</li>
+              <li><strong>Translate and GIF search are not encrypted.</strong> Both are optional and user-initiated, but the text leaves your device in plaintext.</li>
+              <li><strong>Calls are local-network only</strong>, and group calls are desktop-only.</li>
+              <li><strong>Installers are unsigned</strong> beta builds, so Windows SmartScreen warnings are expected. The signed checksums below are how you tell a real build from a tampered one.</li>
+              <li><strong>Update checks contact GitHub</strong>, at most once every six hours, and can be switched off. Nothing about you or your chats is sent.</li>
+            </ul>
+          </article>
+
+          <article class="security-card fade-up">
+            <h3><span class="security-dot security-dot--on" aria-hidden="true"></span>Verify a release</h3>
+            <p>Every release ships <code>SHA256SUMS.txt</code> and its GPG signature. The signing key fingerprint is:</p>
+            <code class="security-fingerprint">914F C63B 5690 FFAC 855F &nbsp;3A5C 1681 D97E 850F 9A3A</code>
+            <pre class="security-code"><code>gpg --import security/public-key.asc
+gpg --verify SHA256SUMS.txt.sig SHA256SUMS.txt
+sha256sum --check SHA256SUMS.txt --ignore-missing</code></pre>
+            <p class="security-note">Check that fingerprint against the one in the repository before trusting it &mdash; that is the whole point of a fingerprint.</p>
+          </article>
+
+          <article class="security-card fade-up">
+            <h3><span class="security-dot security-dot--on" aria-hidden="true"></span>Report a vulnerability</h3>
+            <p>Please report privately rather than in a public issue. Email <a href="mailto:orbit.support.real@gmail.com">orbit.support.real@gmail.com</a>, and encrypt the report with the PGP key in <code>security/</code> if you can.</p>
+            <p class="security-note">You get an acknowledgement within 48 hours and a detailed response within 5 business days. Security fixes are issued for the latest release and the one before it.</p>
+          </article>
+        </div>
       </div>
     </section>
 
@@ -718,7 +799,7 @@
         if (dir > 0) nextMobileSlide(); else prevMobileSlide();
       };
 
-      var ORBIT_VERSION = 'v0.7.0-beta';
+      var ORBIT_VERSION = 'v0.7.2-beta';
       document.querySelectorAll('[data-version]').forEach(function (el) {
         el.textContent = ORBIT_VERSION;
       });
@@ -799,7 +880,7 @@
         var html =
           '<div class="announcement-bar" role="status">' +
             '<div class="announcement-bar-inner">' +
-              '<span class="announcement-text">New: Orbit v0.7.0-beta \u2014 closing a DM no longer deletes your messages, plus an All friends directory and a full-screen /help list</span>' +
+              '<span class="announcement-text">New: Orbit v0.7.2-beta \u2014 the /help list opens full-screen over the keyboard, the update flow verifies what it downloads, and every empty screen got a proper welcome</span>' +
               '<a class="announcement-link" href="https://github.com/D4niel-dev/Orbit-beta/blob/main/CHANGELOG.md" target="_blank" rel="noopener">What\'s new &rarr;</a>' +
               '<button type="button" class="announcement-close" aria-label="Dismiss announcement">✕</button>' +
             '</div>' +

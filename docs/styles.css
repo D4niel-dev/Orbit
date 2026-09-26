@@ -2605,3 +2605,111 @@ html.theme-transition *::after {
 @media (min-width: 721px) {
   .nav-mobile-extra { display: none; }
 }
+
+/* ------------------------------------------------------------------
+   Security & Trust
+   The one section that must be readable rather than impressive: a
+   two-column grid of plain cards, with the gaps card marked so nobody
+   mistakes it for marketing. Reuses the site's card tokens, so it
+   follows the theme toggle like everything else.
+   ------------------------------------------------------------------ */
+.security-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 34px;
+}
+@media (max-width: 860px) {
+  /* minmax(0, 1fr), not 1fr: a grid item defaults to min-width:auto, so the
+     long fingerprint and code lines pushed the column wider than the phone. */
+  .security-grid { grid-template-columns: minmax(0, 1fr); }
+}
+.security-card {
+  /* and the same guard on the card itself, for the two-column case */
+  min-width: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 24px 20px;
+  box-sizing: border-box;
+}
+.security-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 14px;
+  font-size: 16px;
+  font-weight: 650;
+  color: var(--text);
+}
+.security-card p {
+  margin: 0 0 10px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+.security-card ul {
+  margin: 0;
+  padding: 0 0 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.security-card li {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+.security-card strong { color: var(--text); font-weight: 620; }
+.security-card code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12.5px;
+  color: var(--text);
+}
+/* The gaps card is deliberately not styled as a warning: it is a
+   statement of fact, and alarm styling would read as an admission. */
+.security-card--gaps {
+  background: var(--card-bg-soft);
+  border-style: dashed;
+}
+.security-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.security-dot--on { background: var(--green); }
+.security-dot--off { background: var(--text-3); }
+
+.security-fingerprint {
+  display: block;
+  margin: 4px 0 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--card-bg-strong);
+  border: 1px solid var(--border);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.security-code {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--card-bg-strong);
+  border: 1px solid var(--border);
+  overflow-x: auto;
+}
+.security-code code {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-2);
+  white-space: pre;
+}
+.security-note {
+  font-size: 12.5px !important;
+  color: var(--text-3) !important;
+}
+.security-card a { color: var(--accent); }
