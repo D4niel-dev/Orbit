@@ -2005,35 +2005,49 @@ html.theme-transition *::after {
   max-width: 960px;
   margin: 0 auto;
 }
+/* Steps, not cards.
+   This was three bordered cards in a grid — the same shape as the features grid
+   above it, which is why the two sections read as one long list of boxes. A
+   sequence does not want boxes: the numbered nodes and the line between them ARE
+   the structure, and the text sits under each node. */
 .walkthrough-step {
   position: relative;
-  padding: 24px 22px 20px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--card-bg-mid);
-  transition: border-color 0.25s ease, background 0.25s ease;
+  padding: 0 4px;
+  text-align: center;
 }
-.walkthrough-step:hover {
-  border-color: var(--border-strong);
-  background: var(--card-bg-strong);
+.walkthrough-step h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  line-height: 1.35;
+  color: var(--text);
+  font-weight: 600;
+}
+.walkthrough-step p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-2);
+  max-width: 34ch;
+  margin-inline: auto;
 }
 .walkthrough-step:not(:last-child)::after {
   content: '';
   position: absolute;
   z-index: 1;
-  top: 51px;
-  left: calc(50% + 28px);
-  right: calc(-50% + 12px);
+  top: 31px;
+  left: calc(50% + 40px);
+  right: calc(-50% + 40px);
   height: 1px;
-  background: var(--border-strong);
+  background: linear-gradient(to right, var(--border-strong), var(--border));
+  transform-origin: left center;
   pointer-events: none;
 }
 .walkthrough-num {
   position: relative;
   z-index: 2;
-  width: 56px;
-  height: 56px;
-  margin: 0 auto 18px;
+  width: 62px;
+  height: 62px;
+  margin: 0 auto 22px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2713,3 +2727,312 @@ html.theme-transition *::after {
   color: var(--text-3) !important;
 }
 .security-card a { color: var(--accent); }
+
+/* ------------------------------------------------------------------
+   Features, rebuilt.
+
+   It used to be fourteen identical cards in a three-column grid: an icon, a bold
+   title, two lines of body — the shape every template ships, and the reason the
+   page read as generated rather than designed. The features that actually define
+   Orbit now get a row each, with room to say something; everything else is one
+   dense list, so it is still all there without a wall of equal-weight boxes.
+   ------------------------------------------------------------------ */
+.pillars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 44px;
+}
+.pillar {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 48px;
+  align-items: center;
+  padding: 40px 0;
+  border-top: 1px solid var(--border);
+}
+.pillar:last-child { border-bottom: 1px solid var(--border); }
+/* Alternating sides: the eye gets a rhythm instead of a column of identical rows. */
+.pillar--flip .pillar-text { order: 2; }
+.pillar--flip .pillar-visual { order: 1; }
+
+.pillar-index {
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--text-3);
+  margin-bottom: 14px;
+}
+.pillar h3 {
+  margin: 0 0 14px;
+  font-size: clamp(21px, 2.3vw, 28px);
+  line-height: 1.22;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  font-weight: 600;
+}
+.pillar p {
+  margin: 0 0 18px;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text-2);
+  max-width: 46ch;
+}
+.pillar-points {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pillar-points li {
+  position: relative;
+  padding-left: 20px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.pillar-points li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.8;
+}
+
+/* A spec block rather than a picture: honest, and it reads as documentation
+   instead of decoration. */
+.spec {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 18px;
+  padding: 22px 24px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card-bg-soft);
+}
+.spec-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.spec-value {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+/* ---- the one animation, and it explains the product ---- */
+.pillar-visual { display: flex; justify-content: center; }
+.p2p { width: 100%; max-width: 420px; height: auto; }
+/* Give the diagram the room its column has: it is the one place on the page that
+   shows how Orbit works rather than describing it. */
+@media (min-width: 901px) { .pillar-visual .p2p { max-width: 440px; } }
+
+.p2p-dot {
+  animation: p2p-travel 4.6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+.p2p-route {
+  animation: p2p-route-pulse 4.6s ease-in-out infinite;
+}
+.p2p-arrival {
+  animation: p2p-arrive 4.6s ease-out infinite;
+}
+.p2p-absent {
+  animation: p2p-absent 4.6s ease-in-out infinite;
+}
+
+/* The dot leaves the laptop, crosses, and lands on the phone — the whole idea of
+   the product in one gesture. Nothing is animated that does not say something. */
+@keyframes p2p-travel {
+  0%, 8%   { transform: translateX(0);      opacity: 0; }
+  14%      { opacity: 1; }
+  46%      { transform: translateX(184px);  opacity: 1; }
+  52%      { opacity: 0; }
+  100%     { transform: translateX(184px);  opacity: 0; }
+}
+@keyframes p2p-arrive {
+  0%, 46%  { opacity: 0; r: 4; }
+  54%      { opacity: 0.9; r: 9; }
+  70%      { opacity: 0; r: 4; }
+  100%     { opacity: 0; r: 4; }
+}
+@keyframes p2p-route-pulse {
+  0%, 10%  { opacity: 0.25; }
+  30%      { opacity: 1; }
+  60%      { opacity: 0.25; }
+  100%     { opacity: 0.25; }
+}
+@keyframes p2p-absent {
+  0%, 100% { opacity: 0.75; }
+  50%      { opacity: 1; }
+}
+
+/* ---- everything else, dense and scannable ---- */
+.feature-rest { margin-top: 44px; }
+.feature-rest h3 {
+  margin: 0 0 18px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.feature-rest-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 32px;
+}
+.feature-rest-list li {
+  position: relative;
+  padding-left: 18px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.feature-rest-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--text-3);
+  opacity: 0.5;
+}
+
+@media (max-width: 900px) {
+  .pillar { grid-template-columns: minmax(0, 1fr); gap: 28px; padding: 32px 0; }
+  /* On one column the visual should follow its text, never precede it. */
+  .pillar--flip .pillar-text { order: 1; }
+  .pillar--flip .pillar-visual { order: 2; }
+  .feature-rest-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .feature-rest-list { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* The animation is decoration with a job, and it stops when movement is unwelcome. */
+@media (prefers-reduced-motion: reduce) {
+  .p2p-dot, .p2p-route, .p2p-arrival, .p2p-absent { animation: none; }
+  .p2p-dot { opacity: 1; transform: translateX(92px); }
+  .p2p-arrival { opacity: 0.5; }
+}
+
+/* ------------------------------------------------------------------
+   How it works — the line draws itself as the sequence arrives.
+   One animation, and it says the only thing this section has to say: these happen
+   in order. Where scroll-driven animation is unavailable the line is simply there,
+   which is a perfectly good static state.
+   ------------------------------------------------------------------ */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .walkthrough-step:not(:last-child)::after {
+      animation: walk-line linear both;
+      animation-timeline: view();
+      animation-range: entry 15% entry 75%;
+    }
+    .walkthrough-num {
+      animation: walk-node linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 45%;
+    }
+  }
+}
+@keyframes walk-line {
+  from { transform: scaleX(0); opacity: 0; }
+  to   { transform: scaleX(1); opacity: 1; }
+}
+@keyframes walk-node {
+  from { border-color: var(--border); color: var(--text-3); }
+  to   { border-color: var(--accent); color: var(--accent); }
+}
+
+/* Stacked: the sequence runs downwards, so the connector has to as well. The
+   horizontal line would otherwise point at nothing. */
+@media (max-width: 860px) {
+  .walkthrough-steps {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    max-width: 520px;
+  }
+  .walkthrough-step {
+    text-align: left;
+    padding-left: 76px;
+  }
+  .walkthrough-step h3 { margin-top: 6px; }
+  .walkthrough-step p { margin-inline: 0; max-width: none; }
+  .walkthrough-num {
+    position: absolute;
+    left: 0;
+    top: 0;
+    margin: 0;
+  }
+  .walkthrough-step:not(:last-child)::after {
+    top: 62px;
+    bottom: -28px;
+    left: 31px;
+    right: auto;
+    width: 1px;
+    height: auto;
+    background: linear-gradient(to bottom, var(--border-strong), var(--border));
+    transform-origin: top center;
+  }
+  @keyframes walk-line {
+    from { transform: scaleY(0); opacity: 0; }
+    to   { transform: scaleY(1); opacity: 1; }
+  }
+}
+
+/* ------------------------------------------------------------------
+   FAQ, grouped.
+
+   Seven identical rows said nothing about which question matters — the same
+   uniformity as the old feature grid, one section further down. Three labelled
+   groups give it a shape you can scan, and the first answer in each group is open
+   so the section arrives with substance rather than seven closed bars.
+   ------------------------------------------------------------------ */
+.faq-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 40px 48px;
+  margin-top: 40px;
+}
+.faq-group h3 {
+  margin: 0 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.faq-group .faq-list { display: flex; flex-direction: column; gap: 10px; }
+.faq-more {
+  margin: 44px 0 0;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--text-2);
+  max-width: 70ch;
+}
+.faq-more a { color: var(--accent); }
+
+@media (max-width: 900px) {
+  .faq-groups { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+}
+
+
+

@@ -22,7 +22,7 @@
   "applicationCategory": "CommunicationApplication",
   "operatingSystem": "Windows, macOS, Linux, Android",
   "description": "Local-first, peer-to-peer encrypted chat app for desktop and Android. No cloud, no signup, no central server.",
-  "softwareVersion": "0.7.2-beta",
+  "softwareVersion": "0.7.3-beta",
   "license": "https://opensource.org/licenses/MIT",
   "codeRepository": "https://github.com/D4niel-dev/Orbit-beta",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
@@ -326,164 +326,128 @@
     </section>
 
     <section class="section" id="features">
-      <img class="section-bg" src="images/hero/hero-keyA.png" alt="" aria-hidden="true" loading="lazy" width="1672" height="941">
       <div class="container">
         <div class="section-header fade-up">
           <span class="section-kicker">Features</span>
-          <h2>Everything you need to chat privately</h2>
-          <p>No accounts, no signup server, no conversation logs in the cloud. Just you and the people on your network.</p>
+          <h2>Most messengers ask you to trust their server.<br>Orbit does not have one.</h2>
+          <p>That one decision is what the rest of this page is about: what it lets Orbit promise, and what it costs.</p>
         </div>
 
-        <div class="features-grid fade-up-stagger">
-          <article class="feature-card fade-up">
-            <div class="feature-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 13a10 10 0 0 1 14 0"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M2 8.82a15 15 0 0 1 20 0"/><line x1="12" y1="20" x2="12.01" y2="20"/>
+        <div class="pillars">
+
+          <article class="pillar fade-up">
+            <div class="pillar-text">
+              <span class="pillar-index">01</span>
+              <h3>Your message goes straight to the other device</h3>
+              <p>On the same network, Orbit finds the other side and talks to it directly. Nothing is relayed through anyone else, nothing is stored in the middle, and there is no account to sign into.</p>
+              <ul class="pillar-points">
+                <li>Peers are discovered on your network, or paired once by QR code</li>
+                <li>No internet connection required &mdash; the two devices are enough</li>
+              </ul>
+            </div>
+            <div class="pillar-visual">
+              <svg class="p2p" viewBox="0 0 340 210" role="img" aria-label="A message travelling directly from a laptop to a phone, past a server that is crossed out">
+                <defs>
+                  <linearGradient id="p2pFade" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.15"/>
+                    <stop offset="50%" stop-color="var(--accent)" stop-opacity="1"/>
+                    <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.15"/>
+                  </linearGradient>
+                </defs>
+
+                <!-- the route -->
+                <path class="p2p-route" d="M78 118 H262" fill="none" stroke="url(#p2pFade)" stroke-width="1.5" stroke-dasharray="4 6"/>
+
+                <!-- laptop -->
+                <g class="p2p-node p2p-node--send">
+                  <rect x="26" y="92" width="52" height="34" rx="4" fill="none" stroke="var(--border-strong)" stroke-width="1.5"/>
+                  <path d="M18 130 H86" stroke="var(--border-strong)" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M38 104 H60" stroke="var(--text-3)" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M38 111 H52" stroke="var(--text-3)" stroke-width="1.5" stroke-linecap="round"/>
+                </g>
+
+                <!-- phone -->
+                <g class="p2p-node p2p-node--receive">
+                  <rect x="262" y="88" width="34" height="54" rx="6" fill="none" stroke="var(--border-strong)" stroke-width="1.5"/>
+                  <path d="M273 132 H285" stroke="var(--text-3)" stroke-width="1.5" stroke-linecap="round"/>
+                  <circle class="p2p-arrival" cx="279" cy="115" r="4" fill="var(--accent)" opacity="0"/>
+                </g>
+
+                <!-- the server that is not there -->
+                <g class="p2p-absent">
+                  <path d="M158 62 a13 13 0 0 1 13-13 a16 16 0 0 1 30 3 a11 11 0 0 1 5 21 H163 a12 12 0 0 1-5-11 z" fill="none" stroke="var(--text-3)" stroke-width="1.2" opacity="0.55"/>
+                  <path d="M150 41 L220 78" stroke="var(--red, #FF453A)" stroke-width="1.7" stroke-linecap="round" opacity="0.85"/>
+                  <text x="185" y="86" text-anchor="middle" fill="var(--text-3)" font-size="10" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">no server</text>
+                </g>
+
+                <!-- the message in flight -->
+                <circle class="p2p-dot" cx="78" cy="118" r="4.5" fill="var(--accent)"/>
               </svg>
             </div>
-            <h3>Peer-to-peer</h3>
-            <p>Messages travel directly between devices on the LAN. No intermediary servers and no central point of failure.</p>
           </article>
 
-          <article class="feature-card fade-up">
-            <div class="feature-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
+          <article class="pillar pillar--flip fade-up">
+            <div class="pillar-text">
+              <span class="pillar-index">02</span>
+              <h3>Sealed for the person you are talking to</h3>
+              <p>Messages are encrypted for the recipient's device, not for a service. One key format across desktop and Android, so a phone and a laptop can hold an encrypted conversation with each other.</p>
+              <ul class="pillar-points">
+                <li>Group messages are encrypted pairwise, per member &mdash; no shared group secret to leak</li>
+                <li>Keys are generated on your devices and never leave them</li>
+              </ul>
             </div>
-            <h3>End-to-end encrypted</h3>
-            <p>Direct messages use ECDH key exchange and AES-256-GCM, with one key scheme across desktop and Android — an encrypted conversation works in both directions between any two Orbit devices.</p>
+            <div class="pillar-visual">
+              <div class="spec">
+                <span class="spec-label">Direct messages</span>
+                <span class="spec-value">ECDH &middot; HKDF-SHA256 &middot; AES-256-GCM</span>
+                <span class="spec-label">Group messages</span>
+                <span class="spec-value">pairwise &mdash; one ciphertext per member</span>
+                <span class="spec-label">Key material</span>
+                <span class="spec-value">generated locally, never uploaded</span>
+              </div>
+            </div>
           </article>
 
-          <article class="feature-card fade-up">
-            <div class="feature-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-              </svg>
+          <article class="pillar fade-up">
+            <div class="pillar-text">
+              <span class="pillar-index">03</span>
+              <h3>Everything lives on your machines</h3>
+              <p>Your messages are in a database on your own device. Privacy mode hides previews, the Local Vault backs up a whole account &mdash; encrypted &mdash; and it can leave the device with you.</p>
+              <ul class="pillar-points">
+                <li>Nothing is uploaded, so there is nothing to breach</li>
+                <li>Back up a whole account to a file you hold</li>
+              </ul>
             </div>
-            <h3>File sharing</h3>
-            <p>Send photos, documents, and large files over P2P. Transfers stay on your network — no cloud upload, no compression applied today.</p>
+            <div class="pillar-visual">
+              <div class="spec">
+                <span class="spec-label">Storage</span>
+                <span class="spec-value">a local database, per device</span>
+                <span class="spec-label">Backup</span>
+                <span class="spec-value">encrypted vault file, yours to keep</span>
+                <span class="spec-label">Not covered</span>
+                <span class="spec-value">translate &amp; GIF search leave in plaintext</span>
+              </div>
+            </div>
           </article>
 
-          <article class="feature-card fade-up">
-            <div class="feature-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-            </div>
-            <h3>Group chats</h3>
-            <p>Create groups with roles, invite codes, and member management. Collaborate with everyone on the same network.</p>
-          </article>
+        </div>
 
-          <article class="feature-card fade-up">
-            <div class="feature-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
-            </div>
-            <h3>Privacy mode</h3>
-            <p>Optional session-only attachment storage. Keep presence, receipts, and media under your control.</p>
-          </article>
-
-          <article class="feature-card fade-up">
-            <div class="feature-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
-              </svg>
-            </div>
-            <h3>Cross-platform</h3>
-            <p>Electron desktop on Windows, macOS, and Linux, plus Capacitor Android. One protocol, one identity system, and one encryption scheme across both — desktop and phone talk to each other properly.</p>
-          </article>
-
-          <article class="feature-card fade-up">
-            <div class="feature-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3"/><path d="M21 14v7"/><path d="M14 21h7"/>
-              </svg>
-            </div>
-            <h3>Pair by QR code</h3>
-            <p>Show a QR code, scan it from the other device, and you're connected — identity, address, and encryption key all in one. No typing IP addresses.</p>
-          </article>
-
-          <article class="feature-card fade-up">
-            <div class="feature-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/>
-              </svg>
-            </div>
-            <h3>Voice &amp; video calls</h3>
-            <p>Call someone straight from a chat on desktop or Android — accept or decline, mute, toggle the camera, and see how long the last call lasted right in the conversation. Group calls are desktop-only for now. Everything runs peer-to-peer over WebRTC with no relay server.</p>
-          </article>
-
-          <article class="feature-card fade-up">
-            <div class="feature-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/>
-              </svg>
-            </div>
-            <h3>Threads &amp; replies</h3>
-            <p>Reply to any message and the chain stays together — indented with a reply count, and it survives restarts. Open a thread to read it end to end and jump back to the original.</p>
-          </article>
-          <article class="feature-card feature-card-new fade-up">
-            <div class="feature-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
-              </svg>
-            </div>
-            <h3>Notifications</h3>
-            <p>Orbit tells you when someone messages, mentions you or calls — even when it is closed. Each kind of notification carries its own icon and can be set to its own level, so a call can be loud while background work stays silent.</p>
-          </article>
-
-          <article class="feature-card feature-card-new fade-up">
-            <div class="feature-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-              </svg>
-            </div>
-            <h3>Waits for people who are offline</h3>
-            <p>Send to someone who is not reachable and the message waits instead of vanishing. On a local network people come and go constantly — a laptop closes, a phone leaves Wi-Fi range — so Orbit holds it and delivers the moment they are back.</p>
-          </article>
-
-          <article class="feature-card feature-card-new fade-up">
-            <div class="feature-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/>
-              </svg>
-            </div>
-            <h3>Back up everything</h3>
-            <p>The Local Vault saves your messages, attachments and settings to one encrypted file on your own device — and writes it in chunks, so even a large history backs up without running out of memory. Save a copy to Downloads or share it, and delete old ones when you are done.</p>
-          </article>
-
-          <article class="feature-card fade-up">
-            <div class="feature-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="4"/><line x1="9" y1="15" x2="15" y2="9"/>
-              </svg>
-            </div>
-            <h3>Slash commands and polls</h3>
-            <p>Nineteen commands in any group chat &mdash; <code>/help</code>, <code>/me</code>, <code>/shrug</code>, <code>/tableflip</code> and the rest. <code>/poll</code> opens a visual builder instead of asking you to type the syntax by hand.</p>
-          </article>
-
-          <article class="feature-card fade-up">
-            <div class="feature-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/>
-              </svg>
-            </div>
-            <h3>Voice notes</h3>
-            <p>Hold the mic to record and release to send. It arrives as a playable bubble you can scrub, on desktop and on Android.</p>
-          </article>
-
-          <article class="feature-card fade-up">
-            <div class="feature-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-              </svg>
-            </div>
-            <h3>Folders, pins and mute</h3>
-            <p>Sort conversations into folders, pin the ones you return to, and mute a chat without losing its place. Unread counts respect all three.</p>
-          </article>
+        <div class="feature-rest fade-up">
+          <h3>And the rest of it</h3>
+          <ul class="feature-rest-list">
+            <li>File, photo and video transfer, peer to peer</li>
+            <li>Group chats with roles and invite codes</li>
+            <li>Voice and video calls</li>
+            <li>Voice notes</li>
+            <li>Slash commands and polls</li>
+            <li>Threads and replies</li>
+            <li>Folders, pins and per-chat mute</li>
+            <li>Privacy mode</li>
+            <li>Themes, including your own colours</li>
+            <li>Pairing by QR code</li>
+            <li>Notifications with the sender's avatar</li>
+            <li>Queued sends that wait for an offline peer</li>
+          </ul>
         </div>
       </div>
     </section>
@@ -624,10 +588,15 @@ sha256sum --check SHA256SUMS.txt --ignore-missing</code></pre>
         <div class="section-header fade-up">
           <span class="section-kicker">FAQ</span>
           <h2>Questions, answered</h2>
+          <p>The honest version &mdash; including the parts that are still rough.</p>
         </div>
 
-        <div class="faq-list">
-          <details class="faq-item">
+        <div class="faq-groups">
+
+          <section class="faq-group fade-up">
+            <h3>Before you install</h3>
+            <div class="faq-list">
+          <details class="faq-item" open>
             <summary>Do I need an internet connection?</summary>
             <p>No. Orbit works over your local network. As long as devices can reach each other on the LAN, messages, files, and calls keep flowing even when the internet is down.</p>
           </details>
@@ -635,27 +604,47 @@ sha256sum --check SHA256SUMS.txt --ignore-missing</code></pre>
             <summary>Do I need an account or signup?</summary>
             <p>No accounts, no passwords, no signup server. Install Orbit, join a network, and pick a display name. Your identity and keys live on your device.</p>
           </details>
-          <details class="faq-item">
+            </div>
+          </section>
+
+          <section class="faq-group fade-up">
+            <h3>Privacy and reach</h3>
+            <div class="faq-list">
+          <details class="faq-item" open>
             <summary>Is my data really encrypted?</summary>
-            <p>Direct messages use ECDH key exchange with AES-256-GCM, and desktop and Android share the same key scheme — so an encrypted conversation works in both directions between a phone and a computer. The protocol is open source, so you can audit exactly what happens to your data.</p>
+            <p>Direct messages use ECDH key exchange with AES-256-GCM, and desktop and Android share the same key scheme &mdash; so an encrypted conversation works in both directions between a phone and a laptop. Group messages are encrypted pairwise, per member.</p>
           </details>
           <details class="faq-item">
             <summary>Can I use Orbit over the internet?</summary>
             <p>Orbit is designed for local networks first. Devices need a route to reach each other; over the internet that typically means the same VPN or LAN, not a public server.</p>
           </details>
           <details class="faq-item">
+            <summary>Is Orbit open source?</summary>
+            <p>Yes. MIT licensed, with the full source on GitHub. Read the protocol, audit the crypto, or fork it.</p>
+          </details>
+            </div>
+          </section>
+
+          <section class="faq-group fade-up">
+            <h3>Using it</h3>
+            <div class="faq-list">
+          <details class="faq-item" open>
             <summary>How do I add friends?</summary>
             <p>Orbit discovers nearby peers automatically on the same network. You can also add someone by IP address or share your QR code.</p>
           </details>
           <details class="faq-item">
             <summary>Can I make voice and video calls?</summary>
-            <p>Yes. Open a chat and choose Voice Call or Video Call — the other person gets a ring they can accept or decline, and the call runs peer-to-peer over WebRTC with no relay server. Calls work between a phone and a computer, and every finished call is logged in the conversation so you can see how long it lasted and call back in one tap. Group calls are desktop-only for now.</p>
+            <p>Yes. Open a chat and choose Voice Call or Video Call &mdash; the other person gets a ring they can accept or decline, and the call runs peer-to-peer over WebRTC with no relay server. Group calls work between desktop peers.</p>
           </details>
-          <details class="faq-item">
-            <summary>Is Orbit open source?</summary>
-            <p>Yes. MIT licensed, with the full source on GitHub. Read the protocol, audit the crypto, or fork it.</p>
-          </details>
+            </div>
+          </section>
+
         </div>
+
+        <p class="faq-more fade-up">
+          Not answered here? The <a href="#security">security section</a> is more specific about what is and
+          is not protected, and <a href="https://github.com/D4niel-dev/Orbit-beta/issues" target="_blank" rel="noopener noreferrer">GitHub issues</a> is where the rough edges are written down.
+        </p>
       </div>
     </section>
 
@@ -799,7 +788,7 @@ sha256sum --check SHA256SUMS.txt --ignore-missing</code></pre>
         if (dir > 0) nextMobileSlide(); else prevMobileSlide();
       };
 
-      var ORBIT_VERSION = 'v0.7.2-beta';
+      var ORBIT_VERSION = 'v0.7.3-beta';
       document.querySelectorAll('[data-version]').forEach(function (el) {
         el.textContent = ORBIT_VERSION;
       });
@@ -880,7 +869,7 @@ sha256sum --check SHA256SUMS.txt --ignore-missing</code></pre>
         var html =
           '<div class="announcement-bar" role="status">' +
             '<div class="announcement-bar-inner">' +
-              '<span class="announcement-text">New: Orbit v0.7.2-beta \u2014 the /help list opens full-screen over the keyboard, the update flow verifies what it downloads, and every empty screen got a proper welcome</span>' +
+              '<span class="announcement-text">New: Orbit v0.7.3-beta \u2014 Custom Colors now covers the whole theme and reaches Android, the emoji picker is themed, and drafts stop when you send</span>' +
               '<a class="announcement-link" href="https://github.com/D4niel-dev/Orbit-beta/blob/main/CHANGELOG.md" target="_blank" rel="noopener">What\'s new &rarr;</a>' +
               '<button type="button" class="announcement-close" aria-label="Dismiss announcement">✕</button>' +
             '</div>' +
