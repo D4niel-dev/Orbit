@@ -22,7 +22,7 @@
   "applicationCategory": "CommunicationApplication",
   "operatingSystem": "Windows, macOS, Linux, Android",
   "description": "Local-first, peer-to-peer encrypted chat app for desktop and Android. No cloud, no signup, no central server.",
-  "softwareVersion": "0.7.3-beta",
+  "softwareVersion": "0.7.5-beta",
   "license": "https://opensource.org/licenses/MIT",
   "codeRepository": "https://github.com/D4niel-dev/Orbit-beta",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
@@ -447,6 +447,7 @@
             <li>Pairing by QR code</li>
             <li>Notifications with the sender's avatar</li>
             <li>Queued sends that wait for an offline peer</li>
+            <li>Updates that install from inside the app</li>
           </ul>
         </div>
       </div>
@@ -788,7 +789,7 @@ sha256sum --check SHA256SUMS.txt --ignore-missing</code></pre>
         if (dir > 0) nextMobileSlide(); else prevMobileSlide();
       };
 
-      var ORBIT_VERSION = 'v0.7.3-beta';
+      var ORBIT_VERSION = 'v0.7.5-beta';
       document.querySelectorAll('[data-version]').forEach(function (el) {
         el.textContent = ORBIT_VERSION;
       });
@@ -869,7 +870,7 @@ sha256sum --check SHA256SUMS.txt --ignore-missing</code></pre>
         var html =
           '<div class="announcement-bar" role="status">' +
             '<div class="announcement-bar-inner">' +
-              '<span class="announcement-text">New: Orbit v0.7.3-beta \u2014 Custom Colors now covers the whole theme and reaches Android, the emoji picker is themed, and drafts stop when you send</span>' +
+              '<span class="announcement-text">New: Orbit v0.7.5-beta \u2014 /help opens on mobile again, jump to latest, discoverable commands, copyable user IDs, and 55 profile frames' +
               '<a class="announcement-link" href="https://github.com/D4niel-dev/Orbit-beta/blob/main/CHANGELOG.md" target="_blank" rel="noopener">What\'s new &rarr;</a>' +
               '<button type="button" class="announcement-close" aria-label="Dismiss announcement">✕</button>' +
             '</div>' +
