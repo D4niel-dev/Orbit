@@ -22,7 +22,7 @@
   "applicationCategory": "CommunicationApplication",
   "operatingSystem": "Windows, macOS, Linux, Android",
   "description": "Local-first, peer-to-peer encrypted chat app for desktop and Android. No cloud, no signup, no central server.",
-  "softwareVersion": "0.8.4-beta",
+  "softwareVersion": "0.8.5-beta",
   "license": "https://opensource.org/licenses/MIT",
   "codeRepository": "https://github.com/D4niel-dev/Orbit-beta",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
@@ -857,7 +857,7 @@ sha256sum --check SHA256SUMS.txt --ignore-missing</code></pre>
         if (dir > 0) nextMobileSlide(); else prevMobileSlide();
       };
 
-      var ORBIT_VERSION = 'v0.8.4-beta';
+      var ORBIT_VERSION = 'v0.8.5-beta';
       document.querySelectorAll('[data-version]').forEach(function (el) {
         el.textContent = ORBIT_VERSION;
       });
@@ -938,7 +938,7 @@ sha256sum --check SHA256SUMS.txt --ignore-missing</code></pre>
         var html =
           '<div class="announcement-bar" role="status">' +
             '<div class="announcement-bar-inner">' +
-              '<span class="announcement-text">New: Orbit v0.8.4-beta \u2014 three fixes. One tap on Send was also starting the mic (Android fires synthetic mouse events after every touch, aimed at whatever is under your finger by then, and sending had already swapped the composer to the mic). The attachment grid now follows Discord\u2019s layouts \u2014 two squares, three as one large with two stacked, four as a 2x2, and a +N past that. And desktop grid images no longer render at half height</span>' +
+              '<span class="announcement-text">New: Orbit v0.8.5-beta — the phone catches up with the desktop. Orbit is in the Android share sheet, a notification can be answered without opening the app, and there is a PIN lock — plus link previews, a real image viewer with zoom and download, and a network map that shows faces instead of letters.</span>' +
               '<a class="announcement-link" href="https://github.com/D4niel-dev/Orbit-beta/blob/main/CHANGELOG.md" target="_blank" rel="noopener">What\'s new &rarr;</a>' +
               '<button type="button" class="announcement-close" aria-label="Dismiss announcement">✕</button>' +
             '</div>' +
