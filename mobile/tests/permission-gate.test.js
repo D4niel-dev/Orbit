@@ -31,13 +31,26 @@ const SHEET = `(() => {
   const shown = !!(ov && ov.classList.contains('active') && sheet);
   return {
     shown: shown,
-    rows: sheet ? Array.from(sheet.querySelectorAll('.perm-row')).map((r) => ({
+    // ⚠ Scope to the permissions group: the app-op rows also carry .perm-row, so
+    // a bare .perm-row query counts six and the "four permissions" check fails
+    // for a reason that has nothing to do with the code.
+    rows: sheet ? Array.from(sheet.querySelectorAll('.perm-list:not(.perm-settings) > .perm-row')).map((r) => ({
       name: (r.querySelector('.perm-name') || {}).textContent,
       granted: r.classList.contains('is-granted')
     })) : [],
     allow: sheet ? (sheet.querySelector('#perm-allow') || {}).textContent || null : null,
     done: !!(sheet && sheet.querySelector('#perm-done')),
-    battery: !!(sheet && sheet.querySelector('.perm-battery')),
+    // The app-ops: each is its own row with its own jump to Settings, and each
+    // shows "On" once granted.
+    settingsRows: sheet ? Array.from(sheet.querySelectorAll('.perm-setting')).map((r) => {
+      const jump = r.querySelector('[data-perm-settings]');
+      return {
+        name: (r.querySelector('.perm-name') || {}).textContent,
+        on: r.classList.contains('is-granted'),
+        hasJump: !!jump,
+        jumpKey: jump ? jump.getAttribute('data-perm-settings') : null
+      };
+    }) : [],
     // ⚠ The bug this catches: the action was in the DOM but scrolled below the
     // sheet's cap, so the only thing to press was invisible.
     allowVisible: (() => {
@@ -54,16 +67,25 @@ const SHEET = `(() => {
 /** Install a fake native plugin and reset the "already asked" marker. */
 const setup = (states) => `(() => {
   window.__requested = 0;
+  window.__settingsOpened = [];
   window.Capacitor = window.Capacitor || {};
   window.Capacitor.Plugins = window.Capacitor.Plugins || {};
   window.Capacitor.Plugins.OrbitPermissions = {
     check: function () { return Promise.resolve(${JSON.stringify(states)}); },
     request: function () {
       window.__requested++;
-      // Granting everything is what "Allow" is for.
-      return Promise.resolve({ notifications: 'granted', camera: 'granted', microphone: 'granted', nearby: 'granted', battery: 'prompt' });
+      // Granting everything is what "Allow" is for. The two app-ops are NOT part
+      // of it — they open Settings, so a dialog batch cannot grant them.
+      return Promise.resolve({ notifications: 'granted', camera: 'granted', microphone: 'granted', nearby: 'granted', battery: 'prompt', installPackages: 'prompt' });
     },
-    requestBatteryExemption: function () { window.__batteryAsked = (window.__batteryAsked || 0) + 1; return Promise.resolve({}); }
+    requestBatteryExemption: function () {
+      window.__settingsOpened.push('battery');
+      return Promise.resolve({ battery: 'granted' });
+    },
+    requestInstallPackages: function () {
+      window.__settingsOpened.push('installPackages');
+      return Promise.resolve({ installPackages: 'granted' });
+    }
   };
   if (window.OrbitSheet) OrbitSheet.hide();
   window.MStore.settings.permissionsAskedVersion = '';
@@ -79,7 +101,7 @@ const setup = (states) => `(() => {
   await page.waitForTimeout(1200);
 
   console.log('\n== everything already granted ==');
-  await page.evaluate(setup({ notifications: 'granted', camera: 'granted', microphone: 'granted', nearby: 'granted', battery: 'granted' }));
+  await page.evaluate(setup({ notifications: 'granted', camera: 'granted', microphone: 'granted', nearby: 'granted', battery: 'granted', installPackages: 'granted' }));
   const all = await page.evaluate(() => window.OrbitPermissionGate.maybeAsk());
   await page.waitForTimeout(500);
   const allSheet = await page.evaluate(SHEET);
@@ -89,7 +111,7 @@ const setup = (states) => `(() => {
   H.check('no sheet is shown at all', allSheet.shown === false, allSheet);
 
   console.log('\n== three of four missing, never asked before ==');
-  await page.evaluate(setup({ notifications: 'granted', camera: 'prompt', microphone: 'prompt', nearby: 'denied', battery: 'prompt' }));
+  await page.evaluate(setup({ notifications: 'granted', camera: 'prompt', microphone: 'prompt', nearby: 'denied', battery: 'prompt', installPackages: 'prompt' }));
   const some = await page.evaluate(() => window.OrbitPermissionGate.maybeAsk());
   await page.waitForTimeout(600);
   const sheet = await page.evaluate(SHEET);
@@ -105,10 +127,44 @@ const setup = (states) => `(() => {
   H.check('the missing ones are not',
     (sheet.rows.find((r) => r.name === 'Camera') || {}).granted === false, sheet.rows);
   H.check('the button counts what it will ask for', /3/.test(sheet.allow || ''), sheet.allow);
-  H.check('the battery exemption is offered as its own row', sheet.battery === true, sheet);
+  // The app-ops: not part of Allow, because neither has a dialog to accept.
+  console.log('  app-ops: ' + JSON.stringify(sheet.settingsRows));
+  H.check('both app-ops are offered as their own rows',
+    sheet.settingsRows.length === 2, sheet.settingsRows);
+  H.check('the battery exemption is one of them',
+    (sheet.settingsRows.find((r) => r.name === 'Keep Orbit awake') || {}).jumpKey === 'battery', sheet.settingsRows);
+  H.check('and INSTALLING UPDATES is the other',
+    (sheet.settingsRows.find((r) => r.name === 'Install updates') || {}).jumpKey === 'installPackages', sheet.settingsRows);
+  H.check('neither is counted by the Allow button', /3/.test(sheet.allow || ''), sheet.allow);
+  H.check('each offers a jump to Settings while it is off',
+    sheet.settingsRows.every((r) => r.on === false && r.hasJump === true), sheet.settingsRows);
   H.check('the Allow button is VISIBLE, not scrolled out of the sheet',
     sheet.allowVisible && sheet.allowVisible.inView === true, sheet.allowVisible);
   await page.screenshot({ path: H.SHOTS + '/permissions.png' });
+
+  console.log('\n== the install-updates row actually opens Settings ==');
+  const opened = await page.evaluate(() => {
+    const b = document.querySelector('[data-perm-settings="installPackages"]');
+    if (!b) return { clicked: false };
+    b.click();
+    return { clicked: true };
+  });
+  await page.waitForTimeout(700);
+  const called = await page.evaluate(() => window.__settingsOpened);
+  console.log('  clicked=' + opened.clicked + '  plugin methods called: ' + JSON.stringify(called));
+  H.check('the row has a jump button', opened.clicked === true, opened);
+  H.check('tapping it calls requestInstallPackages, not something else',
+    JSON.stringify(called) === JSON.stringify(['installPackages']), called);
+  // The re-check after returning from Settings must not throw with no plugin answer.
+  await page.evaluate(() => {
+    window.__settingsOpened.length = 0;
+    const b = document.querySelector('[data-perm-settings="battery"]');
+    if (b) b.click();
+  });
+  await page.waitForTimeout(600);
+  const called2 = await page.evaluate(() => window.__settingsOpened);
+  H.check('and the battery row still calls its own method',
+    JSON.stringify(called2) === JSON.stringify(['battery']), called2);
 
   console.log('\n== asking again in the same version ==');
   await page.evaluate(() => { if (window.OrbitSheet) OrbitSheet.hide(); });

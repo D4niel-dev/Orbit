@@ -4664,17 +4664,18 @@
 .perm-sub { font-size: 12.5px; line-height: 1.55; color: var(--text-secondary); margin-top: 3px; }
 
 .perm-list { border-top: 1px solid var(--border-subtle); }
-.perm-row,
-.perm-battery {
+.perm-row {
   display: flex;
   align-items: flex-start;
   gap: 12px;
   padding: 11px 18px;
   border-bottom: 1px solid var(--border-subtle);
 }
-/* The battery exemption opens a Settings screen rather than raising a dialog,
-   so it is visually set apart from the permissions above it. */
-.perm-battery { background: var(--bg-raised); }
+/* The app-ops are a separate group, set apart from the permissions above them:
+   each opens a Settings screen rather than raising a dialog, so none of them is
+   part of the Allow button. */
+.perm-settings { margin-top: 10px; }
+.perm-setting { background: var(--bg-raised); }
 
 .perm-icon {
   width: 34px;

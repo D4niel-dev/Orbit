@@ -106,23 +106,43 @@ public class OrbitPermissionsPlugin extends Plugin {
      */
     @PluginMethod
     public void requestBatteryExemption(PluginCall call) {
+        openSettingsIntent(call, Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+    }
+
+    /**
+     * "Install unknown apps" — what Orbit needs to update itself.
+     *
+     * ⚠ NOT A RUNTIME PERMISSION EITHER, for the same reason as battery: it is an
+     * appop, so `requestPermissions()` cannot raise it and there is no dialog to
+     * accept. It is granted from a Settings screen, which is why it is a row of
+     * its own in the sheet rather than part of the Allow button.
+     *
+     * ⚠ IT WAS ALREADY BEING ASKED FOR, AT THE WORST POSSIBLE MOMENT.
+     * OrbitP2PPlugin.installApk() opens this same Settings screen and then
+     * rejects the call with NEED_INSTALL_PERMISSION — so the user tapped Update,
+     * waited for a download, and was thrown into Settings with the update
+     * abandoned. Asking at startup means the download is not wasted.
+     */
+    @PluginMethod
+    public void requestInstallPackages(PluginCall call) {
+        openSettingsIntent(call, Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+    }
+
+    /**
+     * Open a Settings screen for this package, then resolve with the state as it
+     * stands. The answer arrives on a screen we do not control, so the real value
+     * is read on the next check() rather than here — the web layer re-checks when
+     * the app comes back to the foreground.
+     */
+    private void openSettingsIntent(PluginCall call, String action) {
         try {
             Context ctx = getContext();
-            PowerManager pm = (PowerManager) ctx.getSystemService(Context.POWER_SERVICE);
-            if (pm != null && pm.isIgnoringBatteryOptimizations(ctx.getPackageName())) {
-                call.resolve(state());
-                return;
-            }
-            Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-            intent.setData(Uri.parse("package:" + ctx.getPackageName()));
-            // The app's own REQUEST_IGNORE_BATTERY_OPTIMIZATIONS permission (in the
-            // manifest) is what allows this intent to raise the dialog directly.
-            getActivity().startActivity(intent);
+            Intent intent = new Intent(action, Uri.parse("package:" + ctx.getPackageName()));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            ctx.startActivity(intent);
         } catch (Exception e) {
-            Log.w(TAG, "could not open the battery-optimisation dialog", e);
+            Log.w(TAG, "could not open the settings screen for " + action, e);
         }
-        // The user answers in a system dialog, so the real state is read on the
-        // next check rather than here.
         call.resolve(state());
     }
 
@@ -137,9 +157,32 @@ public class OrbitPermissionsPlugin extends Plugin {
             PermissionState st = getPermissionState(alias);
             out.put(alias, st == null ? "prompt" : st.toString());
         }
+        // The two appops, reported in the same vocabulary as the permissions so
+        // the web layer does not need to know they are a different kind of thing.
         out.put("battery", isIgnoringBatteryOptimizations() ? "granted" : "prompt");
+        out.put("installPackages", canInstallPackages() ? "granted" : "prompt");
         out.put("sdk", Build.VERSION.SDK_INT);
         return out;
+    }
+
+    /**
+     * Whether Orbit may hand an APK to the system installer.
+     *
+     * ⚠ Always true below API 26: "install unknown apps" was a single global
+     * switch then, not a per-app appop, so there is nothing this app can ask for
+     * and reporting "prompt" would put a row in the sheet that can never be
+     * satisfied.
+     */
+    private boolean canInstallPackages() {
+        try {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return true;
+            Context ctx = getContext();
+            return ctx.getPackageManager().canRequestPackageInstalls();
+        } catch (Exception e) {
+            // Unknown reads as "already fine": a wrong answer here costs the user
+            // one unnecessary Settings trip, not a broken update.
+            return true;
+        }
     }
 
     private boolean isIgnoringBatteryOptimizations() {

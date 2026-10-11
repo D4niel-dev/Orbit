@@ -51,13 +51,36 @@
       why: 'So Orbit can find your other device on the same network.' }
   ];
 
-  // The battery exemption is not a permission — it opens a Settings screen
-  // instead of a dialog — so it is offered as its own row rather than being
-  // bundled into a button that says "Allow".
-  var BATTERY = {
-    key: 'battery', icon: 'battery-charging', title: 'Keep Orbit awake',
-    why: 'Android can freeze the app in the background, and a message then waits until you next open it.'
-  };
+  // ⚠ THESE ARE NOT PERMISSIONS — THEY ARE APP-OPS.
+  //
+  // Each one opens a Settings screen instead of raising a dialog, so there is
+  // nothing for `requestPermissions()` to raise and nothing to accept. They
+  // cannot be part of a button that says "Allow", so each gets its own row with
+  // its own jump to Settings.
+  //
+  // They are here for the same reason the permissions are: without them the app
+  // fails later, at a worse moment.
+  //   - battery: Android may freeze the foreground service, so a message waits
+  //     until the app is next opened.
+  //   - install: the updater downloads the WHOLE APK and only then discovers it
+  //     cannot open the installer. The download is wasted and the user is dropped
+  //     into Settings mid-update with nothing to come back to.
+  var SETTINGS_ROWS = [
+    {
+      key: 'battery',
+      icon: 'battery-charging',
+      title: 'Keep Orbit awake',
+      why: 'Android can freeze the app in the background, and a message then waits until you next open it.',
+      method: 'requestBatteryExemption'
+    },
+    {
+      key: 'installPackages',
+      icon: 'package-plus',
+      title: 'Install updates',
+      why: 'Orbit updates itself by downloading an APK. Android asks for your permission before it will open the installer.',
+      method: 'requestInstallPackages'
+    }
+  ];
 
   /** The native plugin, or null when it is not there (browser, or an older build). */
   function _plugin() {
@@ -133,11 +156,45 @@
   }
 
   function requestBattery() {
+    return _openSettings('requestBatteryExemption');
+  }
+
+  function requestInstallPackages() {
+    return _openSettings('requestInstallPackages');
+  }
+
+  /**
+   * Open a Settings screen through the plugin, then arrange to re-read the state
+   * when the user comes back.
+   *
+   * ⚠ The answer is given on a screen we do not control, so nothing here can
+   * report it. Without the re-check the row would still say "Open settings" after
+   * the user had already granted it — the sheet would be lying about the one
+   * thing it exists to report.
+   */
+  function _openSettings(method) {
     var p = _plugin();
-    if (p && p.requestBatteryExemption) {
-      return Promise.resolve(p.requestBatteryExemption()).catch(function () { return {}; });
-    }
-    return Promise.resolve({});
+    if (!p || typeof p[method] !== 'function') return Promise.resolve({});
+    _recheckOnReturn();
+    return Promise.resolve(p[method]()).catch(function () { return {}; });
+  }
+
+  function _recheckOnReturn() {
+    if (document.__permRecheck) return;
+    document.__permRecheck = true;
+    var once = function () {
+      // Still in the background — Settings is on top of us.
+      if (document.hidden) return;
+      document.removeEventListener('visibilitychange', once);
+      window.removeEventListener('focus', once);
+      document.__permRecheck = false;
+      // Only if the sheet is still the thing on screen.
+      var ov = document.getElementById('bottom-sheet-overlay');
+      if (!ov || !ov.classList.contains('active')) return;
+      check().then(function (s) { _render(s); }).catch(function () {});
+    };
+    document.addEventListener('visibilitychange', once);
+    window.addEventListener('focus', once);
   }
 
   function _esc(v) {
@@ -150,7 +207,8 @@
    * The sheet. Re-rendered in place after a request so the rows that were just
    * granted show it — the user sees the answer without the sheet vanishing.
    */
-  function _render(states, batteryExempt) {
+  function _render(states) {
+    states = states || {};
     var esc = _esc;
     var still = missing(states);
 
@@ -174,18 +232,23 @@
     });
     html += '</div>';
 
-    // The battery exemption, as its own quiet row: it opens a Settings screen
-    // rather than raising a dialog, so it is not part of the same decision.
-    html += '<div class="perm-battery">' +
-      '<div class="perm-icon"><i data-lucide="' + (batteryExempt ? 'check' : BATTERY.icon) + '"></i></div>' +
-      '<div class="perm-info">' +
-        '<span class="perm-name">' + esc(BATTERY.title) + '</span>' +
-        '<span class="perm-why">' + esc(BATTERY.why) + '</span>' +
-      '</div>' +
-      (batteryExempt
-        ? '<span class="perm-chip">On</span>'
-        : '<button class="perm-link" id="perm-battery-btn">Open settings</button>') +
-    '</div>';
+    // The app-ops, grouped below and set apart: each is a Settings screen, not a
+    // dialog, so none of them is part of the Allow button above.
+    html += '<div class="perm-list perm-settings">';
+    SETTINGS_ROWS.forEach(function (row) {
+      var on = states[row.key] === 'granted';
+      html += '<div class="perm-row perm-setting' + (on ? ' is-granted' : '') + '">' +
+        '<div class="perm-icon"><i data-lucide="' + (on ? 'check' : row.icon) + '"></i></div>' +
+        '<div class="perm-info">' +
+          '<span class="perm-name">' + esc(row.title) + '</span>' +
+          '<span class="perm-why">' + esc(row.why) + '</span>' +
+        '</div>' +
+        (on
+          ? '<span class="perm-chip">On</span>'
+          : '<button class="perm-link" data-perm-settings="' + esc(row.key) + '">Open settings</button>') +
+      '</div>';
+    });
+    html += '</div>';
 
     html += '<div class="perm-actions">' +
       (still.length
@@ -199,9 +262,9 @@
     if (typeof OrbitSheet !== 'undefined' && OrbitSheet.showCustom) {
       // ⚠ `tall` on purpose. The default cap is 70% of the visible area, which is
       // sized for a chooser — a context menu or a poll builder — where leaving
-      // the chat visible matters. This is four explanations plus an action, and at
-      // 70% the Allow button scrolled out of sight: the one thing the user came
-      // here to press was the one thing they could not see.
+      // the chat visible matters. This is four explanations, two app-ops and an
+      // action, and at 70% the Allow button scrolled out of sight: the one thing
+      // the user came here to press was the one thing they could not see.
       OrbitSheet.showCustom(html, { tall: true });
     }
     if (window.lucide) { try { lucide.createIcons(); } catch (e) {} }
@@ -213,7 +276,7 @@
         allow.textContent = 'Asking\u2026';
         request().then(function (next) {
           // Re-render from the state the OS just reported, not from an assumption.
-          _render(next, next.battery === 'granted');
+          _render(next);
         });
       });
     }
@@ -223,12 +286,13 @@
         if (typeof OrbitSheet !== 'undefined' && OrbitSheet.hide) OrbitSheet.hide();
       });
     }
-    var batt = document.getElementById('perm-battery-btn');
-    if (batt) {
-      batt.addEventListener('click', function () {
-        requestBattery();
+    Array.prototype.forEach.call(document.querySelectorAll('[data-perm-settings]'), function (btn) {
+      btn.addEventListener('click', function () {
+        var key = btn.getAttribute('data-perm-settings');
+        var row = SETTINGS_ROWS.filter(function (r) { return r.key === key; })[0];
+        if (row) _openSettings(row.method);
       });
-    }
+    });
   }
 
   function _markAsked() {
@@ -258,21 +322,23 @@
       // Marked before the sheet is shown: if the app is closed while it is open,
       // the next start must not immediately ask again.
       _markAsked();
-      _render(states, states.battery === 'granted');
+      _render(states);
       return { asked: true, missing: need.map(function (w) { return w.key; }), states: states };
     });
   }
 
   window.OrbitPermissionGate = {
     WANTED: WANTED,
-    BATTERY: BATTERY,
+    SETTINGS_ROWS: SETTINGS_ROWS,
     supported: supported,
     check: check,
     request: request,
     requestBattery: requestBattery,
+    requestInstallPackages: requestInstallPackages,
     missing: missing,
     maybeAsk: maybeAsk,
     _render: _render,
+    _openSettings: _openSettings,
     _plugin: _plugin
   };
 })();
