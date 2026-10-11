@@ -48,6 +48,8 @@
     })();
   </script>
   <link rel="stylesheet" href="styles.css">
+  <!-- Motion layer. Loaded last so it only adds; if it fails the page is unchanged. -->
+  <link rel="stylesheet" href="motion.css">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -158,7 +160,7 @@
         </div>
 
         <div class="hero-visual fade-up">
-          <div class="window">
+          <div class="window" data-parallax="0.045">
             <div class="window-bar">
               <div class="window-dots" aria-hidden="true">
                 <span class="r"></span><span class="y"></span><span class="g"></span>
@@ -186,7 +188,59 @@
           </div>
         </div>
       </div>
+
+      <!-- The reference keeps a small vertical stack of round controls beside the
+           hero. Same idea, Orbit's four promises, and each one scrolls to the
+           section that argues for it. -->
+      <div class="icon-rail" aria-label="Why Orbit">
+        <button type="button" class="on" data-scroll-to="#hero" title="Runs on your own network">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+        </button>
+        <button type="button" data-scroll-to="#security" title="End-to-end encrypted">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </button>
+        <button type="button" data-scroll-to="#tech" title="No server in the middle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+        </button>
+        <button type="button" data-scroll-to="#features" title="Fast on a local network">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </button>
+      </div>
     </section>
+
+    <!-- ── The marquee ──────────────────────────────────────────────────────
+         THE signature of the reference, and the thing this hero was missing: its
+         app window is a still. Columns of real interface fragments drifting past
+         each other say "this is what using it feels like" in a way a screenshot
+         cannot. motion.js fills the tracks; this is only the frame. -->
+    <section class="marquee" aria-label="What using Orbit looks like">
+      <div class="marquee-inner">
+        <div class="marquee-col" data-dir="up">
+          <div class="marquee-track" data-offset="0"></div>
+        </div>
+        <div class="marquee-col" data-dir="down">
+          <div class="marquee-track" data-offset="3"></div>
+        </div>
+        <div class="marquee-col" data-dir="up">
+          <div class="marquee-track" data-offset="6"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Kinetic divider. Drifts horizontally with the scroll position rather than
+         looping, so the type is tied to the reader's own movement. -->
+    <div class="kinetic" aria-hidden="true">
+      <div class="kinetic-track">
+        <span class="kinetic-word fill">PEER TO PEER</span>
+        <span class="kinetic-word">NO SERVER</span>
+        <span class="kinetic-word fill">END TO END</span>
+        <span class="kinetic-word">NO ACCOUNT</span>
+        <span class="kinetic-word fill">PEER TO PEER</span>
+        <span class="kinetic-word">NO SERVER</span>
+        <span class="kinetic-word fill">END TO END</span>
+        <span class="kinetic-word">NO ACCOUNT</span>
+      </div>
+    </div>
 
     <section class="trust" aria-label="Product principles">
       <img class="section-bg" src="images/app/preview-darkmode.png" alt="" aria-hidden="true" loading="lazy" width="1630" height="960">
@@ -323,6 +377,16 @@
           </div>
         </div>
       </div>
+    </section>
+
+    <!-- A quiet card with one sentence, one phrase of which is the point. The
+         reference uses these to break up its feature grid, and it works because
+         the sentence does the selling rather than a diagram. -->
+    <section class="statement reveal" aria-label="How Orbit is different">
+      <div class="statement-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+      </div>
+      <p>Your message goes from your device to theirs. <span class="hl">There is nothing in between.</span></p>
     </section>
 
     <section class="section" id="features">
@@ -521,6 +585,21 @@
       </div>
     </section>
 
+    <!-- Mid-page kinetic band. Tighter than the first one: this one is a beat
+         between two sections rather than an introduction. -->
+    <div class="kinetic kinetic--tight" aria-hidden="true">
+      <div class="kinetic-track">
+        <span class="kinetic-word fill">NO CLOUD</span>
+        <span class="kinetic-word">LOCAL FIRST</span>
+        <span class="kinetic-word fill">NO RELAY</span>
+        <span class="kinetic-word">YOUR DEVICES</span>
+        <span class="kinetic-word fill">NO CLOUD</span>
+        <span class="kinetic-word">LOCAL FIRST</span>
+        <span class="kinetic-word fill">NO RELAY</span>
+        <span class="kinetic-word">YOUR DEVICES</span>
+      </div>
+    </div>
+
     <section class="section" id="how-it-works">
       <img class="section-bg" src="images/hero/hero-keyB.png" alt="" aria-hidden="true" loading="lazy" width="1672" height="941">
       <div class="container">
@@ -601,6 +680,19 @@
       </div>
     </section>
 
+    <div class="kinetic kinetic--tight" aria-hidden="true">
+      <div class="kinetic-track">
+        <span class="kinetic-word">AUDIT IT</span>
+        <span class="kinetic-word fill">OPEN SOURCE</span>
+        <span class="kinetic-word">FORK IT</span>
+        <span class="kinetic-word fill">MIT LICENSED</span>
+        <span class="kinetic-word">AUDIT IT</span>
+        <span class="kinetic-word fill">OPEN SOURCE</span>
+        <span class="kinetic-word">FORK IT</span>
+        <span class="kinetic-word fill">MIT LICENSED</span>
+      </div>
+    </div>
+
     <section class="section" id="security">
       <div class="container">
         <div class="section-header fade-up">
@@ -649,6 +741,16 @@ sha256sum --check SHA256SUMS.txt --ignore-missing</code></pre>
           </article>
         </div>
       </div>
+    </section>
+
+    <!-- Second statement. Placed here rather than after the features so the two
+         are never adjacent — a quiet card only reads as quiet next to something
+         that is not. -->
+    <section class="statement reveal" aria-label="What Orbit asks of you">
+      <div class="statement-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <p>There is no account to create and nothing to sign into. <span class="hl">The two devices are the whole system.</span></p>
     </section>
 
     <section class="section faq-section" id="faq">
@@ -1479,5 +1581,8 @@ sha256sum --check SHA256SUMS.txt --ignore-missing</code></pre>
       }
     })();
   </script>
+  <!-- Motion layer. After the page's own script, so it decorates a page that is
+       already wired rather than competing with it. -->
+  <script src="motion.js"></script>
 </body>
 </html>

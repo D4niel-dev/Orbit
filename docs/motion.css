@@ -1,0 +1,447 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Orbit — motion layer
+   ═══════════════════════════════════════════════════════════════════════════
+
+   Loaded AFTER styles.css. Nothing here restyles an existing component; it only
+   adds the motion language, so the page still works if this file fails to load.
+
+   The reference is QClay's "Chat Support Landing Page" (VivaChat) — an animated
+   hero whose visual is two columns of cards scrolling forever, kinetic
+   typography between sections, and gradient blobs drifting behind everything.
+
+   Adapted, not copied: the palette, type and cards are Orbit's. What is borrowed
+   is the MOTION — continuous vertical marquees, masked word-by-word reveals,
+   scroll-linked kinetic type, and CTAs whose arrow sits in its own circle.
+
+   ⚠ Everything animates transform/opacity only, so nothing here can trigger
+   layout. And every loop stops under prefers-reduced-motion (see the end).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Masked type ─────────────────────────────────────────────────────────
+   Each word is wrapped in a clipping box by motion.js and slides up from behind
+   its own baseline. A mask, not a fade — a fade reads as "loading", a mask reads
+   as "set".
+
+   ⚠ Written generically rather than scoped to the hero: the same treatment runs
+   on every section heading, and six near-identical rules are how the old page's
+   keyframes drifted apart. `is-ready` is added by motion.js — to the hero
+   immediately, and to each heading when it scrolls into view, so a heading's
+   words do not finish revealing while it is still off screen. */
+.kw {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  /* Room for descenders, or the mask clips a 'g' or a 'y'. */
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+}
+.kw > i {
+  display: inline-block;
+  font-style: inherit;
+  transform: translateY(115%);
+  transition: transform 1.05s var(--ease);
+  transition-delay: var(--kw-delay, 0s);
+}
+.is-ready .kw > i { transform: translateY(0); }
+
+/* ── 2. CTAs: the arrow gets its own circle ────────────────────────────────
+   The reference's buttons are a label and a circular arrow that separates on
+   hover. Orbit's buttons had a bare inline icon, so the arrow read as part of
+   the word rather than as the thing you press. */
+.btn .btn-arrow {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-left: 9px;
+  margin-right: -6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  transition: transform 0.42s var(--ease), background 0.42s var(--ease);
+}
+.btn .btn-arrow svg { width: 14px; height: 14px; }
+.btn-secondary .btn-arrow { background: var(--overlay-strong); }
+.btn:hover .btn-arrow {
+  transform: translateX(3px) rotate(-45deg);
+  background: rgba(255, 255, 255, 0.28);
+}
+/* The whole button leans very slightly toward the pointer — see the magnetic
+   handler in motion.js. Transform only, so it never reflows the row. */
+.btn.is-magnetic { will-change: transform; }
+
+/* ── 3. The marquee ─────────────────────────────────────────────────────────
+   THE signature of the reference, and the thing Orbit's hero was missing: its
+   app window is a still. Two columns of real interface fragments drifting past
+   say "this is what using it feels like" in a way a screenshot cannot.
+
+   ⚠ The column is duplicated in the DOM and translated by exactly -50%, so the
+   second copy lands where the first began and the loop has no seam. Animating
+   `top` or `margin` would reflow every frame; `transform` does not. */
+.marquee {
+  position: relative;
+  padding: 26px 0 34px;
+  overflow: hidden;
+  /* The columns fade at the top and bottom instead of being cut off, so the loop
+     reads as continuous rather than as a strip with two hard ends. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+          mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+}
+.marquee-inner {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 560px;
+}
+.marquee-col { position: relative; overflow: hidden; }
+.marquee-track {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  animation: marqueeUp var(--marquee-dur, 46s) linear infinite;
+}
+.marquee-col[data-dir="down"] .marquee-track { animation-name: marqueeDown; }
+.marquee-col:nth-child(2) .marquee-track { --marquee-dur: 58s; }
+.marquee-col:nth-child(3) .marquee-track { --marquee-dur: 40s; }
+.marquee:hover .marquee-track { animation-play-state: paused; }
+
+@keyframes marqueeUp   { from { transform: translateY(0); }    to { transform: translateY(-50%); } }
+@keyframes marqueeDown { from { transform: translateY(-50%); } to { transform: translateY(0); } }
+
+/* ── 4. The cards ───────────────────────────────────────────────────────────
+   Interface fragments, not illustrations. Each one is a thing Orbit actually
+   does, so the strip is a demo rather than decoration. */
+.mq-card {
+  flex: 0 0 auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
+  background: var(--card-bg-strong);
+  backdrop-filter: blur(12px);
+  padding: 14px 15px;
+  box-shadow: var(--shadow-md);
+}
+.mq-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 10px;
+}
+.mq-avatar {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(140deg, var(--accent), #7c5cff);
+}
+.mq-name { font-size: 12.5px; font-weight: 600; color: var(--text); }
+.mq-meta { font-size: 10.5px; color: var(--text-3); }
+.mq-body { font-size: 13px; line-height: 1.5; color: var(--text-2); }
+.mq-body strong { color: var(--text); font-weight: 600; }
+
+.mq-bubble {
+  border-radius: 14px 14px 14px 4px;
+  background: var(--overlay-soft);
+  border: 1px solid var(--border);
+  padding: 9px 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.mq-bubble.mine {
+  border-radius: 14px 14px 4px 14px;
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+  margin-left: 26px;
+}
+.mq-row { display: flex; align-items: center; gap: 9px; }
+.mq-icon {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  background: var(--overlay-soft);
+  color: var(--accent);
+}
+.mq-icon svg { width: 15px; height: 15px; }
+.mq-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--overlay-soft);
+  overflow: hidden;
+  margin-top: 9px;
+}
+.mq-bar > i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent), #7c5cff);
+  /* The bar fills on its own so the card looks alive without any JS. */
+  animation: mqFill 4.2s var(--ease) infinite;
+}
+@keyframes mqFill { 0%, 8% { width: 8%; } 62%, 100% { width: 100%; } }
+
+.mq-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--overlay-soft);
+  color: var(--text-2);
+}
+.mq-pill.ok { color: var(--green); border-color: rgba(48, 209, 88, 0.3); background: rgba(48, 209, 88, 0.1); }
+.mq-pill svg { width: 12px; height: 12px; }
+.mq-reactions { display: flex; gap: 5px; margin-top: 10px; }
+.mq-reaction {
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: var(--overlay-soft);
+  border: 1px solid var(--border);
+}
+
+/* ── 5. Kinetic dividers ────────────────────────────────────────────────────
+   The reference cuts between sections with a full-bleed gradient band carrying
+   oversized type. It gives the page a beat — somewhere to breathe — and it is
+   the cheapest way to make a long scroll feel composed.
+
+   ⚠ The horizontal drift is driven by scroll position (motion.js), not by a
+   loop, so the type is tied to the reader's own movement. */
+.kinetic {
+  position: relative;
+  overflow: hidden;
+  padding: 34px 0;
+  margin: 8px 0;
+  background: linear-gradient(100deg, var(--accent-soft), rgba(124, 92, 255, 0.12) 55%, rgba(48, 209, 88, 0.08));
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.kinetic-track { display: flex; white-space: nowrap; will-change: transform; }
+.kinetic-word {
+  font-family: var(--font-display);
+  font-size: clamp(46px, 9vw, 116px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  padding-right: 0.32em;
+  /* Outlined rather than filled: the type is a texture here, not a headline, and
+     a solid block of it would compete with the section it introduces. */
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--text-3);
+  opacity: 0.5;
+}
+.kinetic-word.fill {
+  color: var(--text);
+  -webkit-text-stroke: 0;
+  opacity: 0.92;
+}
+
+/* ── 6. Statement sections ──────────────────────────────────────────────────
+   A quiet card with one sentence, one phrase of which is the point. The
+   reference uses these to break up its feature grid, and it works because the
+   sentence is doing the selling rather than a diagram. */
+.statement {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 76px 24px;
+  text-align: center;
+}
+.statement p {
+  font-family: var(--font-display);
+  font-size: clamp(21px, 2.6vw, 33px);
+  font-weight: 500;
+  line-height: 1.42;
+  letter-spacing: -0.015em;
+  color: var(--text-2);
+  margin: 0;
+}
+.statement .hl { color: var(--accent); font-weight: 600; }
+.statement-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: var(--overlay-soft);
+  color: var(--accent);
+  margin-bottom: 22px;
+}
+.statement-icon svg { width: 18px; height: 18px; }
+/* Word-by-word, driven by the same observer as everything else. */
+.statement .sw {
+  display: inline-block;
+  opacity: 0.18;
+  transform: translateY(6px);
+  transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
+  transition-delay: var(--sw-delay, 0s);
+}
+.statement.in .sw { opacity: 1; transform: none; }
+
+/* ── 7. Scroll choreography ─────────────────────────────────────────────────
+   A single reveal for anything marked .reveal, staggered by --i. Deliberately
+   one system rather than a class per section: the old page had six near-identical
+   keyframes and they had already drifted apart. */
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.85s var(--ease), transform 0.85s var(--ease);
+  transition-delay: calc(var(--i, 0) * 90ms);
+}
+.reveal.in { opacity: 1; transform: none; }
+.reveal-l { transform: translateX(-30px); }
+.reveal-r { transform: translateX(30px); }
+.reveal-scale { transform: scale(0.96); }
+
+/* The app window drifts a little slower than the page — see the parallax
+   handler. Subtle on purpose: enough to separate it from the background, not
+   enough to look like it is sliding away. */
+.hero-visual .window { will-change: transform; }
+
+/* ── 8. Icon rail ───────────────────────────────────────────────────────────
+   The reference keeps a small vertical stack of round controls beside the hero.
+   Same idea, Orbit's four promises. */
+.icon-rail {
+  position: absolute;
+  top: 50%;
+  right: 26px;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 3;
+}
+.icon-rail button {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: var(--card-bg-strong);
+  backdrop-filter: blur(10px);
+  color: var(--text-2);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 0.4s var(--ease), color 0.4s var(--ease), border-color 0.4s var(--ease), background 0.4s var(--ease);
+}
+.icon-rail button svg { width: 18px; height: 18px; }
+.icon-rail button:hover {
+  transform: translateX(-4px);
+  color: var(--accent);
+  border-color: var(--accent-border-strong);
+  background: var(--accent-soft);
+}
+/* The first one is highlighted, the way the reference's headset icon is. */
+.icon-rail button.on { color: #fff; background: linear-gradient(140deg, var(--accent), #7c5cff); border-color: transparent; }
+
+@media (max-width: 1180px) { .icon-rail { display: none; } }
+
+/* ⚠ THE MARQUEE'S BLUR IS DROPPED ON SMALL SCREENS.
+   `backdrop-filter` is one of the most expensive things you can ask a phone to
+   paint — it forces a read-back of everything behind the element, every frame.
+   This strip has eighteen cards moving continuously at once, which would make it
+   the heaviest thing on the page on a mid-range Android and cost battery for
+   decoration. Below the two-column breakpoint the blur goes and the card is made
+   opaque instead: over the flat page background it reads almost identically, and
+   the animation keeps running. */
+@media (max-width: 860px) {
+  .mq-card {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--bg-elevated);
+  }
+}
+
+@media (max-width: 860px) {
+  .marquee-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); height: 460px; }
+  .marquee-col:nth-child(3) { display: none; }
+  .statement { padding: 56px 22px; }
+}
+@media (max-width: 560px) {
+  .marquee-inner { grid-template-columns: minmax(0, 1fr); height: 420px; }
+  .marquee-col:nth-child(2) { display: none; }
+}
+
+/* ── 9. Reduced motion ──────────────────────────────────────────────────────
+   ⚠ Not a nicety here: this page is mostly continuous motion, so for anyone who
+   has asked the OS for less of it, the marquees stop and everything simply
+   arrives in place. The content is identical either way.
+
+   ⚠⚠ `.kw > i` and NOT `.hero h1 .kw > i`. The mask started out hero-only and
+   was then generalised to every section heading — this rule was left behind, so
+   heading words kept their 115% offset and stayed invisible below their masks.
+   A selector that no longer matches anything does nothing and says nothing.
+   Measured with `reducedMotion: 'reduce'`, which is the only way it shows. */
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track,
+  .mq-bar > i,
+  .orb { animation: none !important; }
+  .kw > i,
+  .reveal,
+  .statement .sw {
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+  .kinetic-track { transform: none !important; }
+}
+
+/* ── 10. Card micro-interactions ────────────────────────────────────────────
+   The reference's cards are never still — they lift, their border warms, and the
+   icon answers. The page had reveals but nothing that responded to the pointer,
+   which is the half of "animated" you feel while reading rather than watching.
+
+   ⚠ Only cards that already have a surface: a lift on something with no
+   background just looks like a rendering glitch. `.section-bg` is deliberately
+   NOT here — it already has its own `--scroll-y` parallax in styles.css and two
+   transforms on one element fight. */
+.trust-item,
+.security-card {
+  transition: transform 0.42s var(--ease), border-color 0.42s var(--ease), background 0.42s var(--ease);
+}
+.trust-item:hover,
+.security-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-border-strong);
+}
+.trust-item .trust-icon,
+.trust-item svg {
+  transition: transform 0.42s var(--ease), color 0.42s var(--ease);
+}
+.trust-item:hover .trust-icon { transform: scale(1.12) rotate(-4deg); color: var(--accent); }
+
+/* A definition row is read, not clicked, so it gets a highlight rather than a
+   lift — movement would suggest it does something. */
+.spec-row {
+  transition: background 0.35s var(--ease), padding-left 0.35s var(--ease);
+  border-radius: 10px;
+}
+.spec-row:hover { background: var(--overlay-softer); padding-left: 28px; }
+
+/* ── 11. Section headings ───────────────────────────────────────────────────
+   A heading that has been masked needs its own line-height slack, or the
+   descender padding on `.kw` pushes a two-line heading apart. */
+.section-header h2 .kw { padding-bottom: 0.12em; margin-bottom: -0.12em; }
+
+/* ── 12. A denser kinetic band for mid-page use ─────────────────────────── */
+.kinetic--tight { padding: 22px 0; }
+.kinetic--tight .kinetic-word { font-size: clamp(34px, 6.4vw, 78px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .trust-item:hover,
+  .security-card:hover,
+  .trust-item:hover .trust-icon,
+  .spec-row:hover { transform: none !important; padding-left: 22px; }
+}
