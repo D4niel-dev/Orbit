@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <strong>Current version:</strong> <a href="CHANGELOG.md#v086-beta">v0.8.6-beta</a>
+  <strong>Current version:</strong> <a href="CHANGELOG.md#v087-beta">v0.8.7-beta</a>
 </p>
 
 <p align="center">
@@ -28,7 +28,7 @@
 
 | Channel           | Version     | Status                                                                                                                                                                                                                        |
 | ----------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Latest**        | v0.8.6-beta | Four bugs that each broke something you do every day — an emoji you could not send, a link preview that arrived too late to be useful, a profile card that opened on top of the camera, and a backup file the app could read but never offered you — plus filters and a display style for Contacts, a rebuilt attachment preview, a composer with one door instead of five, and a startup pass that asks for permissions once, and only for the ones that are missing |
+| **Latest**        | v0.8.7-beta | The "+" finally has one door instead of five, Orbit asks for the permissions it needs **once** — and only for the ones that are missing, no longer opening the camera on every launch to provoke the dialog — and four bugs are gone: a dismissed link preview that stayed dismissed, a contact menu that opened empty, a contacts grid wider than the screen, and a staged attachment that vanished on the desktop |
 |                   | v0.8.5-beta | The phone catches up with the desktop — Orbit is in the Android share sheet, a notification can be answered without opening the app, and there is a PIN lock, plus link previews, a real image viewer and a network map that shows faces instead of letters |
 |                   | v0.8.4-beta | A group of images of different sizes no longer goes ragged — the attachment grid now follows Discord’s layouts.  One tap on Send was also starting the mic — Android’s synthetic mouse events land on whatever is under your finger by then, which was the mic, so it recorded and sent a voice note on repeat |
 | **Stable**        | v0.8.0-beta | Your theme and custom colours follow you between your own devices, message search runs on SQLite FTS5, and the update progress bar actually moves                                                                             |
@@ -85,18 +85,14 @@ Whether you are sharing files at home, coordinating in a small office, or experi
 
 Orbit is a **beta-stage app for desktop and Android** aimed at trusted private networks — not a replacement for hardened internet-scale messengers yet, but a serious step toward practical local messaging.
 
-## Highlights (v0.8.6-beta)
+## Highlights (v0.8.7-beta)
 
-* **An emoji picked from the picker could not be sent.** It was not the empty-check — an emoji passes that, and typing one always worked. The picker set the input's value directly, and **assigning `.value` fires no `input` event**, so nothing that watches the composer ever ran: the send button never appeared and the box sat there showing the **mic**. The message was not rejected; **there was no button to press.**
-* **Restore from a backup file.** The Local Vault finds `.orzip` and `.zip` backups in the app's own folder and in `vault/` — **the files that survive deleting the app** — and adds the account *alongside* what is on the phone rather than over it. ⚠ `.orzip` is not a zip: the desktop writes it with gzip and a house extension, so the format is decided by the file's first two bytes, never by its name.
-* **Link previews now appear while you type.** The bar used to appear only *after* the message had gone, which is the one moment a preview is useless — you have already decided. And the card **inside** a sent message printed the domain **twice**: once as the title, once as the full URL underneath. It uses the page's own title and image now, from the same fetch the bar uses.
-* **The attachment preview was rebuilt, starting from a measurement.** A staged image was a bare `<img>` in a 56px tile, so a full-resolution photo was **an empty box with nothing happening in it**. There is a spinner now; each tile carries an **×** that takes that one image out of the send while the rest go normally; and tapping one **looks** at it instead of sending it.
-* **Contacts gained filters and a display style** — All / Online / Offline / Groups with live counts, and a choice of a dense list or a grid of large avatars. Every row has its actions now: a group used to be a row you could only tap.
-* **Tapping "Pair a desktop" re-opened the profile card** — a race. The account switcher closes back to where it was opened from, and that landed the card on top of the camera on the same 220ms timer that opens the scanner.
-* **The composer's "+" is one door now.** It used to drop a five-item list whose first two entries were **"Upload Images"** and **"Upload Videos"** — one intent split by file type, decided before you had seen anything. It opens a sheet now, with a **Photos · Poll · Commands · Files** pill row along the bottom, and the picker decides between an image and a video.
-* **Orbit asks for permissions once, at startup.** ⚠ They were requested from three unrelated places and **none could read the current state**, so a permission you had already granted was asked for again on every launch — and one of them **opened the camera every single start**, purely to provoke the OS dialog. It reads what is granted first now and asks only for what is missing, once per version. If everything is already granted it does **nothing at all**.
-* **A dismissed link preview stayed dismissed all session.** Reported as *"pasted links aren't recognised"* — **that was not what was happening**. The dismissal was keyed by URL for the whole session, so once the bar for a link had been dismissed, putting that same link back in the composer showed nothing. The one moment a preview is genuinely wanted.
-* **The contacts grid was wider than the screen.** ⚠ Reported as *"too spaced out"*. `1fr 1fr` is `minmax(auto, 1fr)`, and the `auto` minimum is the content's min-content width — so one long name pushed its column wider than its share. On a 390px phone the columns measured **188px + 229px = 426px** and the right-hand cards were cut off. A layout complaint is a measurement, not an opinion.
+* **The composer's "+" is one door now.** It used to drop a five-item list whose first two entries were **"Upload Images"** and **"Upload Videos"** — one intent split by file type, decided before you had seen anything. It opens a sheet now, with a **Photos · Poll · Commands · Files** pill row along the bottom, and the picker decides between an image and a video. Camera goes straight to the camera; Gallery takes both.
+* **Orbit asks for permissions once, at startup.** ⚠ They were requested from three unrelated places and **none could read the current state**, so a permission you had already granted was asked for again on every launch — and one of them **opened the camera on every single start**, purely to provoke the OS dialog. It reads what is granted first now and asks only for what is missing, once per version. If everything is already granted it does **nothing at all** — no sheet, no dialog, no camera.
+* **A dismissed link preview stayed dismissed all session.** Reported as *"pasted links aren't recognised, and links ending in `/` aren't recognised"* — **neither was happening**. The dismissal was keyed by URL for the whole session, so once the bar for a link had been dismissed, putting that same link back in the composer showed nothing. The one moment a preview is genuinely wanted.
+* **The contacts grid was wider than the screen.** ⚠ Reported as *"it feels kinda too spaced out"*. `1fr 1fr` is `minmax(auto, 1fr)`, and the `auto` minimum is the content's min-content width — so one long unbreakable name pushed its column wider than its share. On a 390px phone the columns measured **188px + 229px = 426px** and the right-hand cards were cut off. A layout complaint is a measurement, not an opinion.
+* **The three-dots menu on a contact opened an empty sheet.** It drew the sheet and nothing but the Cancel pill. A contact's actions are *user* actions, and there is already a sheet for exactly that — so a direct message opens it now: View Profile, Message, Mute, Close DM, Block.
+* **A staged attachment vanished on the desktop whenever the chat re-rendered** — and it was found by a test that had been written off as flaky. The strip was rebuilt empty and hidden and nothing put the files back: they were still staged and would still be sent, but you could no longer see them or take them out.
 
 ## Version History
 
@@ -830,7 +826,7 @@ Orbit is a **beta-stage app for desktop and Android** aimed at trusted private n
 
 </details>
 
-<details open>
+<details>
 <summary>v0.8.6-beta</summary>
 
 * **Restore from a backup file** — the Local Vault finds `.orzip`/`.zip` backups in the app’s own folder and in `vault/`, the files that survive deleting the app, and adds the account *alongside* what is on the phone rather than over it
@@ -839,9 +835,17 @@ Orbit is a **beta-stage app for desktop and Android** aimed at trusted private n
 * **Contacts** — filter chips with live counts, a list/grid display style, and actions on every row; groups had none at all before
 * **The attachment preview, rebuilt** — a spinner while an image decodes, an × on each to take it out of the send, and tapping one looks at it full screen instead of sending
 * **Only the active tab keeps its label**
+* **Fixed:** tapping “Pair a desktop” re-opened the profile card on top of the camera, and the restore button had no corner radius at all — it was written against a token this app does not define
+* **Mobile test suite** — 196 checks
+
+</details>
+<details open>
+<summary>v0.8.7-beta</summary>
+
 * **The composer's "+" is one door now** — a media panel with a **Photos · Poll · Commands · Files** pill row, instead of a five-item list whose first two entries were "Upload Images" and "Upload Videos"; the picker decides between an image and a video, so that split is gone
 * **Permissions are asked for once, at startup** — only for the ones that are actually missing, once per version. If everything is already granted it does nothing at all, and it no longer opens the camera on every launch just to provoke the dialog
-* **Fixed:** tapping “Pair a desktop” re-opened the profile card on top of the camera; the restore button had no corner radius at all — it was written against a token this app does not define; a dismissed link preview stayed dismissed for the whole session, so re-pasting that link showed nothing; the ⋮ on a contact opened a sheet containing nothing but Cancel; the contacts grid was **426px wide on a 390px screen**, so the right-hand cards were cut off; and on the desktop a re-render made staged attachments vanish while they were still staged and would still be sent
+* **The vault's "Restore From a Backup File" row moved above the Export and Restore buttons** — it is not an action on this vault, it is the recovery path for one that is already gone
+* **Fixed:** a dismissed link preview stayed dismissed for the whole session, so re-pasting that link showed nothing; the ⋮ on a contact opened a sheet containing nothing but Cancel; the contacts grid was **426px wide on a 390px screen**, so the right-hand cards were cut off; and on the desktop a re-render made staged attachments vanish while they were still staged and would still be sent
 * **Mobile test suite** — 299 checks
 
 </details>
