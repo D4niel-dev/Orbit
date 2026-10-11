@@ -43,22 +43,67 @@ test.describe('staged attachments', () => {
     const errors = [];
     page.on('pageerror', (e) => errors.push(String(e.message)));
 
+    // ⚠ WAIT FOR THE COMPOSER'S LISTENERS, NOT JUST ITS MARKUP.
+    //
+    // launchApp resolves as soon as #chat-input EXISTS, but that element is near
+    // the TOP of renderChat's template while attachEvents() — which is what binds
+    // the file input's `change` listener — runs at the very END of the same
+    // render. Staging into that window fires `change` on an input with no
+    // listener, so nothing is staged at all: measured as **0 tiles**, and it
+    // passed standalone roughly half the time, which is what made it look like a
+    // flake rather than a race.
+    //
+    // `_closePlus` is assigned in the SAME block that attaches the file-input
+    // listener, a few lines above it, so waiting for it is a precise proxy for
+    // "the composer is wired" rather than a sleep.
+    await page.waitForFunction(
+      () => window.ChatPanel && typeof window.ChatPanel._closePlus === 'function',
+      null,
+      { timeout: 15000 }
+    );
+
     // Watch from the moment of attach, so the loading state is caught if it
     // happens at all rather than being inferred from the markup.
+    //
+    // ⚠ WATCH FOR THE TILE BEING INSERTED, NOT FOR THE CLASS ON A POLL. A tile is
+    // built with `is-loading` ALREADY on it, and the class comes off when the
+    // image decodes — which for a small image can be inside the same frame. A
+    // requestAnimationFrame poll therefore missed it about half the time, and
+    // that is what this spec kept failing on. A childList mutation fires at
+    // insertion, before any decode can have finished.
+    //
+    // Observed on document.body rather than the area itself: renderChat replaces
+    // `#file-preview-area` wholesale, so an observer bound to the old node would
+    // silently watch a detached element.
     const sawLoading = page.evaluate(() => new Promise((resolve) => {
-      let frames = 0;
-      const tick = () => {
-        const t = document.querySelector('#file-preview-area .fp-tile');
-        if (t && t.classList.contains('is-loading')) { resolve(true); return; }
-        if (++frames > 900) { resolve(false); return; }
-        requestAnimationFrame(tick);
+      const hit = (nodes) => {
+        for (const n of nodes) {
+          if (n.nodeType !== 1) continue;
+          if (n.classList && n.classList.contains('fp-tile') && n.classList.contains('is-loading')) return true;
+          if (n.querySelector && n.querySelector('.fp-tile.is-loading')) return true;
+        }
+        return false;
       };
-      requestAnimationFrame(tick);
+      // Catch anything already on screen before the observer attaches.
+      if (document.querySelector('.fp-tile.is-loading')) { resolve(true); return; }
+      const mo = new MutationObserver((muts) => {
+        for (const m of muts) {
+          if (hit(m.addedNodes)) { mo.disconnect(); resolve(true); return; }
+        }
+      });
+      mo.observe(document.body, { childList: true, subtree: true });
+      setTimeout(() => { mo.disconnect(); resolve(false); }, 10000);
     }));
 
     await page.setInputFiles('#file-input', paths);
     const loadingSeen = await sawLoading;
-    await page.waitForTimeout(2500);
+    // Event-driven rather than a magic number: wait for the three tiles to exist.
+    await page.waitForFunction(
+      () => document.querySelectorAll('#file-preview-area .fp-tile').length === 3,
+      null,
+      { timeout: 15000 }
+    );
+    await page.waitForTimeout(1500);
 
     const tiles = await page.evaluate(() =>
       Array.from(document.querySelectorAll('#file-preview-area .fp-tile')).map((t) => ({
@@ -76,6 +121,31 @@ test.describe('staged attachments', () => {
     expect(tiles.every((t) => t.shadow && t.shadow !== 'none')).toBe(true);
     expect(tiles.every((t) => t.loading === false)).toBe(true);
     expect(loadingSeen).toBe(true);
+
+    // ── ⚠ THE REGRESSION GUARD: the strip must SURVIVE A RE-RENDER ──────────
+    //
+    // renderChat rebuilds the whole composer, including `#file-preview-area` —
+    // which the template emits EMPTY and `display: none` — and nothing put the
+    // staged files back into it. So any re-render while files were staged made
+    // the strip VANISH while `stagedFiles` still held them: they would still be
+    // sent, and the user could no longer see or remove them.
+    //
+    // Not a rare path — the local-echo chat posts its greeting a few seconds
+    // after boot, so it happened on a plain cold start. It was found only because
+    // this spec kept failing about half the time and got investigated instead of
+    // being written off as a flake: the difference was purely whether the
+    // assertion ran before or after that greeting. Measured, before the fix:
+    // 3 tiles at t+0.5s, then `tiles: 0` with `stagedFiles: 3` at t+4.5s.
+    await page.evaluate(() => window.ChatPanel.renderChat(window.store.getState()));
+    await page.waitForTimeout(800);
+    const afterRender = await page.evaluate(() => ({
+      tiles: document.querySelectorAll('#file-preview-area .fp-tile').length,
+      display: (document.getElementById('file-preview-area') || {}).style.display,
+      staged: window.ChatPanel.stagedFiles.length
+    }));
+    expect(afterRender.staged).toBe(3);
+    expect(afterRender.tiles).toBe(3);
+    expect(afterRender.display).not.toBe('none');
 
     // ── Remove the middle one; the rest must survive ────────────────────────
     await page.locator('#file-preview-area .btn-remove-file').nth(1).click();

@@ -1609,6 +1609,22 @@ window.ChatPanel = {
     // Attach local input events
     this.attachEvents();
 
+    // ⚠ REBUILD THE STAGED-ATTACHMENT STRIP FROM `stagedFiles`.
+    //
+    // renderChat rebuilds the whole composer, including `#file-preview-area` —
+    // which the template emits EMPTY and `display: none`. Nothing repopulated it,
+    // so **any re-render while files were staged made the strip vanish**: the
+    // files were still in `stagedFiles` and would still be sent, but they were
+    // no longer on screen and could not be removed. It is not a rare path — the
+    // local-echo chat posts its greeting a few seconds after boot, so it happened
+    // on a plain cold start.
+    //
+    // Found by a spec that had been dismissed as flaky: it passed about half the
+    // time, and the difference was only whether the assertion ran before or after
+    // that greeting. The measured sequence was 3 tiles at t+0.5s, then `tiles: 0`
+    // with `stagedFiles: 3` and the area hidden at t+4.5s.
+    this.renderPreviewArea();
+
     // Initialize audio player visualizers
     if (window.OrbitAudioPlayer) window.OrbitAudioPlayer.init(this.container);
     if (window.OrbitVideoPlayer) window.OrbitVideoPlayer.init(this.container);

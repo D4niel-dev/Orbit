@@ -23,11 +23,17 @@ window.Changelog = {
             'Every contact row has its actions now. Groups had none at all before this \u2014 a group was a row you could only tap.',
             'The attachment preview was rebuilt. A staged image used to be an empty box until it decoded; there is a spinner now, an \u00d7 on each one to take it out of the send, and tapping an image looks at it full screen instead of sending it.',
             'Only the active tab keeps its label. Three labels you are not on is three words competing for a 62px bar.',
+            'The "+" opens one sheet now — a media panel with a Photos, Poll, Commands and Files pill row along the bottom. Upload Images and Upload Videos were the same intent split in two; the picker decides between an image and a video.',
+            'Orbit asks for permissions once, at startup — only for the ones that are actually missing, once per version. If everything is already granted it does nothing at all, and it no longer opens the camera on every launch just to provoke the dialog.',
           ]],
           ['Fixes', [
             'An emoji picked from the picker could not be sent. It was not the empty-check \u2014 an emoji passes that. The picker set the input\u2019s value directly, and assigning .value fires no input event, so the send button never appeared and the composer kept showing the mic.',
             'Tapping \u201cPair a desktop\u201d no longer re-opens the profile card on top of the camera.',
             'The restore button had no corner radius at all \u2014 it was written against a token this app does not define, and an undefined var() is dropped silently.',
+            'A dismissed link preview stayed dismissed for the whole session. Dismiss the bar for a link, then paste that same link back, and nothing appears — which is the one moment a preview is actually wanted.',
+            'The three-dots button on a contact opened a sheet with nothing in it but Cancel. A contact’s actions are user actions, and there is already a sheet for those.',
+            'The contacts grid was wider than the screen. One long name widened its column, giving 426px of grid on a 390px phone with the right-hand cards cut off.',
+            'On the desktop, a re-render made staged attachments vanish. The strip was rebuilt empty and hidden and nothing put the files back, so they were still staged and would still be sent, but you could no longer see or remove them.',
           ]],
           ['Version', [
             'Version: Bumped to v0.8.6-beta.'
