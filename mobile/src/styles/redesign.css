@@ -4731,3 +4731,115 @@
 }
 .perm-actions .perm-go:active { background: var(--accent-hover); }
 .perm-actions .perm-go:disabled { opacity: .6; }
+
+/* ══ The composer's attach sheet ════════════════════════════════════════════
+   What the "+" opens: a panel on top, a pill row along the bottom. It replaced
+   a five-item dropup list whose first two entries were "Upload Images" and
+   "Upload Videos" — one intent, split by file type, decided before the user had
+   seen anything. See js/components/attach-sheet.js. */
+.attach-sheet { padding: 2px 0 0; }
+
+.attach-body { padding: 10px 14px 4px; }
+
+/* ── The media panel ─────────────────────────────────────────────────────── */
+.attach-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.attach-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 108px;
+  padding: 14px 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-raised);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.attach-tile:active { background: var(--bg-hover); color: var(--text-primary); }
+.attach-tile-icon { display: grid; place-items: center; color: var(--accent-primary); }
+.attach-tile-icon svg { width: 26px; height: 26px; }
+.attach-tile-label { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+
+.attach-hint {
+  padding: 10px 2px 2px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ── The Poll / Commands / Files panels ──────────────────────────────────── */
+.attach-rows { display: flex; flex-direction: column; }
+.attach-row {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  padding: 13px 6px;
+  border: none;
+  border-bottom: 1px solid var(--border-subtle);
+  background: transparent;
+  text-align: left;
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+.attach-row:last-child { border-bottom: none; }
+.attach-row:active { background: var(--bg-hover); }
+.attach-row-icon {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-raised);
+  color: var(--accent-primary);
+  display: grid;
+  place-items: center;
+}
+.attach-row-icon svg { width: 18px; height: 18px; }
+.attach-row-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.attach-row-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.attach-row-why { font-size: 12px; line-height: 1.45; color: var(--text-secondary); }
+
+/* ── The pill row ────────────────────────────────────────────────────────── */
+.attach-pills {
+  display: flex;
+  gap: 6px;
+  padding: 12px 14px 2px;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 8px;
+}
+.attach-pill {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 9px 4px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.attach-pill svg { width: 19px; height: 19px; }
+.attach-pill span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.attach-pill:active { background: var(--bg-hover); }
+/* The selected pill is the one that says which panel you are looking at, so it
+   carries the accent rather than a border. */
+.attach-pill.on {
+  background: var(--accent-soft);
+  color: var(--accent-primary);
+}

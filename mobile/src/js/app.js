@@ -3807,7 +3807,17 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   /* ---- Slash Command Handler ---- */
-  function _handleSlashCommand(text, newMsg) {
+  /**
+   * ⚠ `opts.anyChat` exists for the composer's attach sheet, and only for it.
+   *
+   * Slash commands are group utilities and the guard below is what enforces that.
+   * But the POLL BUILDER is not a group-only thing — it is a composer action, and
+   * polls render and vote identically in a DM (the create path already falls back
+   * to a direct send for non-group chats, see the `/poll` case). The attach sheet
+   * reaches the SAME builder through this flag rather than a second copy of it, so
+   * there is still exactly one place a poll is composed.
+   */
+  function _handleSlashCommand(text, newMsg, opts) {
     if (!text || !text.startsWith('/')) return null;
 
     // Group-only guard: all slash commands are group utilities (no AI, per README/plans).
@@ -3816,7 +3826,7 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
       isGroupChat = MStore.groups.some(function(g) { return g.id === activeChatId || g.groupId === activeChatId; });
     } catch(e) { isGroupChat = false; }
-    if (!isGroupChat) {
+    if (!isGroupChat && !(opts && opts.anyChat)) {
       // Clear the slash input so it does not look stuck
       var _slashInput = document.getElementById('chat-input');
       if (_slashInput && _slashInput.value.trim().indexOf('/') === 0) {
@@ -10664,6 +10674,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
   window.showUserActionsSheet = showUserActionsSheet;
 
+  // The composer's attach sheet (js/components/attach-sheet.js) is a separate file
+  // and cannot see inside this closure, so the two things it opens are handed out
+  // here. Both are thin: the poll builder is the /poll builder, and the command
+  // reference is the same modal /help opens. Nothing new is composed for the sheet.
+  window.showHelpModal = showHelpModal;
+  window.openPollBuilder = function () {
+    // `anyChat` because a poll is a composer action, not a group-only utility.
+    return _handleSlashCommand('/poll', null, { anyChat: true });
+  };
+
   /** Show own profile as a slide-up bottom sheet */
   function showProfileSheet() {
     var u = MStore.user;
@@ -14578,11 +14598,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // File input + drop-up menu
+  // File input.
+  //
+  // ⚠ THIS GUARD USED TO READ `if (fileInput && dropupMenu)`. Removing the dropup
+  // markup made `dropupMenu` null, which would have skipped this whole block —
+  // including `fileInput.addEventListener('change', handleFileInput)` — so every
+  // attachment would have stopped staging, with no error anywhere. The "+" would
+  // still have opened the sheet and the picker would still have run; the file
+  // simply would never have arrived. A guard on a thing that no longer exists is
+  // the same silent-failure shape as a CSS rule against a class nothing has.
   var fileInput = document.getElementById('file-input');
-  var dropupMenu = document.getElementById('dropup-menu');
 
-  if (fileInput && dropupMenu) {
+  if (fileInput) {
     // Copy my own user ID from the profile pill. The ID's whole purpose is to be handed to
     // someone else, and on mobile there was no way to get it out at all.
     var btnPillCopy = document.getElementById('btn-pill-copy-id');
@@ -14601,53 +14628,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     var btnPlus = document.getElementById('btn-plus');
-    btnPlus.addEventListener('click', function(e) {
-      e.stopPropagation();
-      dropupMenu.classList.toggle('active');
-      if (dropupMenu.classList.contains('active')) {
-        renderLucide(dropupMenu);
-      }
-    });
-
-    dropupMenu.querySelectorAll('.dropup-item').forEach(function(item) {
-      item.addEventListener('click', function(e) {
+    if (btnPlus) {
+      btnPlus.addEventListener('click', function(e) {
         e.stopPropagation();
-        dropupMenu.classList.remove('active');
-        var type = this.getAttribute('data-upload');
-        // Commands is not an upload — it opens the reference, which is the only place the
-        // nineteen of them are listed. Until now the only door was knowing to type a "/".
-        if (type === 'commands') {
-          if (typeof showHelpModal === 'function') showHelpModal();
-          return;
-        }
-        if (type === 'images') {
-          fileInput.accept = 'image/*';
-          fileInput.removeAttribute('webkitdirectory');
-        } else if (type === 'videos') {
-          fileInput.accept = 'video/*';
-          fileInput.removeAttribute('webkitdirectory');
-        } else if (type === 'files') {
-          fileInput.removeAttribute('accept');
-          fileInput.removeAttribute('webkitdirectory');
-        } else if (type === 'folder') {
-          fileInput.removeAttribute('accept');
-          fileInput.setAttribute('webkitdirectory', '');
-        }
-        fileInput.click();
+        // ⚠ ONE DOOR, NOT FIVE. This used to toggle a dropup list whose first two
+        // entries were "Upload Images" and "Upload Videos" — the same intent split
+        // by file type, decided before the user had seen anything. The sheet that
+        // replaced it opens the picker, and the picker decides. See
+        // js/components/attach-sheet.js for why the media grid is a chooser rather
+        // than an in-app camera roll.
+        if (window.OrbitAttach) window.OrbitAttach.open('photos');
       });
-    });
+    }
 
     fileInput.addEventListener('change', handleFileInput);
-
-    // Close menu on outside tap
-    document.addEventListener('click', function(e) {
-      if (dropupMenu.classList.contains('active') &&
-          !dropupMenu.contains(e.target) &&
-          e.target !== btnPlus &&
-          !btnPlus.contains(e.target)) {
-        dropupMenu.classList.remove('active');
-      }
-    });
   }
 
   // Voice recording — Mic button
@@ -17262,7 +17256,11 @@ document.addEventListener('DOMContentLoaded', function() {
     var tag = e.target.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
     if (e.target.closest('input, textarea, select')) return;
-    if (e.target.closest('button, [role="button"], .btn, .chat-row, .friend-row, .nav-btn, .settings-row, .settings-toggle, .profile-upload-btn, .modal-btn, .msg-action-btn, .dropup-item, .create-group-btn, label, .search-btn, .poll-option')) {
+    // ⚠ `.dropup-item` was in this list and no longer exists — the "+" opens the
+    // attach sheet now. Replaced by its controls rather than just deleted: this
+    // list is what stops a tap blurring the composer, and the sheet's tiles and
+    // pills are exactly the kind of control it is for.
+    if (e.target.closest('button, [role="button"], .btn, .chat-row, .friend-row, .nav-btn, .settings-row, .settings-toggle, .profile-upload-btn, .modal-btn, .msg-action-btn, .attach-tile, .attach-pill, .attach-row, .create-group-btn, label, .search-btn, .poll-option')) {
       setTimeout(function() {
         var active = document.activeElement;
         if (active && active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA' && active.tagName !== 'SELECT') {

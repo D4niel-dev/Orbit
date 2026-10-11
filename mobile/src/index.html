@@ -35,7 +35,7 @@
   <!-- v0.8.1-beta redesign layer. MUST load last: mobile.css redefines several
        selectors more than once, and this sheet restates what the redesign
        changes rather than editing that file in place. -->
-  <link rel="stylesheet" href="styles/redesign.css?v=20261011b">
+  <link rel="stylesheet" href="styles/redesign.css?v=20261011c">
 
   <!-- Syntax Highlighting (Prism) -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
@@ -273,23 +273,10 @@
             <button id="btn-voice" title="Voice message"><i data-lucide="mic"></i></button>
             <button id="btn-send"><i data-lucide="send"></i></button>
           </div>
-          <div id="dropup-menu">
-            <button class="dropup-item" data-upload="images">
-              <i data-lucide="image"></i> Upload Images
-            </button>
-            <button class="dropup-item" data-upload="videos">
-              <i data-lucide="video"></i> Upload Videos
-            </button>
-            <button class="dropup-item" data-upload="files">
-              <i data-lucide="file"></i> Upload Files
-            </button>
-            <button class="dropup-item" data-upload="commands">
-              <i data-lucide="terminal"></i> Commands
-            </button>
-            <button class="dropup-item" data-upload="folder">
-              <i data-lucide="folder"></i> Upload Folder
-            </button>
-          </div>
+          <!-- The "+" opens js/components/attach-sheet.js: a media grid plus a
+               Photos / Poll / Commands / Files pill row. The old dropup list
+               lived here — Upload Images and Upload Videos were the same intent
+               split in two, and the sheet's picker decides between them now. -->
           <div id="voice-recording-indicator" style="display:none;">
             <div class="voice-recording-dot"></div>
             <span id="voice-recording-timer">0:00</span>
@@ -503,7 +490,7 @@
   setTimeout(function() { window._loadImageCropper(); }, 1500);
   </script>
 
-  <script src="js/app.js?v=20261011a"></script>
+  <script src="js/app.js?v=20261011d"></script>
 
   <!-- v0.2.8 Components -->
   <script src="js/components/navigation.js?v=20261004e"></script>
@@ -512,6 +499,8 @@
   <!-- The one place a runtime permission is asked for. Loaded after app.js so
        escapeHtml / OrbitSheet / MStore are already defined when it runs. -->
   <script src="js/components/permission-gate.js?v=20261011b"></script>
+  <!-- The composer's "+" sheet. Replaces the old dropup list. -->
+  <script src="js/components/attach-sheet.js?v=20261011c"></script>
   <script src="js/components/account-switcher.js?v=20261009a"></script>
   <script src="js/components/account-receive.js?v=20261009c"></script>
 </body>
