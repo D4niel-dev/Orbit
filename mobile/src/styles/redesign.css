@@ -4475,10 +4475,21 @@
 /* ── Grid display ──────────────────────────────────────────────────────────
    The same rows, laid out face-first. Two columns of large avatars with the
    name under — for people who recognise a face faster than they read a name. */
+/* ══ Contacts: grid display ═════════════════════════════════════════════════
+   Reworked for v0.8.7. Dan: "about the grid display, might need to rework it cuz
+   it feel kinda too space out with the layout".
+
+   ⚠ IT WAS ALSO OVERFLOWING, which the measurement caught. `1fr 1fr` means
+   `minmax(auto, 1fr)`, and an `auto` minimum is the content's MIN-CONTENT width —
+   so one long unbreakable name pushed its column wider than its share and the
+   whole grid grew past the screen. On a 390px phone the two columns measured
+   188px + 229px = 426px, and the right-hand cards were cut off. `minmax(0, 1fr)`
+   lets a column be narrower than its content, which is also what makes the
+   ellipsis on a long name actually take effect. */
 #friends-list.contacts-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
   padding: 4px 12px 16px;
   align-content: start;
 }
@@ -4488,48 +4499,55 @@
   margin-top: 6px;
 }
 #friends-list.contacts-grid > .friend-row {
+  position: relative;
   flex-direction: column;
-  gap: 8px;
-  padding: 14px 10px 12px;
+  gap: 5px;
+  padding: 12px 8px 10px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   background: var(--bg-surface);
   text-align: center;
+  /* No min-height. Grid items stretch to their row, so the two cards in a row
+     match heights without one — and a fixed floor was most of the empty space. */
+  overflow: hidden;
 }
 #friends-list.contacts-grid > .friend-row .chat-row-avatar {
-  width: 56px; height: 56px;
-  font-size: 20px;
+  width: 46px; height: 46px;
+  font-size: 17px;
 }
 #friends-list.contacts-grid > .friend-row .chat-row-avatar img { width: 100%; height: 100%; }
 #friends-list.contacts-grid > .friend-row .chat-row-info {
   align-items: center;
   text-align: center;
   width: 100%;
+  /* Without this a flex child refuses to shrink below its content, so the
+     ellipsis below never fires and the card overflows instead. */
+  min-width: 0;
 }
 #friends-list.contacts-grid > .friend-row .chat-row-name {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
 }
 #friends-list.contacts-grid > .friend-row .friend-sub {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+  font-size: 10.5px;
+  margin-top: 1px;
 }
+/* The action is a circle on a card: a label belongs to the list view, where
+   there is room for one. */
 #friends-list.contacts-grid > .friend-row .friend-action {
-  width: auto; height: 28px; padding: 0 12px;
-  border-radius: var(--radius-pill);
+  width: 32px; height: 32px; padding: 0;
+  border-radius: 50%;
   background: var(--bg-raised);
 }
 /* ⚠ The row is a COLUMN in grid mode, so a second in-flow action overflows the
    card — the ⋮ rendered below it, outside the border. On a card the overflow
    menu belongs in the corner anyway, so it leaves the flow entirely. */
-#friends-list.contacts-grid > .friend-row { position: relative; }
 #friends-list.contacts-grid > .friend-row .friend-more {
   position: absolute;
-  top: 6px; right: 6px;
-  width: 26px; height: 26px;
+  top: 4px; right: 4px;
+  width: 24px; height: 24px;
   background: transparent;
 }
-/* A common floor so a two-line bio does not make one card taller than its
-   neighbour in the same row. */
-#friends-list.contacts-grid > .friend-row { min-height: 168px; justify-content: flex-start; }
 
 /* ══ Attachment preview: loading, remove, view ═════════════════════════════
    A staged image used to be a bare <img> in a 56px tile, so a photo that took
@@ -4634,3 +4652,81 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* ══ The startup permission pass ════════════════════════════════════════════
+   The sheet from components/permission-gate.js. It exists so the system dialog
+   is the ANSWER to a question rather than the question itself: a bare Android
+   prompt says "Allow Orbit to take pictures and record video?" with no context,
+   at a moment the user did not choose. */
+.perm-sheet { padding: 2px 0 4px; }
+.perm-head { padding: 6px 18px 12px; }
+.perm-title { font-size: 16px; font-weight: 650; color: var(--text-primary); }
+.perm-sub { font-size: 12.5px; line-height: 1.55; color: var(--text-secondary); margin-top: 3px; }
+
+.perm-list { border-top: 1px solid var(--border-subtle); }
+.perm-row,
+.perm-battery {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 11px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+/* The battery exemption opens a Settings screen rather than raising a dialog,
+   so it is visually set apart from the permissions above it. */
+.perm-battery { background: var(--bg-raised); }
+
+.perm-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-raised);
+  color: var(--text-secondary);
+  display: grid;
+  place-items: center;
+}
+.perm-icon svg { width: 17px; height: 17px; }
+.perm-row.is-granted .perm-icon { color: var(--accent-primary); }
+
+.perm-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.perm-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.perm-why { font-size: 12px; line-height: 1.5; color: var(--text-secondary); }
+/* A permission that is already granted is still shown, quietly — the row is the
+   record of what the app has, not only a list of what it is missing. */
+.perm-row.is-granted .perm-name { color: var(--text-secondary); }
+.perm-row.is-granted .perm-why { color: var(--text-muted); }
+
+.perm-link {
+  flex: 0 0 auto;
+  align-self: center;
+  padding: 6px 12px;
+  min-height: 30px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--accent-primary);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.perm-link:active { background: var(--bg-hover); }
+.perm-chip { flex: 0 0 auto; align-self: center; font-size: 11px; font-weight: 600; color: var(--accent-primary); }
+
+.perm-actions { padding: 14px 18px 4px; }
+/* One decision, full width. Leaving is the sheet's own Cancel pill. */
+.perm-actions .perm-go {
+  width: 100%;
+  min-height: 42px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: var(--accent-primary);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.perm-actions .perm-go:active { background: var(--accent-hover); }
+.perm-actions .perm-go:disabled { opacity: .6; }

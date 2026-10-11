@@ -1163,102 +1163,41 @@ var OrbitHome = {
     }
   },
 
-  /** Show context menu for a chat row (long-press) */
+  /** Show context menu for a chat row (long-press, or the ⋮ button) */
   showChatContextMenu: function(chatId) {
     if (typeof OrbitSheet === 'undefined') return;
+
     var folders = MStore.getChatFolders();
     var items = [];
+    var callbacks = {};
     var foldersEnabled = !!(MStore.settings && MStore.settings.experimentalFolders);
 
-    // Group actions first (only for group chats), then the folder section below
     var grp = MStore.groups.find(function(g) { return g.id === chatId || g.groupId === chatId; });
     var isGroup = !!grp;
-    if (isGroup) {
-      var isMuted = !!(MStore.settings.mutedChats && MStore.settings.mutedChats[chatId]);
-      var isPinned = !!(MStore.pinnedDMs && MStore.pinnedDMs[chatId]);
-      var ownerId = grp.ownerId || grp.owner || (grp.creator && grp.creator.id);
-      var isOwner = !!ownerId && String(ownerId) === String(MStore.user ? MStore.user.id : '');
 
-      items.push({ icon: 'users-round', label: 'Group Info', action: 'group_info' });
-      items.push({ icon: 'check-check', label: 'Mark as Read', action: 'group_mark_read' });
-      items.push({ icon: isMuted ? 'bell' : 'bell-off', label: isMuted ? 'Unmute Notifications' : 'Mute Notifications', action: 'group_mute' });
-      items.push({ icon: isPinned ? 'pin-off' : 'pin', label: isPinned ? 'Unpin Chat' : 'Pin Chat', action: 'group_pin' });
-      if (isOwner) {
-        items.push({ icon: 'trash-2', label: 'Delete Group', danger: true, action: 'group_delete' });
-      } else {
-        items.push({ icon: 'log-out', label: 'Leave Group', danger: true, action: 'group_leave' });
-      }
-    }
-
+    // ── Folder membership ───────────────────────────────────────────────────
+    // Chat-level, so it applies to a DM exactly as it does to a group. Built once
+    // here and handed to whichever branch runs, because writing this block twice
+    // is how two menus drift apart.
+    var folderItems = [];
+    var folderCallbacks = {};
     if (foldersEnabled) {
-      // Check which folders this chat already belongs to
       var inFolders = [];
       for (var fi = 0; fi < folders.length; fi++) {
-        if (folders[fi].chatIds.indexOf(chatId) !== -1) {
-          inFolders.push(folders[fi]);
-        }
+        if (folders[fi].chatIds.indexOf(chatId) !== -1) inFolders.push(folders[fi]);
       }
-
-      // Add folder items
       for (var fi2 = 0; fi2 < folders.length; fi2++) {
         var f2 = folders[fi2];
         var alreadyIn = inFolders.some(function(inf) { return inf.id === f2.id; });
         (function(folderId, folderName, folderIcon, isIn) {
-          items.push({
-            icon: isIn ? 'check-circle' : (folderIcon || 'folder'),
-            label: (isIn ? '\u2713 ' : '') + folderName,
-            subtext: isIn ? 'Tap to remove' : 'Add chat to folder',
-            action: isIn ? 'remove_folder_' + folderId : 'add_folder_' + folderId
-          });
-        })(f2.id, f2.name, f2.icon, alreadyIn);
-      }
-      items.push({ icon: 'plus', label: 'New Folder\u2026', action: 'new_folder' });
-    }
-
-    OrbitSheet.show(items);
-    OrbitSheet._callbacks = {};
-
-    // Group action callbacks
-    if (isGroup) {
-      OrbitSheet._callbacks['group_info'] = function() {
-        if (window.showGroupInfo) window.showGroupInfo(chatId);
-      };
-      OrbitSheet._callbacks['group_mark_read'] = function() {
-        MStore.markAsRead(chatId);
-        if (window.renderChatList) window.renderChatList(window._activeHomeTab);
-        showToast('Marked as read', 'info');
-      };
-      OrbitSheet._callbacks['group_mute'] = function() {
-        MStore.toggleMute(chatId);
-        if (window.renderChatList) window.renderChatList(window._activeHomeTab);
-        showToast(isMuted ? 'Unmuted' : 'Muted', 'info');
-      };
-      OrbitSheet._callbacks['group_pin'] = function() {
-        MStore.togglePinDM(chatId);
-        if (window.renderChatList) window.renderChatList(window._activeHomeTab);
-      };
-      if (isOwner) {
-        OrbitSheet._callbacks['group_delete'] = function() {
-          if (confirm('Delete this group permanently? This cannot be undone.')) {
-            if (window.deleteGroupById) window.deleteGroupById(chatId);
-          }
-        };
-      } else {
-        OrbitSheet._callbacks['group_leave'] = function() {
-          if (confirm('Leave this group?')) {
-            if (window.leaveGroupById) window.leaveGroupById(chatId);
-          }
-        };
-      }
-    }
-
-    if (foldersEnabled) {
-      for (var fi3 = 0; fi3 < folders.length; fi3++) {
-        var f2 = folders[fi3];
-        var isIn2 = inFolders.some(function(inf) { return inf.id === f2.id; });
-        (function(folderId, isIn, chatId) {
           var actionKey = (isIn ? 'remove_folder_' : 'add_folder_') + folderId;
-          OrbitSheet._callbacks[actionKey] = function() {
+          folderItems.push({
+            icon: isIn ? 'check-circle' : (folderIcon || 'folder'),
+            label: (isIn ? '✓ ' : '') + folderName,
+            subtext: isIn ? 'Tap to remove' : 'Add chat to folder',
+            action: actionKey
+          });
+          folderCallbacks[actionKey] = function() {
             if (isIn) {
               MStore.removeChatFromFolder(folderId, chatId);
               showToast('Removed from folder', 'info');
@@ -1269,13 +1208,95 @@ var OrbitHome = {
             OrbitHome.renderFolderTabs();
             if (window.renderChatList) window.renderChatList(window._activeHomeTab);
           };
-        })(f2.id, isIn2, chatId);
+        })(f2.id, f2.name, f2.icon, alreadyIn);
       }
+      folderItems.push({ icon: 'plus', label: 'New Folder…', action: 'new_folder' });
+      folderCallbacks['new_folder'] = function() { OrbitHome._showNewFolderSheet(chatId); };
+    }
 
-      OrbitSheet._callbacks['new_folder'] = function() {
-        OrbitHome._showNewFolderSheet(chatId);
+    if (!isGroup) {
+      // ⚠ A DM HAS NO CHAT-LEVEL ACTIONS OF ITS OWN — they are USER actions, and
+      // there is already a sheet for exactly that.
+      //
+      // This function only ever pushed GROUP items and folder items. So for a DM
+      // with the experimental folder feature off, `items` came out EMPTY and
+      // `OrbitSheet.show([])` drew a sheet containing nothing but the Cancel pill.
+      // That is the three-dots button Dan pressed: it opened, and there was
+      // nothing in it.
+      //
+      // showUserActionsSheet(userId) already holds the right set for a PERSON —
+      // View Profile, Message, Mute, Close DM, Block — and it is the same sheet
+      // the profile card opens. A contact gets one place its actions live instead
+      // of a second menu that drifts away from the first.
+      var peerId = chatId.indexOf('dm_') === 0 ? chatId.substring(3) : chatId;
+      if (typeof window.showUserActionsSheet === 'function') {
+        // Folder entries are chat-scoped and still apply, so they are handed over
+        // rather than silently dropped.
+        var extras = folderItems.map(function (it) {
+          return { item: it, callback: folderCallbacks[it.action] };
+        });
+        window.showUserActionsSheet(peerId, { chatId: chatId }, extras);
+        return;
+      }
+      // No user sheet to delegate to: the folder list is all there is, which is
+      // still better than the empty sheet this used to draw.
+      OrbitSheet.show(folderItems);
+      OrbitSheet._callbacks = folderCallbacks;
+      return;
+    }
+
+    // ── Group ───────────────────────────────────────────────────────────────
+    var isMuted = !!(MStore.settings.mutedChats && MStore.settings.mutedChats[chatId]);
+    var isPinned = !!(MStore.pinnedDMs && MStore.pinnedDMs[chatId]);
+    var ownerId = grp.ownerId || grp.owner || (grp.creator && grp.creator.id);
+    var isOwner = !!ownerId && String(ownerId) === String(MStore.user ? MStore.user.id : '');
+
+    items.push({ icon: 'users-round', label: 'Group Info', action: 'group_info' });
+    items.push({ icon: 'check-check', label: 'Mark as Read', action: 'group_mark_read' });
+    items.push({ icon: isMuted ? 'bell' : 'bell-off', label: isMuted ? 'Unmute Notifications' : 'Mute Notifications', action: 'group_mute' });
+    items.push({ icon: isPinned ? 'pin-off' : 'pin', label: isPinned ? 'Unpin Chat' : 'Pin Chat', action: 'group_pin' });
+    if (isOwner) {
+      items.push({ icon: 'trash-2', label: 'Delete Group', danger: true, action: 'group_delete' });
+    } else {
+      items.push({ icon: 'log-out', label: 'Leave Group', danger: true, action: 'group_leave' });
+    }
+
+    items = items.concat(folderItems);
+    Object.keys(folderCallbacks).forEach(function (k) { callbacks[k] = folderCallbacks[k]; });
+
+    callbacks['group_info'] = function() {
+      if (window.showGroupInfo) window.showGroupInfo(chatId);
+    };
+    callbacks['group_mark_read'] = function() {
+      MStore.markAsRead(chatId);
+      if (window.renderChatList) window.renderChatList(window._activeHomeTab);
+      showToast('Marked as read', 'info');
+    };
+    callbacks['group_mute'] = function() {
+      MStore.toggleMute(chatId);
+      if (window.renderChatList) window.renderChatList(window._activeHomeTab);
+      showToast(isMuted ? 'Unmuted' : 'Muted', 'info');
+    };
+    callbacks['group_pin'] = function() {
+      MStore.togglePinDM(chatId);
+      if (window.renderChatList) window.renderChatList(window._activeHomeTab);
+    };
+    if (isOwner) {
+      callbacks['group_delete'] = function() {
+        if (confirm('Delete this group permanently? This cannot be undone.')) {
+          if (window.deleteGroupById) window.deleteGroupById(chatId);
+        }
+      };
+    } else {
+      callbacks['group_leave'] = function() {
+        if (confirm('Leave this group?')) {
+          if (window.leaveGroupById) window.leaveGroupById(chatId);
+        }
       };
     }
+
+    OrbitSheet.show(items);
+    OrbitSheet._callbacks = callbacks;
   },
 
   /** Show an in-app bottom sheet prompting for a new folder name (+ Folder flow) */

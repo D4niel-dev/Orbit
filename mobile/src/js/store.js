@@ -76,6 +76,13 @@ class Store {
       mutedChats: {},      // stored inside settings for backward compat (app.js uses MStore.settings.mutedChats)
       noFlashbang: false,
       appZoom: 100,
+      // The app version whose permission pass was last shown. Set by
+      // components/permission-gate.js so a user who denied something is asked
+      // once per release rather than on every launch. It has to live here, in
+      // the defaults: load() RESETS settings rather than merging, so a key that
+      // is not declared would be dropped on the next boot and the sheet would
+      // reappear forever.
+      permissionsAskedVersion: '',
       ...initialState.settings
     };
 

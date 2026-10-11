@@ -5043,7 +5043,8 @@ document.addEventListener('DOMContentLoaded', function() {
      is the thing just sent. An older link's card would sit there permanently,
      describing something nobody is talking about any more. */
   var _lpBarUrl = null;        // what is showing now
-  var _lpDismissed = {};       // url -> true, for this session
+  var _lpDismissed = {};       // url -> true, for this session (the chat fallback)
+  var _lpComposerSilenced = false;  // the box's link was dismissed; until it is emptied
 
   function _latestLinkUrl(chatId) {
     var LP = window.OrbitLinkPreview;
@@ -5080,13 +5081,46 @@ document.addEventListener('DOMContentLoaded', function() {
       var inputEl = document.getElementById('chat-input');
       // Only when the composer belongs to the chat being painted.
       if (inputEl && inputEl.value && chatId === activeChatId) {
-        var found = inputEl.value.match(/https?:\/\/[^\s]+/);
-        if (found) typed = found[0];
+        // ⚠ ONE SOURCE for "what link is in this text". This used to be a second,
+        // slightly different regex living only here, so the bar and the cards
+        // could disagree about where a URL ended. OrbitLinkPreview.firstUrl() is
+        // the one the messages already use — including its trailing-punctuation
+        // trim, which matters for "see https://x.com." typed mid-sentence.
+        var LPu = window.OrbitLinkPreview;
+        var found = (LPu && LPu.firstUrl)
+          ? LPu.firstUrl(inputEl.value)
+          : (inputEl.value.match(/https?:\/\/[^\s]+/) || [])[0];
+        if (found) typed = found;
       }
     } catch (e) { /* the bar must never break the composer */ }
 
+    // ⚠ A LINK IN THE BOX ALWAYS WINS OVER AN OLD DISMISSAL.
+    //
+    // Dismissing means "stop describing the last thing that was SENT" — it is
+    // about the message, not about the link. But it was keyed by URL for the
+    // whole session, so once the bar for a link had been dismissed, putting that
+    // SAME link into the composer showed nothing at all. That is the one moment a
+    // preview is genuinely wanted: you are looking at the link you are about to
+    // send, and asking what it leads to.
+    //
+    // That is exactly what Dan hit. The chat already held
+    // https://d4niel-dev.github.io/Orbit/, its card had been dismissed at some
+    // point, and pasting it back gave no preview. He read that as "pasted links
+    // are not recognised" and as "links ending in / are not recognised" — it is
+    // one cause, and neither of those is what was happening.
+    //
+    // So the two cases are tracked separately. The chat fallback keeps a
+    // per-URL dismissal for the session, as before. The composer has a single
+    // flag instead, set when you dismiss the bar while a link is in the box and
+    // cleared when the box is emptied — so saying "no" holds while you carry on
+    // typing (the URL changes on every keystroke, and keying by URL would bring
+    // the bar straight back), but clearing the box and pasting the link again is
+    // a fresh decision and gets a fresh preview.
+    if (!typed) _lpComposerSilenced = false;
+
     var url = typed || _latestLinkUrl(chatId);
-    if (!url || _lpDismissed[url]) {
+    var silenced = typed ? _lpComposerSilenced : (url ? !!_lpDismissed[url] : false);
+    if (!url || silenced) {
       if (el.style.display !== 'none') { el.style.display = 'none'; el.innerHTML = ''; _lpBarUrl = null; }
       return;
     }
@@ -5121,9 +5155,25 @@ document.addEventListener('DOMContentLoaded', function() {
         if (close) {
           close.addEventListener('click', function (e) {
             e.stopPropagation();
-            // Dismissed for the session, not for good: the next link in the chat
-            // is a different question and deserves its own answer.
-            _lpDismissed[url] = true;
+            // ⚠ Read the composer NOW rather than trusting the `typed` captured
+            // when this handler was attached. The same URL can arrive from the
+            // other path (the chat's last link, then the same link pasted), and
+            // the bar is not repainted when the URL is unchanged — so the
+            // captured value can describe the previous source.
+            var nowTyped = '';
+            try {
+              var i2 = document.getElementById('chat-input');
+              var LPy = window.OrbitLinkPreview;
+              if (i2 && i2.value && LPy && LPy.firstUrl) nowTyped = LPy.firstUrl(i2.value) || '';
+            } catch (err) { /* fall through to the chat dismissal */ }
+
+            // Which dismissal this is depends on what the bar was describing. A
+            // link in the box is silenced for this compose only; the chat's own
+            // last link is remembered per URL for the session. Dismissed, not
+            // forgotten: the next link in the chat is a different question and
+            // deserves its own answer.
+            if (nowTyped) _lpComposerSilenced = true;
+            else _lpDismissed[url] = true;
             el.style.display = 'none';
             el.innerHTML = '';
             _lpBarUrl = null;
@@ -7446,21 +7496,29 @@ document.addEventListener('DOMContentLoaded', function() {
         ) : '') +
         card('smartphone', 'Auto-Backup on Background', 'Export silently when the app goes to background',
           '<button class="settings-toggle ' + (s.vaultAutoBackup ? 'on' : '') + '" id="vault-auto-toggle"></button>') +
+        // ⚠ THIS ROW SITS ABOVE THE BUTTONS, ON PURPOSE (Dan's call, v0.8.7).
+        //
+        // It used to be the last thing on the screen, below Export and Restore —
+        // which put it after the actions it has nothing to do with, and made it
+        // read as a footnote to them. It is not an action on THIS vault; it is
+        // the recovery path for a vault that is already gone, and the only one
+        // that survives deleting the app. Every other row on this screen is a
+        // setting, so it belongs with the rows.
+        //
+        // A vault and a backup FILE are different things (see vault.js), and the
+        // file is what survives a reinstall. It gets its own row rather than
+        // being folded into "Restore Vault", because a user looking for the file
+        // they saved would not think to look inside a directory restore.
+        card('file-archive', 'Restore From a Backup File',
+          'Find .orzip or .zip backups in this app\u2019s folder and vault/',
+          '<button id="btn-vault-files" class="settings-btn-secondary" style="white-space:nowrap;">Find backups</button>') +
         // One primary, one secondary. Both were primary, which made the eye
         // choose between two things that are not equal: exporting is the routine
         // action, restoring replaces everything you have.
         '<div class="settings-btn-row">' +
           '<button id="btn-vault-export" class="settings-btn-primary"><i data-lucide="download"></i> Export Vault Now</button>' +
           '<button id="btn-vault-restore" class="settings-btn-secondary"><i data-lucide="upload"></i> Restore Vault</button>' +
-        '</div>' +
-        // A vault and a backup FILE are different things (see vault.js), and the
-        // second one is what survives deleting the app. It gets its own row
-        // rather than being folded into "Restore Vault", because a user looking
-        // for the file they saved would not think to look inside a directory
-        // restore.
-        card('file-archive', 'Restore From a Backup File',
-          'Find .orzip or .zip backups in this app\u2019s folder and vault/',
-          '<button id="btn-vault-files" class="settings-btn-secondary" style="white-space:nowrap;">Find backups</button>');
+        '</div>';
       case 'folders':
         if (!s.experimentalFolders) return '';
         var folders = MStore.getChatFolders();
@@ -10489,7 +10547,7 @@ document.addEventListener('DOMContentLoaded', function() {
    * Bottom sheet for a user: View Profile / Message / Add Friend / Close DM / Block.
    * Only actions that apply are shown (Add Friend & Close DM are friend-only, etc.).
    */
-  function showUserActionsSheet(userId, sourceContext) {
+  function showUserActionsSheet(userId, sourceContext, extraItems) {
     if (typeof OrbitSheet === 'undefined' || !OrbitSheet.show) return;
     var myId = MStore.user ? MStore.user.id : '';
     if (!userId || String(userId) === String(myId)) return; // never for yourself
@@ -10589,6 +10647,16 @@ document.addEventListener('DOMContentLoaded', function() {
         MStore.save();
       };
     })(isBlocked);
+
+    // Extras from the caller — entries that are about the CHAT rather than the
+    // person (currently folder membership, handed over by the contact row's ⋮
+    // menu). Appended after the user's own actions so the person stays the
+    // subject of the sheet, and skipped silently if malformed.
+    (extraItems || []).forEach(function (e) {
+      if (!e || !e.item) return;
+      items.push(e.item);
+      if (e.callback) callbacks[e.item.action] = e.callback;
+    });
 
     OrbitSheet.show(items);
     OrbitSheet._callbacks = callbacks;
@@ -12874,22 +12942,11 @@ document.addEventListener('DOMContentLoaded', function() {
     return window._appIsBackgrounded === true || document.hidden === true;
   };
 
-  function requestNotificationPermission() {
-    try {
-      if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
-        window.Capacitor.Plugins.LocalNotifications.requestPermissions();
-      }
-    } catch(e) {
-      console.log('[Notifications] Capacitor permission request error:', e);
-    }
-    try {
-      if ('Notification' in window && window.Notification.permission === 'default') {
-        window.Notification.requestPermission();
-      }
-    } catch(e) {
-      console.log('[Notifications] Web API permission request error:', e);
-    }
-  }
+  // requestNotificationPermission() used to live here and raised the notification
+  // dialog on the spot, with no idea whether it was already granted. It is gone:
+  // there is now exactly one place that asks, components/permission-gate.js, and
+  // it reads the current state first. Leaving a second entry point under the old
+  // name is how a competing prompt gets reintroduced later.
 
   function showWebNotification(title, body, data) {
     try {
@@ -13639,6 +13696,22 @@ document.addEventListener('DOMContentLoaded', function() {
     var selected = items[_mentionSelectedIndex];
     if (selected) selected.scrollIntoView({ block: 'nearest' });
   }
+
+  // ⚠ A PASTED LINK MUST BE SEEN EVEN IF NO `input` EVENT ARRIVES.
+  //
+  // The main handler below is on `input`, which is what a paste normally fires.
+  // But some Android keyboards insert clipboard text through the IME without a
+  // plain `input` event reaching this element — the text appears in the box and
+  // nothing else happens. Listening for `paste` covers that path. `paste` fires
+  // BEFORE the text lands, so the read is deferred a tick; if `input` also fired
+  // this is simply a second, identical paint of the same URL.
+  ['paste', 'compositionend'].forEach(function (evt) {
+    document.getElementById('chat-input').addEventListener(evt, function () {
+      setTimeout(function () {
+        try { _renderLinkPreviewBar(activeChatId); } catch (e) { /* never fatal */ }
+      }, 0);
+    });
+  });
 
   // Auto-resize textarea as content grows
   document.getElementById('chat-input').addEventListener('input', function(e) {
@@ -17512,28 +17585,27 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch(e) {}
   }
 
-  // Request notification permissions
-  try { requestNotificationPermission(); } catch(e) { console.warn('[Startup] requestNotificationPermission failed', e); }
-
-  // Also request Web Notification permission on first user interaction
-  document.addEventListener('click', function requestOnce() {
-    if ('Notification' in window && window.Notification.permission === 'default') {
-      window.Notification.requestPermission();
-    }
-    document.removeEventListener('click', requestOnce);
-  }, { once: true });
+  // ⚠ ONE PERMISSION PASS, AND ONLY FOR WHAT IS MISSING.
+  //
+  // This spot used to do three things, none of which could read the current
+  // state — so a permission that was already granted was asked for again on
+  // every single launch:
+  //
+  //   1. requestNotificationPermission() — unconditionally, every start.
+  //   2. a click listener that called Notification.requestPermission().
+  //   3. getUserMedia({video:true}) then stopping the tracks, purely to provoke
+  //      the camera dialog. The camera indicator lit up on EVERY start, whether
+  //      or not the user was about to scan anything.
+  //
+  // OrbitPermissionGate reads the real state first and asks only for what is
+  // missing, once per version, in a sheet that says what each one is for before
+  // the system dialog appears. If everything is already granted it does nothing
+  // at all — no sheet, no dialog, no camera.
+  try {
+    if (window.OrbitPermissionGate) window.OrbitPermissionGate.maybeAsk();
+  } catch (e) {
+    console.warn('[Startup] permission pass failed', e);
+  }
 
   console.log('[Orbit Mobile] Started');
-
-  // Pre-request Camera Permission on App Startup for QR Scanner
-  if (/android|iphone|ipad|ipod/i.test(navigator.userAgent) && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(function(stream) {
-        stream.getTracks().forEach(function(t) { t.stop(); });
-        console.log('[Orbit] Camera permission granted on startup');
-      })
-      .catch(function(err) {
-        console.warn('[Orbit] Camera permission denied on startup:', err);
-      });
-  }
 });

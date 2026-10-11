@@ -26,6 +26,9 @@ public class MainActivity extends BridgeActivity {
         // Register plugin BEFORE super.onCreate() — known requirement from v0.0.9.1-beta fix
         registerPlugin(OrbitP2PPlugin.class);
         registerPlugin(com.orbit.app.plugins.OrbitSharePlugin.class);
+        // Checks and requests the runtime permissions the app needs. The web layer
+        // owns the sheet that explains them; this only answers and raises dialogs.
+        registerPlugin(com.orbit.app.plugins.OrbitPermissionsPlugin.class);
 
         super.onCreate(savedInstanceState);
 
@@ -33,12 +36,16 @@ public class MainActivity extends BridgeActivity {
         // the intent is parked for the web layer to collect when it is ready.
         com.orbit.app.plugins.OrbitSharePlugin.stashIntent(getApplicationContext(), getIntent());
 
-        // API 33+ requires the runtime POST_NOTIFICATIONS permission before any
-        // notification can be posted. The manifest entry alone is not enough, and
-        // without the request the permission is never granted — so the notification
-        // path caught a SecurityException and quietly did nothing. Asking here means
-        // the prompt appears the first time Orbit runs.
-        requestNotificationPermissionIfNeeded();
+        // ⚠ NO PERMISSION IS ASKED FOR HERE ANY MORE.
+        //
+        // This used to raise the POST_NOTIFICATIONS dialog on every cold start,
+        // unconditionally — it could not tell whether the answer was already yes,
+        // so a user who had granted it was asked again, forever.
+        //
+        // Asking now happens once, in the web layer, through OrbitPermissions:
+        // it reads the current state first and only raises a dialog for what is
+        // actually missing. One funnel, and the sheet can explain WHY before the
+        // system dialog appears. See js/components/permission-gate.js.
 
         enableImmersiveMode();
         createNotificationChannels();
@@ -136,20 +143,6 @@ public class MainActivity extends BridgeActivity {
             }
         } catch (Exception e) {
             e.printStackTrace();
-        }
-    }
-
-    /** Ask for POST_NOTIFICATIONS on API 33+, once, if it is not already granted. */
-    private void requestNotificationPermissionIfNeeded() {
-        if (Build.VERSION.SDK_INT < 33) return;   // Build.VERSION_CODES.TIRAMISU
-        try {
-            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
-                    == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                return;
-            }
-            requestPermissions(new String[]{ android.Manifest.permission.POST_NOTIFICATIONS }, 9001);
-        } catch (Exception e) {
-            android.util.Log.w("MainActivity", "notification permission request failed", e);
         }
     }
 }
