@@ -371,47 +371,93 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
 }
 
 /* ── Search ──────────────────────────────────────────────────────────────── */
+/* Tighter than the default `--spacing-md` on purpose: this panel is 260px and
+   every pixel of the field is text. */
 .search-container {
-  padding: 12px 12px 8px;
+  padding: 10px 10px 8px;
 }
 .search-input-wrapper {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   height: var(--pill-lg);
-  padding: 0 8px 0 12px;
+  padding: 0 4px 0 8px;
   border-radius: var(--pill-lg);
   background: var(--bg-base);
   border: 1px solid var(--border-subtle);
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 /* The field lights up on focus rather than on hover — the hairline is what tells
-   you where you are typing. */
+   you where you are typing. This is also the ONLY focus affordance: the input's
+   own focus style is neutralised below, so the ring is on the pill. */
 .search-input-wrapper:focus-within {
   border-color: var(--accent-ring);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
+
+/* The magnifier.
+   ⚠ It is an `<svg>`, not the `<i>` the markup declares — lucide replaces the
+   tag at runtime AND CARRIES ITS INLINE STYLE ACROSS, so the icon's
+   `position: absolute; left: 12px; width: 16px` arrives as an inline style and
+   beats anything here. My first pass set width and height; only the height
+   landed, because the inline style names the width. It is vertically centred by
+   the wrapper's `align-items: center` (which does apply to an absolutely
+   positioned flex child's static position).
+
+   ⚠ Which also means components.css's `.search-input-wrapper i { position:
+   absolute; left: 12px; … }` has been DEAD since the day lucide started
+   replacing the tag — a rule matching nothing, in the app, before I touched it.
+   Not mine to remove, but worth knowing the geometry comes from the inline
+   style, not from that rule. */
 .search-input-wrapper svg {
-  width: 15px;
-  height: 15px;
   color: var(--text-muted);
   flex-shrink: 0;
 }
+
+/* ⚠⚠ THE FIELD PAINTS NO SURFACE OF ITS OWN — and `!important` is the only way
+   to say so.
+
+   sidebar-middle.js writes the input's background, border, radius and padding as
+   INLINE styles (`background: var(--bg-surface); border: 1px solid
+   var(--border-subtle); border-radius: 8px; padding: 8px 12px 8px 36px`). An
+   inline declaration beats any stylesheet rule, so the field drew a SECOND
+   rounded box inside the pill — which is exactly what Dan saw: a box in a box,
+   with the inner box's right edge cut off hard by the chevron beside it.
+
+   The pill is the only surface now. The padding is restated because the inline
+   36px left is clearance for an icon that ends at 28px, and this panel is 260px
+   wide — every pixel of that field is text. */
 .search-input {
   flex: 1;
   min-width: 0;
-  background: transparent;
-  border: none;
-  outline: none;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 6px 6px 6px 30px !important;
   color: var(--text-primary);
   font-size: 13px;
+  /* ⚠ The placeholder is 160px and the field is ~145px, so it WILL clip — the
+     sidebar is 260px and the icon and the collapse button have to fit too. An
+     ellipsis is the difference between "this is truncated" and "this is broken":
+     without it the text just stops mid-word against the chevron. */
+  text-overflow: ellipsis;
 }
 .search-input::placeholder {
   color: var(--text-muted);
 }
+/* components.css gives the input its own focus box (`.search-input:focus`), which
+   would paint a third surface the moment you click in. The pill already carries
+   the ring, so the field's own is suppressed. */
+.search-input:focus {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
 #btn-toggle-sidebar {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   border-radius: var(--radius-sm);
   color: var(--text-muted);
   flex-shrink: 0;

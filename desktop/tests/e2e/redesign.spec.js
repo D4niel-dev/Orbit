@@ -198,6 +198,44 @@ test.describe('desktop redesign', () => {
     expect(tabs.activeBg).not.toBe(tabs.containerBg);
   });
 
+  test('the search field paints no surface of its own — the pill is the only one', async () => {
+    // ⚠ Dan: "the search bar on the 2nd panel looks weird". It was a BOX IN A BOX:
+    // sidebar-middle.js writes the input's background, border and radius as
+    // INLINE styles (`background: var(--bg-surface); border: 1px solid …;
+    // border-radius: 8px`), so the field drew a second rounded rectangle inside
+    // the pill — with its right edge cut off hard by the chevron beside it. An
+    // inline declaration beats a stylesheet rule, so this needs `!important`, and
+    // without the assertion it would come back the moment anyone tidied the file.
+    const r = await page.evaluate(() => {
+      const wrap = document.querySelector('.search-input-wrapper');
+      const input = document.querySelector('.search-input');
+      if (!wrap || !input) return null;
+      const cs = (el) => {
+        const c = getComputedStyle(el);
+        return {
+          bg: c.backgroundColor,
+          borderWidth: parseFloat(c.borderWidth) || 0,
+          radius: parseFloat(c.borderRadius) || 0,
+          paddingLeft: parseFloat(c.paddingLeft) || 0,
+          width: el.getBoundingClientRect().width
+        };
+      };
+      return { wrap: cs(wrap), input: cs(input) };
+    });
+
+    expect(r).not.toBeNull();
+    // The pill is a surface...
+    expect(r.wrap.bg).not.toBe('rgba(0, 0, 0, 0)');
+    // ...and the field inside it is not. All three, because the inline style sets
+    // all three and any one of them left standing draws a visible box.
+    expect(r.input.bg).toBe('rgba(0, 0, 0, 0)');
+    expect(r.input.borderWidth).toBe(0);
+    expect(r.input.radius).toBe(0);
+    // And the field is wide enough to be worth typing in: the panel is 260px, so
+    // anything under ~140px of text room means the padding is eating the field.
+    expect(r.input.width - r.input.paddingLeft).toBeGreaterThan(140);
+  });
+
   test('hovering a button does not move it', async () => {
     // ⚠ components.css lifts EVERY button 1px and brightens it 10% on hover.
     // The redesign removes that: in a dense desktop UI a control that shifts when
