@@ -12,14 +12,21 @@
  * that reads THIS FILE for the retired hex is what found the second copy —
  * reading the line I had changed would never have shown it.
  *
+ * ⚠⚠ AND THEN IT WAS STILL THREE DEFINITIONS ACROSS THE APP. The same default
+ * was written out again in the profile sidebar and in the Manage Group modal —
+ * both still ending in the retired #6C5CE7. Fixing one file and asserting on one
+ * file is what let the other two survive.
+ *
+ * ⚠ The VALUE now lives in styles/variables.css as `--banner-default`, which is
+ * the one place all three call sites read. This constant is only a NAME for it,
+ * so the two settings call sites below cannot drift apart again.
+ *
  * ⚠ It used to run accent → #6C5CE7: a HARDCODED PURPLE, and therefore a second
- * brand colour in a design that has exactly one. This is a wash of the THEME's
+ * brand colour in a design that has exactly one. It is a wash of the THEME's
  * accent instead, so a nord or sunset user gets their own colour here rather than
  * Orbit blue.
  */
-var DEFAULT_BANNER = 'linear-gradient(135deg,' +
-  'color-mix(in srgb, var(--accent-primary) 42%, var(--bg-surface)),' +
-  'color-mix(in srgb, var(--accent-primary) 10%, var(--bg-surface)))';
+var DEFAULT_BANNER = 'var(--banner-default)';
 
 window.SettingsModal = {
   isOpen: false,
@@ -1191,7 +1198,10 @@ window.SettingsModal = {
               ? '<div style="display:flex;flex-direction:column;align-items:center;padding:16px 0;color:var(--text-muted);gap:8px;"><i data-lucide="radio" style="width:28px;height:28px;opacity:0.3;"></i><div style="font-size:13px;">No peers online</div></div>'
               : '<div style="display:flex;flex-direction:column;gap:5px;">' + state.friends.filter(function(f) { return f.status === 'online'; }).map(function(f) {
                 return '<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:var(--bg-surface);">' +
-                  '<span style="width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block;"></span>' +
+                  // ⚠ `var(--presence-online)`, not a hardcoded #22c55e — that hex was
+                  // the third copy of the presence palette and the one that ignored the
+                  // theme outright. See the note on --presence-* in variables.css.
+                  '<span style="width:8px;height:8px;border-radius:50%;background:var(--presence-online);display:inline-block;"></span>' +
                   '<span style="font-size:13px;color:var(--text-primary);flex:1;">' + window.Sanitize.escapeHtml(f.username) + '</span>' +
                   '<span style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">' + (f.ip || '') + '</span>' +
                 '</div>';
@@ -1489,10 +1499,12 @@ window.SettingsModal = {
                 '<div style="font-size:15px;font-weight:600;color:var(--text-primary);">App Lock (PIN)</div>' +
                 '<div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Protect Orbit with a PIN code on launch</div>' +
               '</div>' +
-              '<label style="position:relative;display:inline-block;width:44px;height:24px;">' +
-                '<input type="checkbox" id="pin-toggle"' + (pinEnabled ? ' checked' : '') + ' style="opacity:0;width:0;height:0;">' +
-                '<span class="toggle-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:' + (pinEnabled ? 'var(--accent-primary)' : 'var(--border-strong)') + ';border-radius:24px;transition:0.3s;"></span>' +
-                '<span class="toggle-knob" style="position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:white;border-radius:50%;transition:0.3s;' + (pinEnabled ? 'transform:translateX(20px);' : '') + '"></span>' +
+              // ⚠ One shared switch — geometry, off-colour and knob travel all live
+              // in §9c of styles/redesign.css. State comes from `checked`, so the
+              // handler below no longer repaints anything by hand.
+              '<label class="orbit-switch">' +
+                '<input type="checkbox" id="pin-toggle"' + (pinEnabled ? ' checked' : '') + '>' +
+                '<span class="orbit-switch-track"><span class="orbit-switch-knob"></span></span>' +
               '</label>' +
             '</div>' +
             (pinEnabled
@@ -2408,10 +2420,9 @@ window.SettingsModal = {
                 '<div style="font-size:13px;font-weight:600;color:var(--text-primary);">Automatic Update Checks</div>' +
                 '<div style="font-size:12px;color:var(--text-muted);margin-top:2px;line-height:1.4;">Ask GitHub for a newer version shortly after launch (at most once every 6 hours). Off means no automatic network contact — the button above still works.</div>' +
               '</div>' +
-              '<label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;">' +
-                '<input type="checkbox" id="update-check-toggle"' + (updateCheckOn ? ' checked' : '') + ' style="opacity:0;width:0;height:0;">' +
-                '<span class="toggle-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:' + (updateCheckOn ? 'var(--accent-primary)' : 'var(--border-strong)') + ';border-radius:24px;transition:0.3s;"></span>' +
-                '<span class="toggle-knob" style="position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:white;border-radius:50%;transition:0.3s;' + (updateCheckOn ? 'transform:translateX(20px);' : '') + '"></span>' +
+              '<label class="orbit-switch">' +
+                '<input type="checkbox" id="update-check-toggle"' + (updateCheckOn ? ' checked' : '') + '>' +
+                '<span class="orbit-switch-track"><span class="orbit-switch-knob"></span></span>' +
               '</label>' +
             '</div>' +
           '</div>' +
@@ -2512,11 +2523,10 @@ window.SettingsModal = {
             window.orbitAPI.dbSetSetting('settings', next);
           }
           window.Storage.set('settings', next);
-          // Repaint the slider in place rather than re-rendering the tab.
-          var slider = updateToggle.parentNode.querySelector('.toggle-slider');
-          var knob = updateToggle.parentNode.querySelector('.toggle-knob');
-          if (slider) slider.style.background = on ? 'var(--accent-primary)' : 'var(--border-strong)';
-          if (knob) knob.style.transform = on ? 'translateX(20px)' : '';
+          // ⚠ Nothing repaints the switch here any more. It used to repaint the
+          // slider and the knob by hand — a SECOND writer for one piece of state,
+          // with its own copy of the travel distance. The checkbox already carries
+          // the state and §9c of styles/redesign.css reads it.
         });
       }
 

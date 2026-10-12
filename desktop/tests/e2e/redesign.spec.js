@@ -13,6 +13,13 @@
 //
 // Both are checked here against the running app rather than by reading the CSS,
 // because the CSS looks correct in both cases.
+//
+// ⚠ ONE EXCEPTION, AND IT EARNED ITSELF: "the retired brand purple appears in no
+// renderer at all" reads the source, because the failure it guards is a string
+// living in a file nobody opened. It walks EVERY renderer, not one — checking a
+// single file is what let two copies of the purple survive a fix.
+const fs = require('fs');
+const path = require('path');
 const { test, expect } = require('@playwright/test');
 const { tmpUserDataDir, launchApp } = require('./helpers');
 
@@ -377,25 +384,42 @@ test.describe('desktop redesign', () => {
     // banner as you type. The first version of this fix changed only the first, so
     // the purple came back the moment anyone touched the banner field.
     //
-    // ⚠⚠ THIS IS CHECKED BEHAVIOURALLY, NOT BY READING THE SOURCE. The first
-    // attempt stripped comments out of the file with a regex to look for the hex —
-    // which is a blunt instrument on a 188 KB file and silently swallowed one of
-    // the two call sites, so the assertion failed for a reason that had nothing to
-    // do with the banner. The runtime value is exact, and the real question is not
-    // "does the string appear" but "do the two paths agree".
+    // ⚠⚠ AND THEN IT TURNED OUT TO BE THREE COPIES, IN THREE FILES. The same
+    // default was spelled out again in the profile sidebar and in the Manage Group
+    // modal, both still ending in the purple. Fixing one file and asserting on one
+    // file is exactly what let the other two survive — so the value now lives in
+    // styles/variables.css as `--banner-default` and all three read it.
+    //
+    // ⚠⚠ CHECKED BEHAVIOURALLY, NOT BY READING THE SOURCE. The first attempt
+    // stripped comments out of a 188 KB file with a regex to look for the hex —
+    // which silently swallowed one of the call sites, so the assertion failed for a
+    // reason that had nothing to do with the banner.
     await page.click('#btn-nav-settings');
     await page.waitForTimeout(1200);
 
     const readPreview = () => page.evaluate(() => {
       const b = document.getElementById('preview-banner');
-      return b ? (b.getAttribute('style') || '') : null;
+      if (!b) return null;
+      const cs = getComputedStyle(b);
+      return {
+        style: b.getAttribute('style') || '',
+        // ⚠ The COMPUTED image, which is the only thing that proves color-mix()
+        // actually resolved and painted. The declared value is a token reference.
+        bgImage: cs.backgroundImage || '',
+        height: Math.round(b.getBoundingClientRect().height)
+      };
     });
 
     const rendered = await readPreview();
     expect(rendered).not.toBeNull();
-    expect(rendered).not.toMatch(/#6C5CE7/i);
-    // A wash of the theme's accent, not a hardcoded pair.
-    expect(rendered).toMatch(/color-mix\(in srgb, var\(--accent-primary\)/);
+    expect(rendered.style).not.toMatch(/#6C5CE7/i);
+    // One definition, referenced — not a gradient spelled out at the call site.
+    expect(rendered.style).toMatch(/var\(--banner-default\)/);
+    // And it PAINTS. Chromium 111+ supports color-mix(); this app is Electron 32
+    // (Chromium 128), so the gradient must resolve to real colour, not to `none`.
+    expect(rendered.bgImage).toContain('gradient');
+    expect(rendered.bgImage).not.toBe('none');
+    expect(rendered.height).toBeGreaterThan(0);
 
     // Now drive the PREVIEW path: type a banner, then clear it. Clearing is what
     // makes the preview fall back to its own copy of the default.
@@ -407,11 +431,209 @@ test.describe('desktop redesign', () => {
       await page.waitForTimeout(700);
 
       const afterClear = await readPreview();
-      expect(afterClear).not.toMatch(/#6C5CE7/i);
+      expect(afterClear.style).not.toMatch(/#6C5CE7/i);
       // ⚠ The two paths must produce the SAME default. This is the assertion that
       // would have caught the half-fix.
-      expect(afterClear).toBe(rendered);
+      expect(afterClear.style).toBe(rendered.style);
+      expect(afterClear.bgImage).toBe(rendered.bgImage);
     }
+  });
+
+  test('the retired brand purple appears in no renderer at all', async () => {
+    // ⚠ COUNTED ACROSS EVERY FILE, NOT CHECKED IN ONE. The fix that removed this
+    // hex from settings-modal.js left it in profile-sidebar.js and
+    // sidebar-middle.js, and a spec that read only the file I had edited reported
+    // green. Comments are allowed to mention it — they are the note explaining why
+    // it is gone — so this strips them and looks at code only.
+    const dir = path.join(__dirname, '../../src/js');
+    const offenders = [];
+    const walk = (d) => {
+      for (const entry of fs.readdirSync(d, { withFileTypes: true })) {
+        const full = path.join(d, entry.name);
+        if (entry.isDirectory()) { walk(full); continue; }
+        if (!entry.name.endsWith('.js')) continue;
+        const src = fs.readFileSync(full, 'utf8');
+        // Block comments, then line comments (sparing `https://`).
+        const code = src
+          .replace(/\/\*[\s\S]*?\*\//g, '')
+          .replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+        if (/#6C5CE7/i.test(code)) offenders.push(path.relative(dir, full));
+      }
+    };
+    walk(dir);
+    expect(offenders).toEqual([]);
+  });
+
+  test('one switch geometry for every switch in the app', async () => {
+    // ⚠ FIVE HAND-BUILT SWITCHES, IN TWO SIZES AND THREE OFF-COLOURS, AND ONE OF
+    // THEM TURNED RED. settings-modal.js had two at 44x24, sidebar-middle.js had
+    // two at 36x20 with a hardcoded #323236, and profile-sidebar.js had one at
+    // 36x20 off a translucent border token — and that one used --accent-danger for
+    // "on", so the same action ("mute notifications") read as a failure in one
+    // panel and a preference in the other.
+    //
+    // They all read `.orbit-switch` now, and the geometry and the travel come from
+    // one place. This measures every switch the app can show at once.
+    await page.click('#btn-nav-settings');
+    await page.waitForTimeout(900);
+    await page.evaluate(() => {
+      const s = window.store.getState().settings;
+      window.store.setState({ settings: { ...s, enableExperimental: true } });
+      window.SettingsModal.renderTab('security');
+    });
+    await page.waitForTimeout(900);
+
+    const shapes = await page.evaluate(() => {
+      const out = [];
+      document.querySelectorAll('.orbit-switch').forEach((sw) => {
+        const track = sw.querySelector('.orbit-switch-track');
+        const knob = sw.querySelector('.orbit-switch-knob');
+        const input = sw.querySelector('input');
+        if (!track || !knob || !input) { out.push({ shape: 'INCOMPLETE' }); return; }
+        const tb = track.getBoundingClientRect();
+        const kb = knob.getBoundingClientRect();
+        out.push({
+          box: Math.round(tb.width) + 'x' + Math.round(tb.height),
+          radius: getComputedStyle(track).borderRadius,
+          off: getComputedStyle(track).backgroundColor,
+          knobInset: Math.round(kb.x - tb.x),
+          // A zero-sized input is still tabbable; display:none would not be.
+          tabbable: input.tabIndex >= 0
+        });
+      });
+      return out;
+    });
+
+    expect(shapes.length).toBeGreaterThan(0);
+    const first = shapes[0];
+    for (const s of shapes) {
+      expect(s.box).toBe(first.box);
+      expect(s.radius).toBe(first.radius);
+      expect(s.off).toBe(first.off);
+      expect(s.tabbable).toBe(true);
+    }
+    // One size, and the knob sits at one consistent inset from the left when off.
+    expect(first.box).toBe('40x22');
+  });
+
+  test('the knob reaches the far end — the travel is computed, not guessed', async () => {
+    // ⚠ A hand-written travel value is a second writer: change the width and the
+    // knob stops short of the end. The CSS computes it from the switch's own
+    // dimensions, so this asserts the ON state is the MIRROR of the off state —
+    // equal inset on the other side, which is the only way to know the arithmetic
+    // is right rather than approximately right.
+    await page.click('#btn-nav-settings');
+    await page.waitForTimeout(900);
+    await page.evaluate(() => window.SettingsModal.renderTab('about'));
+    await page.waitForTimeout(900);
+
+    const off = await page.evaluate(() => {
+      const sw = document.querySelector('#update-check-toggle').closest('.orbit-switch');
+      const tb = sw.querySelector('.orbit-switch-track').getBoundingClientRect();
+      const kb = sw.querySelector('.orbit-switch-knob').getBoundingClientRect();
+      return { left: Math.round(kb.x - tb.x), right: Math.round(tb.right - kb.right) };
+    });
+    // Turn it ON by clicking the track — nothing in the app repaints the switch.
+    await page.evaluate(() => document.querySelector('#update-check-toggle + .orbit-switch-track').click());
+    await page.waitForTimeout(600);
+    const on = await page.evaluate(() => {
+      const sw = document.querySelector('#update-check-toggle').closest('.orbit-switch');
+      const tb = sw.querySelector('.orbit-switch-track').getBoundingClientRect();
+      const kb = sw.querySelector('.orbit-switch-knob').getBoundingClientRect();
+      return { left: Math.round(kb.x - tb.x), right: Math.round(tb.right - kb.right) };
+    });
+
+    expect(off.left).toBe(on.right);
+    expect(off.right).toBe(on.left);
+    // And the state came from the checkbox, with no JS involved.
+    expect(off.left).not.toBe(on.left);
+  });
+
+  test('muting is a preference, not a failure', async () => {
+    // ⚠ The profile sidebar's mute switch turned RED when on — --accent-danger for
+    // an ordinary setting. The group modal's switch for the very same action has
+    // always been the accent, so one control read as an error in one panel and a
+    // preference in the other.
+    await page.evaluate(() => {
+      const f = (window.store.getState().friends || [])[0];
+      if (f && window.ProfileSidebar) window.ProfileSidebar.open(f);
+    });
+    await page.waitForTimeout(900);
+
+    const before = await page.evaluate(() => {
+      const t = document.querySelector('#profile-mute-input').closest('.orbit-switch')
+        .querySelector('.orbit-switch-track');
+      return getComputedStyle(t).backgroundColor;
+    });
+    await page.evaluate(() => document.querySelector('#profile-mute-row').click());
+    await page.waitForTimeout(600);
+    const after = await page.evaluate(() => {
+      const input = document.querySelector('#profile-mute-input');
+      const track = input.closest('.orbit-switch').querySelector('.orbit-switch-track');
+      const icon = document.querySelector('#profile-mute-icon');
+      return {
+        checked: input.checked,
+        track: getComputedStyle(track).backgroundColor,
+        icon: getComputedStyle(icon).color,
+        // The theme's danger colour, so "is it red?" can be answered rather than
+        // eyeballed.
+        danger: getComputedStyle(document.documentElement).getPropertyValue('--accent-danger').trim()
+      };
+    });
+
+    expect(after.checked).toBe(true);
+    expect(after.track).not.toBe(before);
+    // Neither the switch nor its icon may be the danger colour while muted.
+    const toRgb = (hex) => {
+      const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex.trim());
+      return m ? 'rgb(' + [1, 2, 3].map((i) => parseInt(m[i], 16)).join(', ') + ')' : hex;
+    };
+    const danger = toRgb(after.danger);
+    expect(after.track).not.toBe(danger);
+    expect(after.icon).not.toBe(danger);
+  });
+
+  test('the profile banner has a height, and the avatar straddles it', async () => {
+    // ⚠ THE BANNER HAD NEVER BEEN VISIBLE. The markup wrote the banner's
+    // `background` in one `style` attribute and its `height:80px` in a SECOND one
+    // on the same div — the parser keeps the first and silently drops the rest, so
+    // the div measured 319x0 and the gradient was painted into nothing. Nothing
+    // noticed because no spec had ever opened this panel.
+    await page.evaluate(() => {
+      const f = (window.store.getState().friends || [])[0];
+      if (f && window.ProfileSidebar) window.ProfileSidebar.open(f);
+    });
+    await page.waitForTimeout(1000);
+
+    const r = await page.evaluate(() => {
+      const banner = document.querySelector('#profile-sidebar-content .pf-banner');
+      const avatar = document.querySelector('#profile-sidebar-content .pf-avatar');
+      if (!banner || !avatar) return null;
+      const bb = banner.getBoundingClientRect();
+      const ab = avatar.getBoundingClientRect();
+      const bcs = getComputedStyle(banner);
+      // The panel's own scroll container, which must be an ancestor of BOTH — a
+      // negative margin is clipped by an overflow ancestor, and with the scroller
+      // on the body the avatar's top half was cut off at the banner's edge.
+      const scroller = banner.closest('.pf-scroll');
+      return {
+        bannerBox: Math.round(bb.width) + 'x' + Math.round(bb.height),
+        paints: bcs.backgroundImage !== 'none' && bcs.backgroundImage.includes('gradient'),
+        // The avatar must cross the banner's bottom edge, not sit below it.
+        avatarOverlapsBanner: ab.top < bb.bottom,
+        scrollerIsAncestorOfBoth: !!scroller && scroller.contains(banner) && scroller.contains(avatar),
+        // And the banner must be inside the scroller, so it scrolls with the body.
+        bannerClippedByNothing: bb.height > 0
+      };
+    });
+
+    expect(r).not.toBeNull();
+    // 80px tall — the height that never landed, and a real width.
+    expect(r.bannerBox.split('x')[1]).toBe('80');
+    expect(Number(r.bannerBox.split('x')[0])).toBeGreaterThan(100);
+    expect(r.paints).toBe(true);
+    expect(r.avatarOverlapsBanner).toBe(true);
+    expect(r.scrollerIsAncestorOfBoth).toBe(true);
   });
 
   test('the Activity Center tabs are a segmented control, and survive a switch', async () => {

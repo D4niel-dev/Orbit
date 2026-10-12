@@ -1580,7 +1580,12 @@ window.SidebarMiddle = {
           var state = window.store ? window.store.getState() : null;
           var online = state && state.friends ? state.friends.filter(function(f) { return f.status === 'online'; }).length : 0;
           st.textContent = online > 0 ? 'Connected' : 'Disconnected';
-          st.style.color = online > 0 ? '#30D158' : '#ef4444';
+          // ⚠ These were the literals #30D158 and #ef4444 — and #30D158 is exactly
+          // DARK's --accent-success, so this readout kept a bright green on nord,
+          // sunset and the seasonal themes while everything around it changed.
+          // Deliberately the ACCENT tokens rather than --presence-*: this is the
+          // local peer's connection readout, not somebody's presence dot.
+          st.style.color = online > 0 ? 'var(--accent-success)' : 'var(--accent-danger)';
           sp.textContent = String(online);
           if (window._p2pStartTime) {
             var elapsed = Math.floor((Date.now() - window._p2pStartTime) / 1000);
@@ -1848,9 +1853,13 @@ window.SidebarMiddle = {
       var html = '';
       filtered.forEach(function(m) {
         var isOnline = m.status === 'online';
+        // ⚠ Presence comes from the shared palette, not from the raw accents. This
+        // was the fifth site and the fourth different answer: the member list used
+        // --accent-success, the chat header used --accent-success, the profile
+        // sidebar hardcoded #22c55e and the settings peers row hardcoded #22c55e too.
         var onlineDot = isOnline
-          ? '<span style="width:8px;height:8px;border-radius:50%;background:var(--accent-success);display:inline-block;margin-right:8px;"></span>'
-          : '<span style="width:8px;height:8px;border-radius:50%;background:var(--text-muted);display:inline-block;margin-right:8px;"></span>';
+          ? '<span style="width:8px;height:8px;border-radius:50%;background:var(--presence-online);display:inline-block;margin-right:8px;"></span>'
+          : '<span style="width:8px;height:8px;border-radius:50%;background:var(--presence-offline);display:inline-block;margin-right:8px;"></span>';
         var mFrame = window.Frames.getFrameForUser(m.userId);
         // Cross-reference friends list for correct avatar (member.avatar may be stale/wrong)
         var mFriend = window.store ? window.store.getState().friends.find(function(f) { return f.userId === m.userId; }) : null;
@@ -2118,7 +2127,11 @@ window.SidebarMiddle = {
       '<div style="flex:1;padding:32px;overflow-y:auto;background:var(--bg-surface);">' +
         '<h3 style="font-family:var(--font-display);font-size:24px;margin:0 0 24px;color:var(--text-primary);">Manage Group</h3>' +
         '<div style="margin-bottom:24px;border-radius:12px;overflow:hidden;border:1px solid var(--border-subtle);">' +
-          '<div style="height:96px;background:linear-gradient(135deg,var(--accent-primary),#6C5CE7);position:relative;">' +
+        // ⚠ `var(--banner-default)`, not a gradient spelled out here. This is the
+        // third copy of the same default (with the profile sidebar and the settings
+        // preview) and it was still ending in the retired #6C5CE7. One value, one
+        // place: styles/variables.css.
+          '<div style="height:96px;background:var(--banner-default);position:relative;">' +
             previewAvatarSection +
           '</div>' +
           '<div style="padding:46px 24px 20px;background:var(--bg-surface);">' +
@@ -2154,15 +2167,18 @@ window.SidebarMiddle = {
         sectionEnd +
         sectionStart('sliders-horizontal', 'Preferences', false) +
           '<label style="display:flex;align-items:center;gap:12px;font-size:13px;color:var(--text-primary);cursor:pointer;padding:8px 0;">' +
-            '<span style="position:relative;display:inline-block;width:36px;height:20px;border-radius:10px;transition:0.2s;flex-shrink:0;background:' + (group.pinned ? 'var(--accent-primary)' : '#323236') + ';" id="group-info-pin-track">' +
-              '<input type="checkbox" id="group-info-pin"' + (group.pinned ? ' checked' : '') + ' style="opacity:0;width:0;height:0;position:absolute;">' +
-              '<span id="group-info-pin-knob" style="position:absolute;left:' + (group.pinned ? '18px' : '2px') + ';top:2px;width:16px;height:16px;border-radius:50%;background:white;transition:0.2s;pointer-events:none;"></span>' +
+            // ⚠ A <span>, not a <label>: the row IS already a label, and a label
+            // inside a label is invalid. The row's label does the toggling; this is
+            // only the visual, and §9c of styles/redesign.css owns its appearance.
+            '<span class="orbit-switch">' +
+              '<input type="checkbox" id="group-info-pin"' + (group.pinned ? ' checked' : '') + '>' +
+              '<span class="orbit-switch-track"><span class="orbit-switch-knob"></span></span>' +
             '</span><div><div>Pin Group</div><div style="font-size:11px;color:var(--text-muted);font-weight:400;">Keep this group near the top of your chat list</div></div>' +
           '</label>' +
           '<label style="display:flex;align-items:center;gap:12px;font-size:13px;color:var(--text-primary);cursor:pointer;padding:8px 0;border-top:1px solid var(--border-subtle);">' +
-            '<span style="position:relative;display:inline-block;width:36px;height:20px;border-radius:10px;transition:0.2s;flex-shrink:0;background:' + (group.notificationMuted ? 'var(--accent-primary)' : '#323236') + ';" id="group-info-mute-track">' +
-              '<input type="checkbox" id="group-info-mute"' + (group.notificationMuted ? ' checked' : '') + ' style="opacity:0;width:0;height:0;position:absolute;">' +
-              '<span id="group-info-mute-knob" style="position:absolute;left:' + (group.notificationMuted ? '18px' : '2px') + ';top:2px;width:16px;height:16px;border-radius:50%;background:white;transition:0.2s;pointer-events:none;"></span>' +
+            '<span class="orbit-switch">' +
+              '<input type="checkbox" id="group-info-mute"' + (group.notificationMuted ? ' checked' : '') + '>' +
+              '<span class="orbit-switch-track"><span class="orbit-switch-knob"></span></span>' +
             '</span><div><div>Mute Notifications</div><div style="font-size:11px;color:var(--text-muted);font-weight:400;">Stop notification alerts from this group</div></div>' +
           '</label>' +
         sectionEnd +
@@ -2288,28 +2304,23 @@ window.SidebarMiddle = {
     }
 
     // Pin toggle
+    // ⚠ The track and the knob used to be repainted by hand here, on render AND on
+    // every change — a second writer for state the checkbox already carries, with
+    // its own hardcoded travel ('18px' / '2px'). §9c of styles/redesign.css reads
+    // `:checked` and computes the travel from the switch's own dimensions, so all
+    // that is left is the store write.
     var pinCheck = document.getElementById('group-info-pin');
-    var pinTrack = document.getElementById('group-info-pin-track');
-    var pinKnob = document.getElementById('group-info-pin-knob');
     if (pinCheck) {
-      if (pinTrack) pinTrack.style.background = pinCheck.checked ? 'var(--accent-primary)' : '#323236';
       pinCheck.addEventListener('change', function() {
         window.store.updateGroupField(groupId, 'pinned', pinCheck.checked ? 1 : 0);
-        if (pinTrack) pinTrack.style.background = pinCheck.checked ? 'var(--accent-primary)' : '#323236';
-        if (pinKnob) pinKnob.style.left = pinCheck.checked ? '18px' : '2px';
       });
     }
 
     // Mute toggle
     var muteCheck = document.getElementById('group-info-mute');
-    var muteTrack = document.getElementById('group-info-mute-track');
-    var muteKnob = document.getElementById('group-info-mute-knob');
     if (muteCheck) {
-      if (muteTrack) muteTrack.style.background = muteCheck.checked ? 'var(--accent-primary)' : '#323236';
       muteCheck.addEventListener('change', function() {
         window.store.updateGroupField(groupId, 'notificationMuted', muteCheck.checked ? 1 : 0);
-        if (muteTrack) muteTrack.style.background = muteCheck.checked ? 'var(--accent-primary)' : '#323236';
-        if (muteKnob) muteKnob.style.left = muteCheck.checked ? '18px' : '2px';
       });
     }
 

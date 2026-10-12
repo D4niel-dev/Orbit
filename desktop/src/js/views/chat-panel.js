@@ -730,7 +730,11 @@ window.ChatPanel = {
 
     if (!activeFriend) return '';
 
-    var statusColors = { online: 'var(--accent-success)', away: 'var(--accent-warning)', busy: 'var(--accent-danger)', dnd: 'var(--accent-danger)', offline: 'var(--text-muted)', invisible: 'var(--text-muted)' };
+    // ⚠ Reads the shared presence palette (styles/variables.css) rather than the
+    // raw accents, so the chat header and the profile sidebar cannot disagree about
+    // what "online" looks like. They did: this map was right and the profile's was a
+    // hardcoded copy.
+    var statusColors = { online: 'var(--presence-online)', away: 'var(--presence-away)', busy: 'var(--presence-busy)', dnd: 'var(--presence-busy)', offline: 'var(--presence-offline)', invisible: 'var(--presence-offline)' };
     var statusLabels = { online: 'Online', away: 'Away', busy: 'Busy', dnd: 'Do Not Disturb', invisible: 'Invisible', offline: 'Offline' };
     var friendStatus = activeFriend.status || 'offline';
     var statusColor = statusColors[friendStatus] || 'var(--text-muted)';

@@ -3,6 +3,59 @@
   /* Fallback accent (themes override) */
   --accent-primary: #0A84FF;
 
+  /* The default banner — the strip across the top of a profile, a group card and
+     the settings preview. ONE definition for THREE call sites, because they used
+     to be three copies of the same string and they drifted: the v0.9.0 fix changed
+     one of them and left two still ending in a hardcoded #6C5CE7, a second brand
+     colour in a design that has exactly one.
+
+     It is a wash of the THEME's accent, so a nord or sunset user gets their own
+     colour here rather than Orbit blue. color-mix() is Chrome 111+; this app is
+     Electron 32 (Chromium 128), and redesign.spec.js asserts the banner actually
+     paints rather than trusting the version.
+
+     ⚠ The strength is 32% → 8%, down from 42% → 10%. A banner is the DEFAULT
+     identity state — "you have not chosen one" — and at 42% it was the most
+     saturated surface in the app while carrying no content, which made it the
+     loudest thing on a profile that has a name and a face to lead with. It is a
+     wash now, and the same value serves the settings preview, so the two cannot
+     drift apart again.
+
+     ⚠ Declared HERE, in the base sheet that always loads, NOT in redesign.css.
+     The three call sites are inline styles, and a `var()` naming an undefined
+     token drops the WHOLE declaration — so a banner defined only in the redesign
+     layer would leave every default banner with no background at all the moment
+     that layer was removed. `--bg-surface` is intentionally not defined here:
+     var() substitution happens where the token is USED, so the theme's own
+     --bg-surface is what lands. */
+  --banner-default: linear-gradient(135deg,
+    color-mix(in srgb, var(--accent-primary) 32%, var(--bg-surface)),
+    color-mix(in srgb, var(--accent-primary) 8%, var(--bg-surface)));
+
+  /* Presence. ONE palette for the app, derived from the semantic accents so it
+     follows the theme — on nord the online dot is nord's green, not a hardcoded
+     one that ignores the theme entirely.
+
+     ⚠ There were TWO palettes and they disagreed. chat-panel.js used the accent
+     tokens; profile-sidebar.js hardcoded #22c55e / #eab308 / #ef4444 / #6b7280;
+     and the settings "Online Peers" row hardcoded #22c55e. So the SAME friend's
+     online dot was a different green in the chat header than in the profile
+     sidebar — #30D158 against #22c55e on dark, and on nord a muted sage against a
+     vivid green.
+
+     ⚠ Declared in the base sheet, not the redesign layer, for the same reason as
+     --banner-default: these are used from inline styles, and a var() naming an
+     undefined token drops the whole declaration — the dot would lose its colour
+     rather than fall back.
+
+     `dnd` shares busy and `invisible` shares offline on purpose: each pair is two
+     labels for one visual state, and separate hues would invent a distinction the
+     UI never draws. */
+  --presence-online:  var(--accent-success);
+  --presence-away:    var(--accent-warning);
+  --presence-busy:    var(--accent-danger);
+  --presence-offline: var(--text-muted);
+
   /* Spacing */
   --spacing-xs: 4px;
   --spacing-sm: 8px;

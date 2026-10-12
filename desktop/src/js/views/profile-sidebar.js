@@ -34,23 +34,21 @@ window.ProfileSidebar = {
     var esc = window.Sanitize.escapeHtml;
     var limit = P ? P.limitFor(false) : 3;
     var first = pinned[0];
-    var rowStyle = 'display:block;width:100%;text-align:left;background:transparent;border:none;' +
-      'padding:6px 0;cursor:pointer;font-size:12.5px;color:var(--text-secondary);' +
-      'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
-    return '<div id="profile-pinned" style="margin-top:16px;text-align:left;background:var(--bg-base);' +
-        'border-radius:8px;padding:12px;">' +
-      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
-        '<i data-lucide="pin" style="width:14px;height:14px;color:var(--accent-primary);"></i>' +
-        '<span style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-muted);">Pinned</span>' +
-        '<span style="margin-left:auto;font-size:11px;color:var(--text-muted);">' +
+    // ⚠ `pf-card` so the pinned block is the same surface, border and radius as the
+    // bio and the rows around it — it used to be its own inline `--bg-base` box with
+    // its own radius, next to a bio box with a different one.
+    return '<div id="profile-pinned" class="pf-card pf-pinned">' +
+      '<div class="pf-pinned-head">' +
+        '<i data-lucide="pin" class="pf-pinned-pin"></i>' +
+        '<span class="pf-label">Pinned</span>' +
+        '<span class="pf-pinned-count">' +
           pinned.length + ' of ' + limit +
         '</span>' +
       '</div>' +
-      '<button id="profile-pinned-jump" data-msg-id="' + esc(String(first.msgId)) + '" style="' + rowStyle + '">' +
+      '<button id="profile-pinned-jump" class="pf-pinned-jump" data-msg-id="' + esc(String(first.msgId)) + '">' +
         esc(first.text || '(attachment)') +
       '</button>' +
-      '<button id="profile-pinned-show-all" style="margin-top:6px;background:transparent;border:none;' +
-        'padding:0;cursor:pointer;font-size:11.5px;font-weight:600;color:var(--accent-primary);">' +
+      '<button id="profile-pinned-show-all" class="pf-pinned-all">' +
         (pinned.length > 1 ? 'Show all ' + pinned.length + ' pinned' : 'Manage pinned') +
       '</button>' +
     '</div>';
@@ -63,102 +61,148 @@ window.ProfileSidebar = {
       return;
     }
 
-    var bannerHtml = user.banner
+    // The default banner. ⚠ `var(--banner-default)` rather than a gradient written
+    // out here: this exact default is shared with the settings preview and the
+    // Manage Group modal, and the three copies had already drifted — this one and
+    // the group one still ended in a hardcoded #6C5CE7 long after the settings one
+    // was fixed. The value lives in styles/variables.css, once.
+    //
+    // ⚠⚠ THIS HOLDS DECLARATIONS, NOT A WHOLE `style="…"` ATTRIBUTE, AND THAT IS THE
+    // FIX FOR A BUG THAT HAD ALWAYS BEEN HERE. It used to be `'style="background:…"'`
+    // and the consumer below was `'<div ' + bannerHtml + ' style="height:80px;…">'` —
+    // so the div came out with TWO `style` attributes. The HTML parser keeps the
+    // FIRST and silently DROPS the rest, so `height:80px;flex-shrink:0` never landed
+    // and the banner rendered as a 319x0 box: a gradient painted into nothing, on a
+    // profile that has no custom banner. Measured, not read — the parsed DOM shows
+    // one style attribute and a height of 0, which is why reading the line looks
+    // perfectly fine.
+    //
+    // The settings preview (settings-modal.js) writes it as declarations inside one
+    // attribute and has always worked; this is the only site that did not.
+    var bannerCss = user.banner
       ? (user.banner.startsWith('#') || user.banner.startsWith('linear-gradient')
-        ? 'style="background:' + window.Sanitize.escapeHtml(user.banner) + ';"'
-        : 'style="background-image:url(' + window.Sanitize.escapeHtml(user.banner) + ');background-size:cover;background-position:center;"')
-      : 'style="background:linear-gradient(135deg,var(--accent-primary),#6C5CE7);"';
+        ? 'background:' + window.Sanitize.escapeHtml(user.banner) + ';'
+        : 'background-image:url(' + window.Sanitize.escapeHtml(user.banner) + ');background-size:cover;background-position:center;')
+      : 'background:var(--banner-default);';
 
     var bioHtml = user.bio
       ? window.Sanitize.markdown(user.bio)
       : '<span style="color:var(--text-muted);font-style:italic;">No bio yet...</span>';
 
     var isOnline = user.status === 'online';
-    var statusColors = { online: '#22c55e', away: '#eab308', busy: '#ef4444', dnd: '#ef4444', offline: '#6b7280', invisible: '#6b7280' };
+    // ⚠ The presence palette lives in styles/variables.css as `--presence-*`. This
+    // map used to be a SECOND copy of it, hardcoded in hex — so the same friend's
+    // online dot was #22c55e here and --accent-success (#30D158) in the chat header,
+    // and on a nord theme this one ignored the theme completely.
+    var statusColors = {
+      online: 'var(--presence-online)', away: 'var(--presence-away)',
+      busy: 'var(--presence-busy)', dnd: 'var(--presence-busy)',
+      offline: 'var(--presence-offline)', invisible: 'var(--presence-offline)'
+    };
     var statusLabels = { online: 'Online', away: 'Away', busy: 'Busy', dnd: 'Do Not Disturb', invisible: 'Invisible', offline: 'Offline' };
-    var statusColor = statusColors[user.status] || '#6b7280';
+    var statusColor = statusColors[user.status] || 'var(--presence-offline)';
     var statusLabel = statusLabels[user.status] || 'Offline';
 
     var lastSeenHtml = '';
     if (!isOnline && user.status !== 'invisible' && user.lastSeen) {
       var lastSeenStr = window.Format.relativeTime ? window.Format.relativeTime(new Date(user.lastSeen).toISOString()) : window.Format.absoluteTime(new Date(user.lastSeen).toISOString());
-      lastSeenHtml = '<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Last seen ' + lastSeenStr + '</div>';
+      lastSeenHtml = '<div class="pf-lastseen">Last seen ' + lastSeenStr + '</div>';
     }
 
     // A DM's chat id is the other person's user id.
     var pinnedChatId = user.userId;
     var pinnedSectionHtml = this._pinnedSectionHtml(pinnedChatId);
 
+    // ⚠ THIS MARKUP CARRIES CLASSES RATHER THAN INLINE STYLES. Every other surface
+    // in this app is styled by assigning `style="…"` in the renderer, and this panel
+    // was too — which is why it had never been touched by a stylesheet and why the
+    // banner could sit at height 0 unnoticed. The classes are `pf-*` and live in
+    // §9d of styles/redesign.css. Every id is unchanged, so all the wiring below
+    // (and the click handlers outside this file) still finds what it looks for.
+    var avatarHtml = user.avatar
+      ? (function() {
+        var frame = window.Frames.getFrameForUser(user.userId);
+        var img = '<img src="' + window.Sanitize.escapeHtml(user.avatar) + '" class="pf-avatar-img" alt="">';
+        return frame
+          ? '<span class="pf-avatar-framed">' + img + '<img src="icons/frames/pfp_frame_' + frame + '.png" class="pf-avatar-frame" draggable="false" alt=""></span>'
+          : img;
+      })()
+      : '<span class="pf-avatar-initial">' + window.Sanitize.escapeHtml(user.username.charAt(0).toUpperCase()) + '</span>';
+
     this.contentArea.innerHTML =
-      '<div style="display:flex;flex-direction:column;height:100%;">' +
-        // Close button
-        '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border-subtle);">' +
-          '<span style="font-weight:600;font-size:14px;color:var(--text-primary);">Profile</span>' +
-          '<button id="btn-close-profile-sidebar" style="background:transparent;border:none;cursor:pointer;color:var(--text-secondary);padding:4px;border-radius:4px;"><i data-lucide="x" style="width:18px;height:18px;"></i></button>' +
+      '<div class="pf-root">' +
+        '<div class="pf-header">' +
+          '<span class="pf-header-title">Profile</span>' +
+          '<button id="btn-close-profile-sidebar" class="pf-close" title="Close"><i data-lucide="x"></i></button>' +
         '</div>' +
 
-        // Banner area
-        '<div ' + bannerHtml + ' style="height:80px;flex-shrink:0;"></div>' +
+        // ⚠ The banner and the body share ONE scroll container. The avatar is pulled
+        // up with a negative margin to straddle the banner's edge, and a negative
+        // margin is clipped by an `overflow` ancestor — so with the scroller on
+        // `.pf-body` the avatar's top half was cut off at the banner's edge and the
+        // banner painted over it. The scroller has to be the ancestor of both.
+        '<div class="pf-scroll">' +
+          '<div class="pf-banner" style="' + bannerCss + '"></div>' +
 
-        // Content area
-        '<div style="flex:1;padding:20px;text-align:center;">' +
-          // Avatar
-        '<div style="margin-bottom:8px;">' +
-          (user.avatar
-            ? (function() {
-              var frame = window.Frames.getFrameForUser(user.userId);
-              var img = '<img src="' + window.Sanitize.escapeHtml(user.avatar) + '" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid var(--bg-surface);">';
-              return frame ? '<div style="position:relative;display:inline-block;">' + img + '<img src="icons/frames/pfp_frame_' + frame + '.png" style="position:absolute;top:-14%;left:-14%;width:122%;height:122%;pointer-events:none;object-fit:contain;" draggable="false" alt=""></div>' : img;
-            })()
-            : '<div style="width:64px;height:64px;border-radius:50%;background:var(--accent-primary);display:flex;align-items:center;justify-content:center;font-size:24px;color:white;font-weight:600;margin:0 auto;">' + user.username.charAt(0).toUpperCase() + '</div>'
-          ) +
-        '</div>' +
-          '<h2 style="font-size:20px;font-weight:700;color:var(--text-primary);margin:0 0 4px;">' + window.Sanitize.escapeHtml(user.username) + '</h2>' +
-          '<div style="font-size:13px;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:12px;">#' + window.Sanitize.escapeHtml(user.usertag || '') + '</div>' +
-          '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:16px;">' +
-            '<span style="width:8px;height:8px;border-radius:50%;background:' + statusColor + ';display:inline-block;"></span>' +
-            '<span style="font-size:12px;color:var(--text-muted);">' + window.Sanitize.escapeHtml(statusLabel) + '</span>' +
+        '<div class="pf-body">' +
+          // ⚠ The avatar is pulled UP over the banner's bottom edge. It already
+          // carried a 3px --bg-surface ring; a ring only reads as a ring if the disc
+          // straddles an edge, and the body's top padding pushed it clear of the
+          // banner instead — so the ring was invisible and the banner read as a
+          // strip that happened to be there.
+          '<div class="pf-identity">' +
+            '<div class="pf-avatar">' + avatarHtml + '</div>' +
+            '<h2 class="pf-name">' + window.Sanitize.escapeHtml(user.username) + '</h2>' +
+            '<div class="pf-tag">#' + window.Sanitize.escapeHtml(user.usertag || '') + '</div>' +
+            '<div class="pf-presence">' +
+              '<span class="pf-dot" style="background:' + statusColor + '"></span>' +
+              '<span class="pf-status">' + window.Sanitize.escapeHtml(statusLabel) + '</span>' +
+            '</div>' +
             lastSeenHtml +
           '</div>' +
 
-          // Bio
-          '<div style="text-align:left;background:var(--bg-base);border-radius:8px;padding:12px;font-size:13px;color:var(--text-primary);line-height:1.6;border:1px solid var(--border-subtle);">' +
-            bioHtml +
-          '</div>' +
+          '<div class="pf-card pf-bio">' + bioHtml + '</div>' +
 
           // Pinned messages — under the user info, alongside the bio and the user id, so
           // the panel says everything about this person in one place. The bar in the
           // conversation is separate and both are wanted.
           pinnedSectionHtml +
 
-          // Mute toggle
-          '<div id="profile-mute-row" style="margin-top:16px;display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--bg-base);border-radius:8px;border:1px solid var(--border-subtle);cursor:pointer;">' +
-            '<div style="display:flex;align-items:center;gap:10px;">' +
-              '<i data-lucide="bell" id="profile-mute-icon" style="width:18px;height:18px;color:var(--text-secondary);"></i>' +
-              '<span id="profile-mute-label" style="font-size:13px;font-weight:500;color:var(--text-primary);">Mute Notifications</span>' +
-            '</div>' +
-            '<div id="profile-mute-toggle" style="width:36px;height:20px;border-radius:10px;background:var(--border-subtle);position:relative;transition:background 0.2s;flex-shrink:0;">' +
-              '<div style="width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>' +
-            '</div>' +
-          '</div>' +
+          // Mute. ⚠ The row is a <label> wrapping a REAL checkbox, instead of a div
+          // with a click handler sitting next to a decorative div. Same interaction,
+          // but the control is keyboard-reachable and the switch has state to read.
+          '<label id="profile-mute-row" class="pf-card pf-row">' +
+            '<span class="pf-row-main">' +
+              '<i data-lucide="bell" id="profile-mute-icon" class="pf-row-icon"></i>' +
+              '<span id="profile-mute-label" class="pf-row-label">Mute Notifications</span>' +
+            '</span>' +
+            '<span class="orbit-switch">' +
+              '<input type="checkbox" id="profile-mute-input">' +
+              '<span class="orbit-switch-track"><span class="orbit-switch-knob"></span></span>' +
+            '</span>' +
+          '</label>' +
 
           // User ID, with a way to copy it. It is a monospace string whose whole purpose
           // is to be handed to someone else, and there was no way to get it out.
-          '<div style="margin-top:16px;text-align:left;">' +
-            '<div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:600;margin-bottom:4px;">User ID</div>' +
-            '<div style="display:flex;align-items:stretch;gap:6px;">' +
-              '<div style="flex:1;min-width:0;font-size:12px;color:var(--text-secondary);font-family:var(--font-mono);word-break:break-all;padding:8px;background:var(--bg-base);border-radius:4px;">' + window.Sanitize.escapeHtml(user.userId) + '</div>' +
-              '<button id="profile-copy-id" data-user-id="' + window.Sanitize.escapeHtml(user.userId) + '" title="Copy user ID" style="flex-shrink:0;width:34px;border-radius:4px;border:1px solid var(--border-subtle);background:transparent;color:var(--text-secondary);cursor:pointer;">' +
-                '<i data-lucide="copy" style="width:14px;height:14px;"></i>' +
+          '<div class="pf-field">' +
+            '<div class="pf-label">User ID</div>' +
+            '<div class="pf-idrow">' +
+              '<div class="pf-id">' + window.Sanitize.escapeHtml(user.userId) + '</div>' +
+              '<button id="profile-copy-id" class="pf-copy" data-user-id="' + window.Sanitize.escapeHtml(user.userId) + '" title="Copy user ID">' +
+                '<i data-lucide="copy"></i>' +
               '</button>' +
             '</div>' +
           '</div>' +
 
-          // Block/Unblock button
-          '<div id="profile-block-row" style="margin-top:16px;display:flex;align-items:center;justify-content:center;padding:12px;background:var(--bg-base);border-radius:8px;border:1px solid var(--border-subtle);cursor:pointer;">' +
-            '<i data-lucide="ban" id="profile-block-icon" style="width:18px;height:18px;color:var(--accent-danger);flex-shrink:0;"></i>' +
-            '<span id="profile-block-label" style="font-size:13px;font-weight:500;color:var(--accent-danger);margin-left:8px;">Block User</span>' +
+          // ⚠ `pf-row-danger`: a destructive action used to be the SAME CARD as the
+          // mute row above it — same surface, same border, same shape, differing only
+          // in the colour of the text. Blocking someone and muting them are not the
+          // same kind of decision.
+          '<div id="profile-block-row" class="pf-card pf-row pf-row-danger">' +
+            '<i data-lucide="ban" id="profile-block-icon" class="pf-row-icon"></i>' +
+            '<span id="profile-block-label" class="pf-row-label">Block User</span>' +
           '</div>' +
+        '</div>' +
         '</div>' +
       '</div>';
 
@@ -217,15 +261,16 @@ window.ProfileSidebar = {
       closeBtn.addEventListener('click', function(e) { e.stopPropagation(); self.close(); });
     }
 
-    // Mute toggle
-    var muteRow = this.contentArea.querySelector('#profile-mute-row');
-    if (muteRow) {
+    // Mute. The row is a <label> for #profile-mute-input, so a click anywhere in it
+    // toggles the checkbox and fires `change` — one handler for one control, rather
+    // than a div click handler that had to repaint the switch itself.
+    var muteInput = this.contentArea.querySelector('#profile-mute-input');
+    if (muteInput) {
       var state = window.store.getState();
       var isMuted = state.mutedChats && state.mutedChats[user.userId];
       self._updateMuteUI(isMuted);
 
-      muteRow.addEventListener('click', function(e) {
-        e.stopPropagation();
+      muteInput.addEventListener('change', function() {
         window.store.toggleMute(user.userId);
         var newState = window.store.getState();
         var nowMuted = newState.mutedChats && newState.mutedChats[user.userId];
@@ -273,20 +318,25 @@ window.ProfileSidebar = {
   _updateMuteUI(isMuted) {
     var icon = this.contentArea.querySelector('#profile-mute-icon');
     var label = this.contentArea.querySelector('#profile-mute-label');
-    var toggle = this.contentArea.querySelector('#profile-mute-toggle');
-    if (!icon || !label || !toggle) return;
+    var input = this.contentArea.querySelector('#profile-mute-input');
+    if (!icon || !label || !input) return;
+    // ⚠ Sets the INPUT's checked state; the switch reads it (§9c of
+    // styles/redesign.css). This used to paint the track's background and move the
+    // knob by hand — the third of three copies of one state machine.
+    input.checked = !!isMuted;
     if (isMuted) {
       icon.setAttribute('data-lucide', 'bell-off');
-      icon.style.color = 'var(--accent-danger)';
+      // ⚠ The icon was --accent-danger and the track turned RED. Muting is not an
+      // error: it is a setting that is on. The group modal's switch for the very
+      // same action has always been accent, so the same control read as a failure
+      // in one panel and a preference in the other. It now matches the switch it
+      // sits next to — accent when on, neutral when off.
+      icon.style.color = 'var(--accent-primary)';
       label.textContent = 'Unmute Notifications';
-      toggle.style.background = 'var(--accent-danger)';
-      toggle.querySelector('div').style.transform = 'translateX(16px)';
     } else {
       icon.setAttribute('data-lucide', 'bell');
       icon.style.color = 'var(--text-secondary)';
       label.textContent = 'Mute Notifications';
-      toggle.style.background = 'var(--border-subtle)';
-      toggle.querySelector('div').style.transform = 'translateX(0)';
     }
     if (window.lucide) window.lucide.createIcons({ root: this.contentArea });
   },
