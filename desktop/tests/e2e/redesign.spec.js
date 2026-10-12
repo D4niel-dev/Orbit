@@ -333,6 +333,129 @@ test.describe('desktop redesign', () => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
   });
 
+  test('the settings nav selects with a tint, and keeps it across a tab switch', async () => {
+    await page.click('#btn-nav-settings');
+    await page.waitForTimeout(1200);
+
+    const read = () => page.evaluate(() => {
+      const a = document.querySelector('.settings-tab.active');
+      const i = document.querySelector('.settings-tab:not(.active)');
+      const cs = (e) => (e ? getComputedStyle(e) : null);
+      return a && i ? {
+        label: a.textContent.trim(),
+        activeBg: cs(a).backgroundColor, activeColor: cs(a).color,
+        idleBg: cs(i).backgroundColor
+      } : null;
+    });
+
+    const first = await read();
+    expect(first).not.toBeNull();
+    // ⚠ An accent TINT, not the raised grey block it shipped as — the same
+    // "selected = a filled surface" treatment the rail and the list rows moved
+    // away from. Low alpha is what makes it a tint.
+    const m = /rgba?\(([^)]+)\)/.exec(first.activeBg);
+    const alpha = m ? (m[1].split(',').length === 4 ? parseFloat(m[1].split(',')[3]) : 1) : 0;
+    expect(alpha).toBeGreaterThan(0);
+    expect(alpha).toBeLessThan(0.5);
+    expect(first.activeBg).not.toBe(first.idleBg);
+
+    // ⚠ The tab colours are written INLINE and the click handler rewrites them, so
+    // this is really asking whether the `!important` block still wins after a
+    // switch — the failure mode is a nav that reverts to the old look on click.
+    await page.locator('.settings-tab[data-tab="notifications"]').click();
+    await page.waitForTimeout(900);
+    const second = await read();
+    expect(second.label).toBe('Notifications');
+    expect(second.activeBg).toBe(first.activeBg);
+    expect(second.idleBg).toBe(first.idleBg);
+  });
+
+  test('the profile banner default has no second brand colour, and both paths agree', async () => {
+    // ⚠ The default banner ran accent → #6C5CE7, a HARDCODED PURPLE — a second
+    // brand colour in a design that has exactly one. And it was written out TWICE:
+    // once in the render path and once in the live-preview path that rebuilds the
+    // banner as you type. The first version of this fix changed only the first, so
+    // the purple came back the moment anyone touched the banner field.
+    //
+    // ⚠⚠ THIS IS CHECKED BEHAVIOURALLY, NOT BY READING THE SOURCE. The first
+    // attempt stripped comments out of the file with a regex to look for the hex —
+    // which is a blunt instrument on a 188 KB file and silently swallowed one of
+    // the two call sites, so the assertion failed for a reason that had nothing to
+    // do with the banner. The runtime value is exact, and the real question is not
+    // "does the string appear" but "do the two paths agree".
+    await page.click('#btn-nav-settings');
+    await page.waitForTimeout(1200);
+
+    const readPreview = () => page.evaluate(() => {
+      const b = document.getElementById('preview-banner');
+      return b ? (b.getAttribute('style') || '') : null;
+    });
+
+    const rendered = await readPreview();
+    expect(rendered).not.toBeNull();
+    expect(rendered).not.toMatch(/#6C5CE7/i);
+    // A wash of the theme's accent, not a hardcoded pair.
+    expect(rendered).toMatch(/color-mix\(in srgb, var\(--accent-primary\)/);
+
+    // Now drive the PREVIEW path: type a banner, then clear it. Clearing is what
+    // makes the preview fall back to its own copy of the default.
+    const input = page.locator('#input-banner');
+    if (await input.isVisible().catch(() => false)) {
+      await input.fill('#123456');
+      await page.waitForTimeout(500);
+      await input.fill('');
+      await page.waitForTimeout(700);
+
+      const afterClear = await readPreview();
+      expect(afterClear).not.toMatch(/#6C5CE7/i);
+      // ⚠ The two paths must produce the SAME default. This is the assertion that
+      // would have caught the half-fix.
+      expect(afterClear).toBe(rendered);
+    }
+  });
+
+  test('the Activity Center tabs are a segmented control, and survive a switch', async () => {
+    await page.click('#btn-nav-activity');
+    await page.waitForTimeout(1200);
+
+    const read = () => page.evaluate(() => {
+      const a = document.querySelector('.activity-tab.active');
+      const i = document.querySelector('.activity-tab:not(.active)');
+      const track = document.getElementById('activity-tabs');
+      if (!a || !i || !track) return null;
+      const cs = (e) => getComputedStyle(e);
+      return {
+        label: a.textContent.trim(),
+        activeBg: cs(a).backgroundColor,
+        idleBg: cs(i).backgroundColor,
+        trackBg: cs(track).backgroundColor,
+        // ⚠ The underline is inline (`border-bottom: 2px solid …`) and the click
+        // handler rewrites `borderBottomColor`, so a non-zero width here means the
+        // old treatment is back.
+        activeBottomWidth: parseFloat(cs(a).borderBottomWidth) || 0,
+        idleBottomWidth: parseFloat(cs(i).borderBottomWidth) || 0
+      };
+    });
+
+    const first = await read();
+    expect(first).not.toBeNull();
+    expect(first.activeBottomWidth).toBe(0);
+    expect(first.idleBottomWidth).toBe(0);
+    // The selected tab is a SURFACE: it differs from its neighbour and from the
+    // track behind them.
+    expect(first.activeBg).not.toBe(first.idleBg);
+    expect(first.activeBg).not.toBe(first.trackBg);
+
+    await page.locator('.activity-tab[data-tab="mentions"]').click();
+    await page.waitForTimeout(800);
+    const second = await read();
+    expect(second.label).toBe('Mentions');
+    expect(second.activeBg).toBe(first.activeBg);
+    expect(second.activeBottomWidth).toBe(0);
+
+    await page.evaluate(() => { if (window.ActivityCenter) window.ActivityCenter.close(); });
+  });
+
   test('the layer is the ONLY difference — disabling it restores the old accent', async () => {
     const accent = () =>
       page.evaluate(() => {

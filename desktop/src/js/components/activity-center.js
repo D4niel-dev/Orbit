@@ -19,10 +19,18 @@ window.ActivityCenter = {
     if (this._overlay) return;
     this.activeTab = 'all';
     var overlay = document.createElement('div');
+    // ⚠ Ids added for the v0.9.0 redesign. The overlay and the modal are built
+    // here with `style.cssText` and nothing else — no id, no class — so a
+    // stylesheet had nothing to aim at, and the alternative was a selector
+    // matching the inline text (`div[style*="9999"]`), which breaks the moment
+    // anyone reorders that string. An id is not a design change; it makes the
+    // element addressable.
+    overlay.id = 'activity-overlay';
     overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:center;justify-content:center;';
     overlay.addEventListener('click', function(e) { if (e.target === overlay) window.ActivityCenter.close(); });
 
     var modal = document.createElement('div');
+    modal.id = 'activity-modal';
     modal.style.cssText = 'background:var(--bg-surface);border-radius:16px;padding:24px;max-width:520px;width:90%;height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.4);border:1px solid var(--border-subtle);';
 
     modal.innerHTML =

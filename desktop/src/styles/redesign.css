@@ -929,8 +929,9 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
 #settings-overlay > div {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
   box-shadow: var(--shadow-xl);
+  /* The radius is set in §9b, beside the rest of the settings chrome — one
+     writer per declaration. */
 }
 /* The settings nav is a step BELOW the panel it sits in, so it gets the base
    surface and a hairline — luminance stepping, not a divider line. */
@@ -982,23 +983,268 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
   border-bottom-color: var(--accent-primary) !important;
 }
 
-/* Inputs inside any overlay. ⚠ Scoped to the real hosts, not to `.modal`. */
+/* Fields inside the settings content are handled in §9b, where they need
+   `!important` — every one of them carries its own inline background and border,
+   so a rule without it here would be a second writer for the same declarations
+   and would silently lose. */
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   9b. THE SETTINGS MODAL AND THE ACTIVITY CENTER
+
+   ⚠⚠ BOTH ARE BUILT ENTIRELY FROM INLINE STYLES, AND NO STYLESHEET HAS EVER
+   TOUCHED EITHER.
+
+   `settings-modal.js` and `activity-center.js` write every colour, radius,
+   padding and font weight into `style="…"` as they build the markup, and
+   components.css contains not one rule for `.settings-tab`, `.settings-collapsible`,
+   `.collapsible-header`, `.activity-tab` or any of their ids — verified by grep.
+
+   So `!important` is not laziness anywhere in this section: an inline declaration
+   beats any stylesheet rule, and without it every rule below would be a no-op
+   while looking perfectly correct. The classes and ids that DO exist are the
+   hooks — which is why this section is mostly one rule per repeated element
+   rather than eight.
+
+   ⚠ THREE THINGS ARE DELIBERATELY LEFT ALONE, because JS drives them:
+     • `.collapsible-body { display }` — the header's onclick toggles it
+     • `.collapse-icon { transform }`  — the same onclick rotates it
+     • `#activity-tabs { display }`    — nothing toggles it, but it is not ours
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── The settings shell ──────────────────────────────────────────────────── */
+
+/* Softer than the 12px it shipped with — the panel is 800×600 and a 12px corner
+   on a surface that size reads as sharp next to the 18px composer. */
+#settings-overlay > div {
+  border-radius: var(--radius-lg);
+}
+
+/* The nav rail. */
+#settings-overlay > div > div:first-child {
+  padding: 20px 16px;
+}
+
+/* ⚠ "Settings" is a LABEL for the nav below it, not the page title — the page
+   title is the h3 inside the content ("My Account"). It shipped at 20px bold,
+   larger than the thing it labels, which inverted the hierarchy. */
+#settings-overlay > div > div:first-child > h2 {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: .02em;
+  color: var(--text-secondary) !important;
+  margin-bottom: 16px !important;
+}
+
+/* ⚠ The nav items carry their own colours INLINE — `background: var(--bg-hover);
+   color: var(--text-primary)` on the active one, `transparent` on the rest — and
+   the click handler rewrites them. Both properties need `!important`:
+   `background` because the active item was a raised grey block, the same
+   "selected = a filled surface" treatment the rail and the list rows moved away
+   from, and `color` because without it the accent tint would sit under grey text. */
+.settings-tab {
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  border-radius: var(--radius-sm) !important;
+  padding: 9px 12px !important;
+  font-size: 13px;
+  font-weight: 500 !important;
+  text-align: left;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.settings-tab:hover {
+  background: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+}
+.settings-tab.active {
+  background: var(--accent-soft) !important;
+  color: var(--accent-primary) !important;
+  font-weight: 600 !important;
+}
+
+#btn-close-settings {
+  border-radius: var(--radius-sm) !important;
+  color: var(--text-secondary) !important;
+  font-size: 13px;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+#btn-close-settings:hover {
+  background: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+}
+
+/* The content pane. 32px of padding on all four sides wasted a band at the top
+   and bottom of a pane that scrolls anyway. */
+#settings-content {
+  padding: 26px 30px !important;
+}
+
+/* The page title, and the only thing in the pane that is allowed to be large. */
+#settings-content > h3 {
+  font-size: 19px !important;
+  font-weight: 600 !important;
+  letter-spacing: -.015em;
+  margin-bottom: 20px !important;
+}
+
+/* ── The collapsible sections ─────────────────────────────────────────────── */
+.settings-collapsible {
+  border-radius: var(--radius-md) !important;
+  border: 1px solid var(--border-subtle) !important;
+  margin-bottom: 10px !important;
+}
+
+/* The header sits a step BELOW the body it opens — luminance stepping, the same
+   rule the surfaces follow everywhere else. ⚠ Not `display`, and not the icon's
+   `transform`: the header's inline onclick toggles both. */
+.collapsible-header {
+  background: var(--bg-base) !important;
+  padding: 12px 14px !important;
+  transition: background var(--dur) var(--ease);
+}
+.collapsible-header:hover {
+  background: var(--bg-raised) !important;
+}
+.collapsible-body {
+  padding: 14px !important;
+}
+
+/* The field labels ("Username", "Bio") — uppercase micro-labels, and at 11px a
+   label needs air rather than density. */
+.collapsible-body label {
+  letter-spacing: .06em;
+}
+
+/* ── Fields inside the settings content ──────────────────────────────────── */
+/* ⚠ `!important` because every one of these fields carries its own inline
+   background, border and radius. Without it this rule — which shipped in §9 and
+   looked correct — never applied to anything; it only ever agreed with the inline
+   values by coincidence. */
+/* ⚠ `input[type="password"]` is here for the PIN fields, which only exist once
+   the PIN lock is switched on — so it matches nothing in the default state and
+   that is correct, not dead. `input[type="search"]` was in the first version of
+   this rule and appears nowhere in the settings markup at all; removed. */
 #settings-content input[type="text"],
 #settings-content input[type="password"],
-#settings-content input[type="search"],
 #settings-content textarea {
-  background: var(--bg-base);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
+  background: var(--bg-base) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--text-primary) !important;
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
+/* The border-colour half needs `!important` too, for the same reason: the inline
+   `border` shorthand sets it. (The box-shadow half never did, which is why the
+   ring appeared but the border stayed grey.) */
 #settings-content input:focus,
 #settings-content textarea:focus {
-  border-color: var(--accent-ring);
+  border-color: var(--accent-ring) !important;
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
+/* ⚠ The initial-avatar fallback was a fully saturated accent disc with white
+   text — the loudest object in a card whose banner is now a quiet wash. The
+   design language for an initials avatar is a soft accent fill with accent text
+   (see the contact rows), so it matches them.
+   `div` only: `#preview-avatar-img` is an `<img>` when the user has a photo, and
+   that must keep its own pixels. */
+div#preview-avatar-img {
+  background: var(--accent-soft) !important;
+  color: var(--accent-primary) !important;
+}
+
+/* ── The Activity Center ─────────────────────────────────────────────────── */
+#activity-overlay {
+  background: rgba(0, 0, 0, .68) !important;
+}
+#activity-modal {
+  border-radius: var(--radius-lg) !important;
+  padding: 20px !important;
+  box-shadow: var(--shadow-xl) !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+/* The header row: the title, "Clear All", and the close button. */
+#activity-modal h2 {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  letter-spacing: -.01em;
+}
+#btn-clear-activity {
+  background: var(--bg-raised-2) !important;
+  color: var(--text-secondary) !important;
+  border-radius: var(--radius-sm) !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  padding: 4px 10px !important;
+  transition: var(--transition);
+}
+#btn-clear-activity:hover {
+  background: var(--bg-active) !important;
+  color: var(--text-primary) !important;
+}
+#activity-close {
+  width: var(--icon-btn);
+  height: var(--icon-btn);
+  border-radius: var(--radius-sm) !important;
+  color: var(--text-muted) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+#activity-close:hover {
+  background: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+}
+
+/* ⚠⚠ The tab row was UNDERLINED TEXT — the same control the sidebar had before
+   this redesign, given a different treatment in the same app. (That is the third
+   time: the sidebar tabs, the gallery tabs, and these.) A segmented control wins
+   for the same reason as the sidebar's: it shows the available set rather than
+   only the selection, and the active item is a surface rather than a line under a
+   word.
+
+   ⚠ `border: none` must be a SHORTHAND with `!important`: the markup sets
+   `border-bottom: 2px solid var(--accent-primary)` inline, and the click handler
+   rewrites `borderBottomColor`, so only zeroing all four widths kills the
+   underline for good. */
+#activity-tabs {
+  gap: 2px !important;
+  padding: 3px !important;
+  margin-bottom: 14px !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--bg-base) !important;
+}
+.activity-tab {
+  flex: 1;
+  min-width: 0;
+  border: none !important;
+  border-radius: var(--radius-sm) !important;
+  padding: 7px 4px !important;
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  text-align: center;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.activity-tab:hover {
+  color: var(--text-primary) !important;
+}
+.activity-tab.active {
+  background: var(--bg-raised-2) !important;
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+}
+
+/* The empty state — an icon, a line, and a quieter sub-line. */
+#activity-content {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    THE GLOBAL BUTTON HOVER

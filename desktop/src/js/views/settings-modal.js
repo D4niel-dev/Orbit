@@ -1,5 +1,26 @@
 // src/js/views/settings-modal.js
 
+/**
+ * The default profile banner.
+ *
+ * ⚠⚠ ONE DEFINITION, USED TWICE — AND IT WAS NOT, WHICH COST A ROUND TRIP.
+ *
+ * This gradient was written out in two places: the render path and the
+ * live-preview path (which rebuilds the banner as you type in the field). The
+ * v0.9.0 fix changed the render path and left the preview one alone, so the old
+ * colour came straight back the moment anyone touched the banner input. A test
+ * that reads THIS FILE for the retired hex is what found the second copy —
+ * reading the line I had changed would never have shown it.
+ *
+ * ⚠ It used to run accent → #6C5CE7: a HARDCODED PURPLE, and therefore a second
+ * brand colour in a design that has exactly one. This is a wash of the THEME's
+ * accent instead, so a nord or sunset user gets their own colour here rather than
+ * Orbit blue.
+ */
+var DEFAULT_BANNER = 'linear-gradient(135deg,' +
+  'color-mix(in srgb, var(--accent-primary) 42%, var(--bg-surface)),' +
+  'color-mix(in srgb, var(--accent-primary) 10%, var(--bg-surface)))';
+
 window.SettingsModal = {
   isOpen: false,
 
@@ -99,7 +120,11 @@ window.SettingsModal = {
         ? (user.banner.startsWith('#') || user.banner.startsWith('linear-gradient') || user.banner.startsWith('rgb')
           ? 'background:' + window.Sanitize.escapeHtml(user.banner)
           : 'background-image:url(' + window.Sanitize.escapeHtml(user.banner) + ');background-size:cover;background-position:center')
-        : 'background:linear-gradient(135deg,var(--accent-primary),#6C5CE7)';
+        // ⚠ Changed HERE rather than overridden in redesign.css on purpose: this
+        // inline style is either the default or the banner the user chose, and a
+        // stylesheet rule with `!important` could not tell the two apart — it would
+        // quietly discard a custom banner.
+        : 'background:' + DEFAULT_BANNER;
 
       content.innerHTML =
         '<h3 style="font-family:var(--font-display);font-size:24px;margin-bottom:24px;">My Account</h3>' +
@@ -312,7 +337,7 @@ window.SettingsModal = {
                 bannerEl.style.cssText = 'height:120px;position:relative;background-image:url(' + window.Sanitize.escapeHtml(banner) + ');background-size:cover;background-position:center;';
               }
             } else {
-              bannerEl.style.cssText = 'height:120px;position:relative;background:linear-gradient(135deg,var(--accent-primary),#6C5CE7);';
+              bannerEl.style.cssText = 'height:120px;position:relative;background:' + DEFAULT_BANNER + ';';
             }
           }
         } catch (e) {
