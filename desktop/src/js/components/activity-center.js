@@ -134,7 +134,18 @@ window.ActivityCenter = {
       if (found && found.avatar) {
         return '<img src="' + window.Sanitize.escapeHtml(found.avatar) + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;flex-shrink:0;">';
       }
-      return '<div style="width:24px;height:24px;border-radius:50%;background:var(--bg-hover);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:var(--text-muted);font-weight:600;">' + (name ? name.charAt(0).toUpperCase() : '?') + '</div>';
+      // ⚠⚠ THE ONE AVATAR IN THE APP THAT WAS NOT AN AVATAR.
+      //
+      // This fallback was `background: var(--bg-hover); color: var(--text-muted)`
+      // — an opaque grey disc with a grey letter, which reads as an empty circle,
+      // i.e. as nothing. Dan: "why is the default avatar transparent?"
+      //
+      // It was the lone outlier: every other photo-less avatar in the desktop app
+      // is a solid accent disc with a white letter — webrtc-call (×3), the group
+      // header, the profile sidebar, the settings preview (×2), both sidebar rows,
+      // and the chat chip six lines below this one. Eleven of them. Matching the
+      // sibling is the fix; there is no new design decision here.
+      return '<div style="width:24px;height:24px;border-radius:50%;background:var(--accent-primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:white;font-weight:600;">' + (name ? name.charAt(0).toUpperCase() : '?') + '</div>';
     };
 
     var activityHtml = '';
@@ -145,7 +156,10 @@ window.ActivityCenter = {
       if (logs.length === 0) {
         activityHtml = 
           '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:40px;text-align:center;">' +
-            '<div style="margin-bottom:16px; width:80px; height:80px; border-radius:50%; background:var(--bg-hover); display:flex; align-items:center; justify-content:center; color:var(--text-muted);">' +
+            // ⚠ The class is here so redesign.css can reach it without a structural
+            // selector. The GLYPH is what was faint, not the disc: it is a muted
+            // colour at 50% opacity, which is what "transparent" looked like.
+            '<div class="activity-empty-icon" style="margin-bottom:16px; width:80px; height:80px; border-radius:50%; background:var(--bg-hover); display:flex; align-items:center; justify-content:center; color:var(--text-muted);">' +
               '<i data-lucide="activity" style="width:40px;height:40px;opacity:0.5;"></i>' +
             '</div>' +
             '<div style="font-size:16px; font-weight:600; color:var(--text-primary); margin-bottom:4px;">No System Activity</div>' +
@@ -207,7 +221,10 @@ window.ActivityCenter = {
         var emptyDesc = this.activeTab === 'mentions' ? 'When someone mentions you in a group chat, it will appear here.' : (this.activeTab === 'files' ? 'Files and media shared in your chats will appear here.' : 'Your recent messages and activity will appear here.');
         activityHtml = 
           '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:40px;text-align:center;">' +
-            '<div style="margin-bottom:16px; width:80px; height:80px; border-radius:50%; background:var(--bg-hover); display:flex; align-items:center; justify-content:center; color:var(--text-muted);">' +
+            // ⚠ The class is here so redesign.css can reach it without a structural
+            // selector. The GLYPH is what was faint, not the disc: it is a muted
+            // colour at 50% opacity, which is what "transparent" looked like.
+            '<div class="activity-empty-icon" style="margin-bottom:16px; width:80px; height:80px; border-radius:50%; background:var(--bg-hover); display:flex; align-items:center; justify-content:center; color:var(--text-muted);">' +
               '<i data-lucide="' + emptyIcon + '" style="width:40px;height:40px;opacity:0.5;"></i>' +
             '</div>' +
             '<div style="font-size:16px; font-weight:600; color:var(--text-primary); margin-bottom:4px;">' + emptyText + '</div>' +

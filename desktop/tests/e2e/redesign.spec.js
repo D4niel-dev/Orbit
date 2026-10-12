@@ -456,6 +456,87 @@ test.describe('desktop redesign', () => {
     await page.evaluate(() => { if (window.ActivityCenter) window.ActivityCenter.close(); });
   });
 
+  test('every photo-less avatar is a solid accent disc, not a faint one', async () => {
+    // ⚠ Dan: "why is the default avatar transparent? and i mean the activity
+    // modal!" Two separate things were wrong, and the assertion covers both:
+    //
+    //   • the activity sender's fallback was the app's ONLY avatar that was not an
+    //     accent disc — `--bg-hover` fill with a `--text-muted` letter, an opaque
+    //     grey circle with a grey letter, which reads as an empty circle. Eleven
+    //     other call sites (webrtc-call, chat-panel, profile-sidebar,
+    //     settings-modal, sidebar-middle) all use `--accent-primary` + white.
+    //   • the redesign had restyled the settings preview's avatar to
+    //     `--accent-soft`, reasoning that it should match the phone's contact rows.
+    //     That is 14% alpha, and the avatar straddles the profile banner and the
+    //     card body, so it was invisible against BOTH and only the 4px ring showed.
+    //     The phone uses a soft tint; the desktop uses a solid disc. Reverted.
+    //
+    // So the assertion is the principle, not one element: a photo-less avatar is a
+    // solid accent disc with a light letter, everywhere.
+    const accent = await page.evaluate(() =>
+      getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim());
+    const toRgb = (hex) => {
+      const h = hex.replace('#', '');
+      return 'rgb(' + parseInt(h.slice(0, 2), 16) + ', ' + parseInt(h.slice(2, 4), 16) + ', ' + parseInt(h.slice(4, 6), 16) + ')';
+    };
+    const disc = (el) => {
+      const cs = getComputedStyle(el);
+      return { bg: cs.backgroundColor, color: cs.color };
+    };
+
+    // 1. The settings preview.
+    await page.click('#btn-nav-settings');
+    await page.waitForTimeout(1400);
+    const preview = await page.evaluate(() => {
+      const el = document.querySelector('div#preview-avatar-img');
+      if (!el) return null;
+      const cs = getComputedStyle(el);
+      return { bg: cs.backgroundColor, color: cs.color };
+    });
+    expect(preview).not.toBeNull();
+    expect(preview.bg).toBe(toRgb(accent));
+    // ⚠ A light letter. White on the accent is the convention; an accent-coloured
+    // letter on an accent disc is the same shape as the bug.
+    expect(preview.color).toBe('rgb(255, 255, 255)');
+    await page.evaluate(() => { if (window.SettingsModal) window.SettingsModal.close(); });
+    await page.waitForTimeout(600);
+
+    // 2. A real activity row: seed a friend with NO avatar and a message, so the
+    //    fallback actually renders. The local-echo chat is excluded from activity,
+    //    which is why a fresh account sees the empty state and nothing else.
+    await page.evaluate(() => {
+      const st = window.store.getState();
+      window.store.setState({
+        friends: [{ userId: 'p_ava', username: 'Ava Chen', status: 'online' }],
+        messages: Object.assign({}, st.messages, {
+          p_ava: [{ id: 1, sender: 'p_ava', text: 'hello', timestamp: new Date().toISOString() }]
+        })
+      });
+    });
+    await page.waitForTimeout(900);
+    await page.click('#btn-nav-activity');
+    await page.waitForTimeout(1600);
+
+    const rowAvatar = await page.evaluate(() => {
+      const content = document.getElementById('activity-content');
+      if (!content) return null;
+      // The 24px sender disc, not the 16px chat chip.
+      const d = Array.from(content.querySelectorAll('div')).find((el) => {
+        const b = el.getBoundingClientRect();
+        return Math.round(b.width) === 24 && Math.round(b.height) === 24;
+      });
+      if (!d) return null;
+      const cs = getComputedStyle(d);
+      return { bg: cs.backgroundColor, color: cs.color, text: d.textContent.trim() };
+    });
+    expect(rowAvatar).not.toBeNull();
+    expect(rowAvatar.bg).toBe(toRgb(accent));
+    expect(rowAvatar.color).toBe('rgb(255, 255, 255)');
+    expect(rowAvatar.text).toBe('A');
+
+    await page.evaluate(() => { if (window.ActivityCenter) window.ActivityCenter.close(); });
+  });
+
   test('the layer is the ONLY difference — disabling it restores the old accent', async () => {
     const accent = () =>
       page.evaluate(() => {

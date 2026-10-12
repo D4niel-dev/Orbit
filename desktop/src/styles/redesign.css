@@ -1142,15 +1142,45 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-/* ⚠ The initial-avatar fallback was a fully saturated accent disc with white
-   text — the loudest object in a card whose banner is now a quiet wash. The
-   design language for an initials avatar is a soft accent fill with accent text
-   (see the contact rows), so it matches them.
-   `div` only: `#preview-avatar-img` is an `<img>` when the user has a photo, and
-   that must keep its own pixels. */
-div#preview-avatar-img {
-  background: var(--accent-soft) !important;
-  color: var(--accent-primary) !important;
+/* ⚠⚠ THE AVATAR IS DELIBERATELY NOT RESTYLED HERE, AND THAT IS THE FIX.
+
+   My first pass DID restyle it — I set the settings preview's photo-less avatar
+   to `--accent-soft` with an accent letter, on the reasoning that it should match
+   the phone's contact rows. That was wrong twice over:
+
+     • It made the disc nearly INVISIBLE. The avatar straddles the profile banner
+       and the card body below it (`bottom: -40px`), and `--accent-soft` is 14%
+       alpha — invisible against the banner's accent wash and invisible against the
+       card, so all you saw was the 4px ring. Dan: "why is the default avatar
+       transparent?"
+     • The desktop's own convention is the opposite of the phone's. EVERY other
+       photo-less avatar here is a solid `--accent-primary` disc with a white
+       letter — eleven call sites across webrtc-call, chat-panel, profile-sidebar,
+       settings-modal, sidebar-middle and activity-center. The phone uses a soft
+       tint; the desktop uses a solid disc. I read the phone's rule and applied it
+       to the desktop.
+
+   So there is no rule here: the markup's own inline `--accent-primary` + white is
+   correct, and an override would only be able to make it worse. */
+
+/* The empty state's placeholder disc.
+   ⚠ Dan: "why is the default avatar transparent? and i mean the activity modal!"
+   — and this is very likely what he was looking at, because the sender avatars
+   only exist once there IS activity, and the local-echo chat is excluded from the
+   activity list, so a fresh-ish account sees this and nothing else.
+
+   The DISC was never the faint part — `--bg-hover` on `--bg-surface` is a clear
+   step. The GLYPH was: a muted colour at 50% opacity. So the glyph is what
+   changes; the disc only stops using a hover token as a static fill. */
+.activity-empty-icon {
+  background: var(--bg-raised-2) !important;
+}
+.activity-empty-icon svg {
+  /* ⚠ Both inline: the `<i data-lucide>` carries `opacity: .5`, and lucide copies
+     an icon's inline style onto the `<svg>` it swaps in — the same mechanism that
+     made the search magnifier's width unreachable. */
+  color: var(--text-secondary) !important;
+  opacity: 1 !important;
 }
 
 /* ── The Activity Center ─────────────────────────────────────────────────── */
