@@ -2,17 +2,34 @@
    ────────────────────────────────────────────────────────────────────────────
    v0.9.0-beta — the desktop redesign.
 
-   ⚠ THIS FILE IS A LAYER, NOT A REPLACEMENT, AND THAT IS THE POINT.
+   ⚠ THIS FILE IS A LAYER, NOT A REPLACEMENT, AND THAT IS THE POINT — IT IS ALSO
+   THE THING THE "CLASSIC LOOK" SETTING SWITCHES OFF.
 
    components.css is 73 KB and redefines plenty of selectors more than once, so
    editing it in place means guessing which copy wins. This sheet loads LAST and
-   restates the parts of the UI the redesign changes. Delete the one <link> in
-   index.html and the previous design is back, exactly — which is the safety net
-   Dan asked for, and a better one than a copy of the old files, because there is
-   nothing to restore *from*.
+   restates the parts of the UI the redesign changes. `link.disabled = true` on its
+   one <link> gives the previous design back, which is what Settings → Appearance →
+   "Classic look" does, and what the safety net was always for.
 
-   The authoritative copy of the previous UI is the git tag
-   `desktop-ui-pre-v0.9.0`; `.design-backup/` holds a working copy.
+   ⚠⚠ WHAT THIS LAYER OWNS IS THE CHROME, AND ONLY THE CHROME. The titlebar, the
+   rail, the middle panel, the chat header, the conversation, the composer, the
+   overlays, the settings modal and the Activity Center all live here and all revert.
+   Two things deliberately do NOT:
+
+     • the SWITCH (.orbit-switch)      — in components.css
+     • the PROFILE SIDEBAR (.pf-*)     — in components.css
+
+   Their markup was migrated out of inline styles in v0.9.0, so their rules cannot
+   live in a sheet that might be switched off — and reverting them would restore two
+   defects rather than two features: a profile banner that measured 319x0 (two
+   `style` attributes on one div, so the height never landed) and five switches in
+   two sizes with three off-colours, one of them turning RED for "mute". The fixes
+   for those are in the markup and the components sheet, not here.
+
+   ⚠ So "delete this line and the previous design is back" is true of the chrome and
+   NOT of those two components. For the byte-exact previous UI, the git tag
+   `desktop-ui-pre-v0.9.0` is the only honest answer; `.design-backup/` holds a
+   working copy.
 
    The language is the PHONE's ("Refined minimal", mobile/src/styles/redesign.css
    v0.8.1) at desktop density — same product, same surfaces, same accent, same
@@ -30,6 +47,10 @@
      8. The composer
      9. Overlays — modals, menus, toasts, sidebars
     10. Motion
+
+   ⚠ The switch and the profile sidebar were §9c and §9d here; they moved to
+   components.css when the toggle was added. Anything the renderer needs in BOTH UIs
+   belongs in a sheet that always loads.
    ──────────────────────────────────────────────────────────────────────────── */
 
 
@@ -104,56 +125,37 @@
   --shadow-lg: 0 10px 32px rgba(0, 0, 0, .6);
   --shadow-xl: 0 18px 48px rgba(0, 0, 0, .68), 0 2px 8px rgba(0, 0, 0, .45);
 
-  /* Motion. One curve and one duration, so the whole app moves at the same
-     tempo. `--transition` is restated because the existing sheet uses
-     `transition: var(--transition)` in a lot of places — this way all of them
-     pick up the new feel without being rewritten. */
-  --ease: cubic-bezier(.22, .61, .36, 1);
-  --dur: 200ms;
+  /* Motion. `--transition` is restated because components.css uses
+     `transition: var(--transition)` in eight places — this way all of them pick up
+     the new feel without being rewritten. ⚠ `--dur` and `--ease` themselves live in
+     variables.css: the switch and the profile sidebar are styled in components.css,
+     and they need the timing whether or not this layer is loaded. */
   --transition: all var(--dur) var(--ease);
 
   /* A rail icon, a header icon and a composer icon are the same thing at the
      same size, so they get one size. */
   --icon-btn: 32px;
   --row-h: 52px;
-
-  /* The switch — ONE geometry for five call sites. There were two sizes (44x24 in
-     settings, 36x20 in the group modal and the profile sidebar) and three
-     different off-colours (--border-strong, #323236, --border-subtle).
-
-     ⚠ `--switch-off` is `--bg-hover` — a SOLID surface — and that is the point.
-     Two of the three old off-colours were --border-* tokens, which are
-     semi-transparent in every theme (dark: rgba(255,255,255,.08)). Using a
-     translucent border colour as a FILL makes a track that is nearly invisible
-     against the row it sits on, which is exactly how the profile sidebar's switch
-     looked.
-
-     The knob's travel is computed from the other three, not written out — a
-     separate travel value is a second writer, and changing the width without
-     changing it is how a knob ends up stopping short of the end. */
-  --switch-w: 40px;
-  --switch-h: 22px;
-  --switch-knob: 16px;
-  --switch-inset: 3px;
-  --switch-off: var(--bg-hover);
 }
 
 /* The accent, unified with the phone — this is the one value the redesign moves
    in the theme files' territory, and it is restated here rather than edited into
    dark.css so that deleting this file restores the old accent too.
 
-   `theme.spec.js` asserts these two values; they were updated with the change. */
+   `theme.spec.js` asserts these two values; they were updated with the change.
+
+   ⚠ `--accent-ring` is NOT here. It used to be, for dark and light only — which
+   meant the other eight themes had no focus ring anywhere. It is derived from the
+   accent in variables.css now, once, for every theme. */
 :root[data-theme="dark"] {
   --accent-primary: #4D7CFE;
   --accent-hover:   #6A93FF;
   --accent-soft:    rgba(77, 124, 254, .14);
-  --accent-ring:    rgba(77, 124, 254, .32);
 }
 :root[data-theme="light"] {
   --accent-primary: #3F6EF0;
   --accent-hover:   #3462E0;
   --accent-soft:    rgba(63, 110, 240, .10);
-  --accent-ring:    rgba(63, 110, 240, .28);
 }
 
 /* Light theme's surfaces, so the structure is not dark-only. */
@@ -1294,446 +1296,6 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
 #activity-content {
   color: var(--text-secondary);
   font-size: 13px;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   9c. THE SWITCH — ONE CONTROL, FIVE CALL SITES
-
-   ⚠ THERE WERE FIVE HAND-BUILT SWITCHES, IN THREE FILES, AND FOUR OF THEM
-   DISAGREED WITH EACH OTHER:
-
-     settings-modal.js   App Lock PIN         44x24   off --border-strong
-     settings-modal.js   Automatic Updates    44x24   off --border-strong
-     sidebar-middle.js   Pin Group            36x20   off #323236
-     sidebar-middle.js   Mute Notifications   36x20   off #323236
-     profile-sidebar.js  Mute Notifications   36x20   off --border-subtle
-
-   Two sizes. Three off-colours. And the SAME action — "mute notifications" —
-   rendered as a RED switch in the profile sidebar and an ACCENT switch in the
-   group modal, because the profile one used --accent-danger for "on".
-
-   ⚠ The off-colours are the interesting part: two of the three were --border-*
-   tokens, which are SEMI-TRANSPARENT in every theme. A translucent border colour
-   used as a fill is nearly invisible against the row it sits on, which is how the
-   profile switch looked. --switch-off is a solid surface instead.
-
-   ⚠ State is driven by the real checkbox through SIBLING combinators — not `:has()`
-   (which would work here, Chromium 128, but a sibling selector cannot be the thing
-   that breaks) and not by JS. Every one of the five sites had a second writer that
-   repainted the track background and moved the knob by hand on every change:
-
-     settings-modal.js:2516   slider.style.background = on ? accent : border-strong
-     sidebar-middle.js:2306   pinTrack.style.background = …; pinKnob.style.left = …
-     profile-sidebar.js:289   toggle.style.background = …; knob.style.transform = …
-
-   Three copies of one state machine, each with its own idea of the travel
-   distance. All three are gone: the markup carries `checked`, the CSS reads it.
-
-   ⚠ `.toggle-slider` and `.toggle-knob` — the class names the settings markup has
-   been carrying since long before this redesign — had NO RULES IN ANY STYLESHEET.
-   They were markup-only, so the switch was never styled by CSS at all; every
-   pixel of it came from inline styles. Worth knowing before trusting a class name
-   to mean something.
-
-   ⚠ The travel is CALCULATED, never written out. A hand-written travel value is a
-   second writer: change the width and the knob stops short of the end.
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* The outer element is a `<label>` where the switch is its own control, and a
-   `<span>` where it sits inside a row that is already a label — nesting a label
-   inside a label is invalid and browsers disagree about what it does. Both work
-   here: the element is only a positioning box. */
-.orbit-switch {
-  position: relative;
-  display: inline-flex;
-  flex-shrink: 0;
-  cursor: pointer;
-}
-
-/* The real control: focusable and keyboard-operable, just not visible. It is
-   absolutely positioned and zero-sized rather than `display: none`, because a
-   display:none input cannot be tabbed to — the switch would be mouse-only. */
-.orbit-switch > input {
-  position: absolute;
-  width: 0;
-  height: 0;
-  margin: 0;
-  opacity: 0;
-}
-
-.orbit-switch-track {
-  position: relative;
-  display: block;
-  width: var(--switch-w);
-  height: var(--switch-h);
-  border-radius: var(--switch-h);
-  background: var(--switch-off);
-  transition: background var(--dur) var(--ease);
-}
-
-.orbit-switch-knob {
-  position: absolute;
-  top: var(--switch-inset);
-  left: var(--switch-inset);
-  width: var(--switch-knob);
-  height: var(--switch-knob);
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, .35);
-  pointer-events: none;
-  transition: transform var(--dur) var(--ease);
-}
-
-.orbit-switch > input:checked + .orbit-switch-track {
-  background: var(--accent-primary);
-}
-.orbit-switch > input:checked + .orbit-switch-track > .orbit-switch-knob {
-  transform: translateX(calc(var(--switch-w) - var(--switch-knob) - 2 * var(--switch-inset)));
-}
-
-/* Keyboard focus lands on the invisible input, so the ring has to be drawn on the
-   track. */
-.orbit-switch > input:focus-visible + .orbit-switch-track {
-  outline: 2px solid var(--accent-ring);
-  outline-offset: 2px;
-}
-
-/* A switch that only REPORTS state, inside a row that is itself the control —
-   the profile sidebar's mute row. Clicks must reach the row, so the switch does
-   not swallow them. */
-.orbit-switch.is-static {
-  pointer-events: none;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   9d. THE PROFILE SIDEBAR
-
-   ⚠ NO STYLESHEET HAD EVER TOUCHED THIS PANEL, AND NO SPEC DROVE IT. It was
-   built entirely from inline styles in profile-sidebar.js, which is how it
-   managed to ship a banner that renders as a 319x0 box — a gradient painted into
-   nothing — without anything noticing.
-
-   The markup now carries `pf-*` classes (see render() in profile-sidebar.js) and
-   this is the only place its appearance is defined.
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-.pf-root {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
-
-.pf-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 48px;
-  padding: 0 10px 0 16px;
-  flex-shrink: 0;
-  border-bottom: 1px solid var(--border-subtle);
-}
-.pf-header-title {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-.pf-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
-}
-.pf-close svg {
-  width: 16px;
-  height: 16px;
-}
-.pf-close:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-/* ⚠ ONE scroll container for the banner AND the body. The avatar is pulled up with
-   a negative margin to straddle the banner's edge, and a negative margin is clipped
-   by an `overflow` ancestor — so with the scroller on `.pf-body` the avatar's top
-   half was cut off at the banner's edge, with the banner painting over it. The
-   scroller has to be the ancestor of both. */
-.pf-scroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-/* ⚠ The height lives HERE, not inline, and that is the whole bug. The markup used
-   to put the banner's `background` in one `style` attribute and its
-   `height:80px;flex-shrink:0` in a SECOND one on the same div. The parser keeps
-   the first and silently drops the rest, so the height never landed and the
-   banner has always measured 319x0. */
-.pf-banner {
-  height: 80px;
-}
-
-.pf-body {
-  padding: 0 16px 20px;
-  text-align: center;
-}
-
-/* ⚠ The avatar is pulled UP over the banner's bottom edge. It already carried a
-   3px `--bg-surface` ring; a ring only reads as a ring if the disc straddles an
-   edge, and the body's top padding pushed the avatar clear of the banner instead
-   — so the ring was invisible and the banner read as a strip that happened to be
-   there rather than as the top of a profile card. */
-.pf-identity {
-  margin-top: -34px;
-}
-.pf-avatar {
-  margin-bottom: 10px;
-  line-height: 0;
-}
-.pf-avatar-img,
-.pf-avatar-initial {
-  width: 68px;
-  height: 68px;
-  border-radius: 50%;
-  border: 3px solid var(--bg-surface);
-  display: inline-block;
-  box-sizing: border-box;
-}
-.pf-avatar-img {
-  object-fit: cover;
-}
-/* The initials fallback is a solid accent disc with a white letter — the desktop's
-   convention for a photo-less avatar, in all twelve other places. */
-.pf-avatar-initial {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--accent-primary);
-  color: #fff;
-  font-size: 25px;
-  font-weight: 600;
-}
-.pf-avatar-framed {
-  position: relative;
-  display: inline-block;
-  line-height: 0;
-}
-.pf-avatar-frame {
-  position: absolute;
-  top: -14%;
-  left: -14%;
-  width: 122%;
-  height: 122%;
-  pointer-events: none;
-  object-fit: contain;
-}
-
-.pf-name {
-  margin: 0 0 3px;
-  font-family: var(--font-display);
-  font-size: 19px;
-  font-weight: 700;
-  letter-spacing: -.01em;
-  color: var(--text-primary);
-  /* The panel is narrow; a long name must wrap rather than push the panel wide. */
-  overflow-wrap: anywhere;
-}
-.pf-tag {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-bottom: 10px;
-}
-.pf-presence {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-.pf-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
-  flex-shrink: 0;
-}
-.pf-status {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-.pf-lastseen {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-top: 3px;
-}
-
-/* One surface, one border, one radius for every block in the panel — the bio, the
-   pinned list and the rows. They used to each carry their own inline radius. */
-.pf-card {
-  text-align: left;
-  background: var(--bg-base);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-}
-.pf-bio {
-  margin-top: 16px;
-  padding: 12px;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--text-primary);
-}
-
-.pf-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 14px;
-  padding: 12px;
-  cursor: pointer;
-}
-.pf-row-main {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-.pf-row-icon {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-  color: var(--text-secondary);
-}
-.pf-row-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-/* ⚠ A DESTRUCTIVE ROW, AND IT USED TO LOOK LIKE A SETTING. Blocking someone was
-   the same card as muting them — same surface, same border, same shape, differing
-   only in the colour of the text. The tint says "this one is different" without
-   shouting, and it is a tint of the THEME's danger colour so it survives nord. */
-.pf-row-danger {
-  justify-content: center;
-  background: color-mix(in srgb, var(--accent-danger) 9%, transparent);
-  border-color: color-mix(in srgb, var(--accent-danger) 26%, transparent);
-}
-.pf-row-danger .pf-row-icon,
-.pf-row-danger .pf-row-label {
-  color: var(--accent-danger);
-}
-.pf-row-danger:hover {
-  background: color-mix(in srgb, var(--accent-danger) 16%, transparent);
-}
-
-.pf-field {
-  margin-top: 16px;
-  text-align: left;
-}
-.pf-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-.pf-idrow {
-  display: flex;
-  align-items: stretch;
-  gap: 6px;
-  margin-top: 5px;
-}
-.pf-id {
-  flex: 1;
-  min-width: 0;
-  padding: 8px;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  background: var(--bg-base);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text-secondary);
-  word-break: break-all;
-}
-.pf-copy {
-  flex-shrink: 0;
-  width: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
-}
-.pf-copy svg {
-  width: 14px;
-  height: 14px;
-}
-.pf-copy:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-/* ── The pinned block ────────────────────────────────────────────────────── */
-.pf-pinned {
-  margin-top: 14px;
-  padding: 12px;
-}
-.pf-pinned-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-.pf-pinned-pin {
-  width: 14px;
-  height: 14px;
-  color: var(--accent-primary);
-  flex-shrink: 0;
-}
-.pf-pinned-count {
-  margin-left: auto;
-  font-size: 11px;
-  color: var(--text-muted);
-  font-variant-numeric: tabular-nums;
-}
-.pf-pinned-jump {
-  display: block;
-  width: 100%;
-  padding: 6px 0;
-  border: none;
-  background: transparent;
-  text-align: left;
-  font-size: 12.5px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.pf-pinned-jump:hover {
-  color: var(--text-primary);
-}
-.pf-pinned-all {
-  margin-top: 6px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--accent-primary);
-  cursor: pointer;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

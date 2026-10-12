@@ -546,6 +546,33 @@ window.SettingsModal = {
       content.innerHTML =
         '<h3 style="font-family:var(--font-display);font-size:24px;margin-bottom:24px;">Appearance</h3>' +
 
+        // Section: Look
+        // ⚠ FIRST IN THE TAB, above Theme, because it is the biggest single choice in
+        // it — and because the person who needs it is someone who is unhappy with the
+        // new UI and should not have to hunt. The whole row is a <label>, so clicking
+        // the text works as well as the switch.
+        '<div class="settings-collapsible" style="margin-bottom:12px;border-radius:10px;border:1px solid var(--border-subtle);overflow:hidden;">' +
+          '<div class="collapsible-header" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg-base);cursor:pointer;user-select:none;" onclick="var b=this.nextElementSibling;var i=this.querySelector(\'.collapse-icon\');if(b.style.display===\'none\'){b.style.display=\'block\';i.style.transform=\'rotate(0deg)\'}else{b.style.display=\'none\';i.style.transform=\'rotate(-90deg)\'}">' +
+            '<div style="display:flex;align-items:center;gap:8px;"><i data-lucide="layout-panel-left" style="width:16px;height:16px;color:var(--text-muted);"></i><span style="font-size:13px;font-weight:600;color:var(--text-primary);">Look</span></div>' +
+            '<i data-lucide="chevron-down" class="collapse-icon" style="width:16px;height:16px;color:var(--text-muted);transition:transform 0.2s;"></i>' +
+          '</div>' +
+          '<div class="collapsible-body" style="padding:16px;display:block;">' +
+            '<label style="display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;">' +
+              '<div>' +
+                '<div style="font-size:14px;color:var(--text-primary);">Classic look</div>' +
+                '<div style="font-size:12px;color:var(--text-muted);font-weight:400;margin-top:2px;">Use the previous design instead of the new one</div>' +
+              '</div>' +
+              // ⚠ A <span>, not a <label>: the row IS the label, and a label inside a
+              // label is invalid. See §9c in components.css.
+              '<span class="orbit-switch">' +
+                '<input type="checkbox" id="set-classic-ui"' + (s.classicUI === true ? ' checked' : '') + '>' +
+                '<span class="orbit-switch-track"><span class="orbit-switch-knob"></span></span>' +
+              '</span>' +
+            '</label>' +
+            '<div style="font-size:11.5px;color:var(--text-muted);margin-top:10px;padding-top:10px;border-top:1px solid var(--border-subtle);line-height:1.5;">Takes effect straight away — no restart. Your theme, and everything else in this panel, keeps working either way.</div>' +
+          '</div>' +
+        '</div>' +
+
         // Section: Theme
         '<div class="settings-collapsible" style="margin-bottom:12px;border-radius:10px;border:1px solid var(--border-subtle);overflow:visible;">' +
           '<div class="collapsible-header" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg-base);cursor:pointer;user-select:none;" onclick="var b=this.nextElementSibling;var i=this.querySelector(\'.collapse-icon\');if(b.style.display===\'none\'){b.style.display=\'block\';i.style.transform=\'rotate(0deg)\'}else{b.style.display=\'none\';i.style.transform=\'rotate(-90deg)\'}">' +
@@ -1010,6 +1037,17 @@ window.SettingsModal = {
       }
       content.querySelector('#set-msg-anim').addEventListener('change', function(e) { updateSettings('messageAnim', e.target.value); });
       content.querySelector('#set-24h').addEventListener('change', function(e) { updateSettings('timeFormat24', e.target.checked); });
+
+      // The Classic look toggle. ⚠ Nothing here touches the stylesheet — the store
+      // write is the whole handler. applySettings runs from the store subscription
+      // and owns the layer, so the toggle and the inline pre-paint script in
+      // index.html cannot disagree about what "classic" means.
+      var classicToggle = content.querySelector('#set-classic-ui');
+      if (classicToggle) {
+        classicToggle.addEventListener('change', function(e) {
+          updateSettings('classicUI', e.target.checked);
+        });
+      }
       content.querySelector('#set-translate').addEventListener('change', function(e) {
         updateSettings('messageTranslate', e.target.checked);
         updateSettings('experimentalMessageTranslate', e.target.checked);

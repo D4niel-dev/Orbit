@@ -15,7 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- CSS Architecture -->
-  <link rel="stylesheet" href="styles/variables.css?v=20260721">
+  <link rel="stylesheet" href="styles/variables.css?v=20261012b">
   <link rel="stylesheet" href="styles/themes/light.css?v=20260721">
   <link rel="stylesheet" href="styles/themes/dark.css?v=20260721">
   <link rel="stylesheet" href="styles/themes/dark-purple.css?v=20260721">
@@ -28,13 +28,44 @@
   <link rel="stylesheet" href="styles/themes/seasonal-winter.css?v=20260721">
   <link rel="stylesheet" href="styles/base.css?v=20260721">
   <link rel="stylesheet" href="styles/layout.css?v=20260721">
-  <link rel="stylesheet" href="styles/components.css?v=20261009a">
+  <link rel="stylesheet" href="styles/components.css?v=20261012b">
   <link rel="stylesheet" href="styles/animations.css?v=20260721">
   <!-- ⚠ LOADED LAST, ON PURPOSE, AND IT IS THE WHOLE v0.9.0 REDESIGN.
-       A layer over components.css rather than an edit to it — delete this one
-       line and the previous design is back, exactly. See the header comment in
-       the file. -->
-  <link rel="stylesheet" href="styles/redesign.css?v=20261012a">
+       A layer over components.css rather than an edit to it — disabling this one
+       <link> gives the previous design back, which is what Settings → Appearance →
+       "Classic look" does. See the header comment in the file.
+
+       ⚠ It owns the CHROME only. The switch and the profile sidebar are styled in
+       components.css, because their markup is class-based in both UIs. -->
+  <link id="redesign-css" rel="stylesheet" href="styles/redesign.css?v=20261012b">
+
+  <!-- ⚠ THE "CLASSIC LOOK" PREFERENCE IS APPLIED HERE, INLINE, BEFORE FIRST PAINT.
+       Applied from app.js instead, the app would draw the new UI and then visibly
+       switch to the old one on every launch — a flash for exactly the people who
+       chose the classic look, which is the worst possible audience for it. This is
+       why the setting is read through `orbitAPI.storeGet`, a SYNCHRONOUS IPC through
+       the preload bridge, rather than from the SQLite copy the app loads later.
+
+       ⚠⚠ IT FAILS OPEN, AND THAT IS THE WHOLE SAFETY PROPERTY. No bridge, no
+       settings, a thrown error, or anything that is not exactly `classicUI: true`
+       leaves the redesign ON. A user must never be able to end up in an unstyled app
+       because a preference read went wrong.
+
+       ⚠ It is also not the authority — store.js applies the real setting once it
+       loads, so a stale or missing value here costs a brief flash, never a wrong
+       final state. -->
+  <script>
+    (function () {
+      try {
+        var api = window.orbitAPI;
+        var settings = (api && api.storeGet) ? api.storeGet('settings') : null;
+        if (settings && settings.classicUI === true) {
+          var link = document.getElementById('redesign-css');
+          if (link) link.disabled = true;
+        }
+      } catch (e) { /* leave the new UI on */ }
+    })();
+  </script>
 
   <!-- Syntax Highlighting (Prism) -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">

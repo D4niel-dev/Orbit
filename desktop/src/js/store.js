@@ -71,6 +71,13 @@ class Store {
       },
       settings: {
         theme: 'dark',
+        // The previous desktop UI, for anyone who does not want the v0.9.0 redesign.
+        // ⚠ `false` — the new UI is the default, and the flag describes the OPT-OUT,
+        // which is the direction the setting actually exists for. Read in three
+        // places and all three treat anything other than exactly `true` as the new
+        // UI: the inline script in index.html (before first paint), applySettings,
+        // and the toggle in Settings → Appearance.
+        classicUI: false,
         fontSize: 'Medium',
         messageBubbles: 'Modern',
         appZoom: 100,

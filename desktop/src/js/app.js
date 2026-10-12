@@ -228,8 +228,45 @@ document.addEventListener('DOMContentLoaded', () => {
   // Detect system dark mode preference
   const darkModeMedia = window.matchMedia('(prefers-color-scheme: dark)');
 
+  /**
+   * The "Classic look" setting — the previous UI, for anyone who does not want the
+   * new one.
+   *
+   * ⚠ IT IS ONE LINE OF WORK BECAUSE THE REDESIGN IS ONE STYLESHEET. Everything the
+   * redesign changes about the chrome lives in styles/redesign.css, loaded last, so
+   * disabling its <link> restores the previous cascade. No reload, no re-render, no
+   * second copy of the old UI to keep in sync — the browser re-resolves the cascade
+   * on the spot.
+   *
+   * ⚠ It is applied from applySettings, which runs at boot AND on every settings
+   * change (the store subscription below), so the layer can never drift from the
+   * preference. index.html also applies it inline before first paint, so the new UI
+   * does not flash on launch — this is the authority, that is the anti-flash.
+   *
+   * ⚠ `disabled` rather than removing the element: re-enabling must not re-fetch,
+   * and a removed link has to be rebuilt from a string that would then be a second
+   * definition of the path.
+   */
+  const applyRedesignLayer = (enabled) => {
+    var link = document.getElementById('redesign-css');
+    if (!link) return false;
+    link.disabled = !enabled;
+    return true;
+  };
+  window.OrbitRedesign = {
+    apply: applyRedesignLayer,
+    isOn: () => {
+      var link = document.getElementById('redesign-css');
+      return !!link && !link.disabled;
+    }
+  };
+
   // ---- Apply settings from store ----
   const applySettings = (settings) => {
+    // ⚠ First, before anything reads a computed style: `!== true` so a missing or
+    // malformed value means the NEW ui, never a half-styled classic one.
+    applyRedesignLayer(settings.classicUI !== true);
+
     var theme = settings.theme || 'dark';
     if (theme === 'system') {
       theme = darkModeMedia.matches ? 'dark' : 'light';

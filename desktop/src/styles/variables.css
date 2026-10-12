@@ -56,6 +56,50 @@
   --presence-busy:    var(--accent-danger);
   --presence-offline: var(--text-muted);
 
+  /* The focus ring. ⚠⚠ THIS WAS DEFINED ONLY IN redesign.css, AND ONLY FOR dark AND
+     light — so on nord, sunset, midnight, dark-purple and all four seasonal themes
+     the token did not exist and EVERY ONE of its seven uses dropped its declaration
+     and said nothing: no focus ring on any input, no ring on the search pill, the
+     chat field, the settings fields, or the switch. Same family as `--shadow-xl`.
+
+     Derived from the theme's own accent here, so all ten themes get one and a new
+     theme cannot forget it. color-mix() at 32% reproduces dark's previous
+     rgba(77,124,254,.32) exactly; light moves from .28 to .32, which is the point —
+     one rule instead of a per-theme value that eight themes never got. */
+  --accent-ring: color-mix(in srgb, var(--accent-primary) 32%, transparent);
+
+  /* Motion. One curve and one duration, so the whole app moves at the same tempo.
+     ⚠ Here rather than in the redesign layer: the switch and the profile sidebar
+     are styled in components.css (their markup is class-based in both UIs), and a
+     rule there referencing a token only the layer defines would lose its transition
+     in classic mode. `--transition` is still restated by the layer, because
+     components.css uses `transition: var(--transition)` in eight places and the
+     themes define their own. */
+  --ease: cubic-bezier(.22, .61, .36, 1);
+  --dur: 200ms;
+
+  /* The switch — ONE geometry for five call sites. There were two sizes (44x24 in
+     settings, 36x20 in the group modal and the profile sidebar) and three different
+     off-colours (--border-strong, #323236, --border-subtle).
+
+     ⚠ `--switch-off` is `--bg-hover` — a SOLID surface — and that is the point. Two
+     of the three old off-colours were --border-* tokens, which are SEMI-TRANSPARENT
+     in every theme (dark: rgba(255,255,255,.08)). Using a translucent border colour
+     as a FILL makes a track that is nearly invisible against the row it sits on,
+     which is exactly how the profile sidebar's switch looked.
+
+     The knob's travel is computed from the other three, not written out — a separate
+     travel value is a second writer, and changing the width without changing it is
+     how a knob ends up stopping short of the end.
+
+     ⚠ Also here rather than in the layer, for the same reason as --dur: the switch
+     markup carries classes in both UIs, so its rules live in components.css. */
+  --switch-w: 40px;
+  --switch-h: 22px;
+  --switch-knob: 16px;
+  --switch-inset: 3px;
+  --switch-off: var(--bg-hover);
+
   /* Spacing */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
