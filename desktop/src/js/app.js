@@ -234,9 +234,8 @@ document.addEventListener('DOMContentLoaded', () => {
    *
    * ⚠ IT IS ONE LINE OF WORK BECAUSE THE REDESIGN IS ONE STYLESHEET. Everything the
    * redesign changes about the chrome lives in styles/redesign.css, loaded last, so
-   * disabling its <link> restores the previous cascade. No reload, no re-render, no
-   * second copy of the old UI to keep in sync — the browser re-resolves the cascade
-   * on the spot.
+   * disabling its <link> restores the previous cascade. No second copy of the old UI
+   * to keep in sync.
    *
    * ⚠ It is applied from applySettings, which runs at boot AND on every settings
    * change (the store subscription below), so the layer can never drift from the
@@ -258,6 +257,52 @@ document.addEventListener('DOMContentLoaded', () => {
     isOn: () => {
       var link = document.getElementById('redesign-css');
       return !!link && !link.disabled;
+    },
+
+    /**
+     * Save the choice and restart so it takes effect.
+     *
+     * ⚠⚠ IT RESTARTS RATHER THAN FLIPPING THE LAYER LIVE, AND THE REASON IS THE
+     * MOMENT IT HAPPENS. applySettings would repaint the whole window the instant
+     * the setting changed — so the user would watch the UI they are leaving change
+     * under them and *then* see the window close. A restart is what they asked for
+     * and what the confirmation promises; the last thing they see should be the
+     * dialog, not a half-transitioned app.
+     *
+     * ⚠ The live store is deliberately NOT updated, for the same reason: setState
+     * runs the subscription, which runs applySettings, which repaints. The write
+     * goes to the stores and nowhere else, and the restarted app reads it back.
+     *
+     * ⚠ BOTH stores, the way the update-check toggle does it. electron-store is the
+     * durable source — the Database constructor copies it over SQLite on every
+     * launch — and the SQLite write is belt and braces for the boot read. Both are
+     * synchronous, so the value is on disk before the process exits.
+     */
+    commitClassicUI: (classic) => {
+      var next = Object.assign({}, window.store.getState().settings, { classicUI: classic === true });
+      if (window.Storage) window.Storage.set('settings', next);
+      if (window.orbitAPI && window.orbitAPI.dbSetSetting) window.orbitAPI.dbSetSetting('settings', next);
+      window.OrbitRedesign.requestRestart();
+    },
+
+    /**
+     * ⚠ Split out from commitClassicUI so it is the ONE place the restart is asked
+     * for — and so a spec can replace it. The preload's bridge is frozen and
+     * non-extensible (verified: assigning to it silently does nothing), so a test
+     * cannot stub `orbitAPI.relaunchApp`; without this seam, asserting the confirm
+     * path would mean actually relaunching Electron and leaking a process.
+     */
+    requestRestart: () => {
+      if (window.orbitAPI && window.orbitAPI.relaunchApp) {
+        window.orbitAPI.relaunchApp();
+        return true;
+      }
+      // No relaunch bridge — a plain browser rather than Electron. Apply it live so
+      // the toggle is not a dead control there; read the value that was just
+      // written, because the live store was not touched.
+      var saved = window.Storage ? window.Storage.get('settings', {}) : {};
+      applyRedesignLayer(saved.classicUI !== true);
+      return false;
     }
   };
 

@@ -792,10 +792,14 @@ test.describe('desktop redesign', () => {
     }
   });
 
-  test('Classic look switches the layer off live, and both UIs stay whole', async () => {
+  test('Classic look reverts the chrome and both UIs stay whole', async () => {
     // The setting exists so a user who does not want the new UI can have the old one.
     // ⚠ Applied by disabling ONE <link> — the redesign is a layer — so this asserts
     // the chrome actually changes, not merely that the link flipped.
+    //
+    // ⚠ The LAYER is driven directly here, through apply(). The switch does not flip
+    // it any more: it confirms and restarts (see the two tests below), so wiring this
+    // assertion to a click on the switch would be testing a path that no longer runs.
     const chrome = () => page.evaluate(() => {
       const link = document.getElementById('redesign-css');
       const search = document.querySelector('.search-input-wrapper');
@@ -813,59 +817,142 @@ test.describe('desktop redesign', () => {
       };
     });
 
-    // New UI at boot.
-    await page.click('#btn-nav-settings');
-    await page.waitForTimeout(900);
-    await page.evaluate(() => window.SettingsModal.renderTab('appearance'));
-    await page.waitForTimeout(900);
-
     const before = await chrome();
     expect(before.layerOn).toBe(true);
     expect(before.iconBtn).toBe('32px');
     expect(before.searchRadius).toBe('34px');
 
-    // The toggle must exist, be off, and be a real switch.
-    const toggle = await page.evaluate(() => {
-      const el = document.getElementById('set-classic-ui');
-      if (!el) return null;
-      return { checked: el.checked, rowTag: el.closest('label') ? el.closest('label').tagName : null };
-    });
-    expect(toggle).not.toBeNull();
-    expect(toggle.checked).toBe(false);
-    // ⚠ The whole row is the label, so clicking the text toggles it too.
-    expect(toggle.rowTag).toBe('LABEL');
-
-    // Flip it by clicking the ROW, and check the chrome without any reload.
-    await page.evaluate(() => document.getElementById('set-classic-ui').closest('label').click());
-    await page.waitForTimeout(800);
-
+    // Classic.
+    await page.evaluate(() => window.OrbitRedesign.apply(false));
+    await page.waitForTimeout(500);
     const after = await chrome();
     expect(after.layerOn).toBe(false);
     // The layer's token is gone and the element it restyled is back to the old shape.
     expect(after.iconBtn).toBe('');
     expect(after.searchRadius).not.toBe('34px');
-    // ⚠ And the switch survives — it is in components.css precisely so this holds.
-    expect(after.switchBox).toBe('40x22');
 
-    // The profile sidebar too, with the layer off.
-    await page.evaluate(() => { window.SettingsModal.close(); });
-    await page.waitForTimeout(500);
+    // ⚠ The profile sidebar, with the layer off — and this is also where a switch is
+    // finally IN THE DOM. Measured earlier, switchBox was null because nothing on
+    // screen carried one, which is a fact about the test, not the app.
     await page.evaluate(() => {
       const f = (window.store.getState().friends || [])[0];
       if (f && window.ProfileSidebar) window.ProfileSidebar.open(f);
     });
     await page.waitForTimeout(1000);
     const classic = await chrome();
+    // ⚠ The switch survives — it is in components.css precisely so this holds.
     expect(classic.switchBox).toBe('40x22');
     expect(classic.bannerHeight).toBe(80);
 
-    // And back again, live.
+    // And back.
     await page.evaluate(() => window.OrbitRedesign.apply(true));
     await page.waitForTimeout(500);
     const back = await chrome();
     expect(back.layerOn).toBe(true);
     expect(back.iconBtn).toBe('32px');
     expect(back.searchRadius).toBe('34px');
+  });
+
+  // Open Settings → Appearance and return the state a test cares about.
+  const lookState = () => page.evaluate(() => ({
+    layerOn: !document.getElementById('redesign-css').disabled,
+    checked: document.getElementById('set-classic-ui').checked,
+    // ⚠ BOTH stores, because the restart reads them back.
+    inElectronStore: (window.orbitAPI.storeGet('settings') || {}).classicUI,
+    inSqlite: (window.orbitAPI.dbGetSetting('settings', {}) || {}).classicUI,
+    // The confirm dialog mounts into #modal-container.
+    dialogTitle: (() => {
+      const c = document.getElementById('modal-container');
+      if (!c || !c.textContent) return null;
+      return c.textContent.includes('Switch to the classic look?') ? 'switch'
+        : c.textContent.includes('Switch back to the new look?') ? 'back' : null;
+    })()
+  }));
+
+  const clickDialog = (label) => page.evaluate((t) => {
+    const btn = Array.from(document.querySelectorAll('#modal-container button'))
+      .find((b) => b.textContent.trim() === t);
+    if (btn) btn.click();
+    return !!btn;
+  }, label);
+
+  const openAppearance = async () => {
+    await page.click('#btn-nav-settings');
+    await page.waitForTimeout(900);
+    await page.evaluate(() => window.SettingsModal.renderTab('appearance'));
+    await page.waitForTimeout(900);
+  };
+
+  test('the Classic look switch asks first, and cancelling changes nothing', async () => {
+    // ⚠⚠ A SWITCH THAT MOVES AND THEN ASKS PERMISSION IS SHOWING A STATE THAT IS NOT
+    // SAVED. Changing the look restarts the app, so the control must not act on the
+    // click: it goes back at once and only a confirmed choice may move it.
+    await openAppearance();
+
+    const before = await lookState();
+    expect(before.layerOn).toBe(true);
+    expect(before.checked).toBe(false);
+    expect(before.inElectronStore).not.toBe(true);
+    expect(before.dialogTitle).toBeNull();
+
+    // Clicking the ROW (the label) opens the confirmation.
+    await page.evaluate(() => document.getElementById('set-classic-ui').closest('label').click());
+    await page.waitForTimeout(400);
+    const asked = await lookState();
+    expect(asked.dialogTitle).toBe('switch');
+    // ⚠ The switch is back where it started.
+    expect(asked.checked).toBe(false);
+    // And NOTHING has been written or applied while the question is open.
+    expect(asked.layerOn).toBe(true);
+    expect(asked.inElectronStore).not.toBe(true);
+
+    // Cancel.
+    expect(await clickDialog('Not now')).toBe(true);
+    await page.waitForTimeout(500);
+    const cancelled = await lookState();
+    expect(cancelled.dialogTitle).toBeNull();
+    expect(cancelled.checked).toBe(false);
+    expect(cancelled.layerOn).toBe(true);
+    expect(cancelled.inElectronStore).not.toBe(true);
+    expect(cancelled.inSqlite).not.toBe(true);
+  });
+
+  test('confirming saves the choice and asks for a restart, without repainting first', async () => {
+    // ⚠⚠ THE RESTART IS STUBBED ON window.OrbitRedesign, NOT ON orbitAPI. The preload
+    // bridge is frozen and non-extensible — assigning to orbitAPI.relaunchApp
+    // silently does nothing (verified) — so the real call would fire and this test
+    // would relaunch Electron for real and leak a process. requestRestart exists as a
+    // seam for exactly this.
+    await page.evaluate(() => {
+      window.__restarts = 0;
+      window.OrbitRedesign.requestRestart = function () { window.__restarts += 1; return true; };
+    });
+
+    await openAppearance();
+    await page.evaluate(() => document.getElementById('set-classic-ui').closest('label').click());
+    await page.waitForTimeout(400);
+    expect(await clickDialog('Restart now')).toBe(true);
+    await page.waitForTimeout(600);
+
+    const r = await page.evaluate(() => ({
+      restarts: window.__restarts,
+      inElectronStore: (window.orbitAPI.storeGet('settings') || {}).classicUI,
+      inSqlite: (window.orbitAPI.dbGetSetting('settings', {}) || {}).classicUI,
+      layerOn: !document.getElementById('redesign-css').disabled,
+      dialogGone: !document.getElementById('modal-container').textContent.includes('Switch to the classic look?')
+    }));
+
+    expect(r.restarts).toBe(1);
+    // ⚠ Both stores — the restart reads SQLite at boot, and electron-store is what
+    // the pre-paint script reads. A write to only one of them is a half-fix.
+    expect(r.inElectronStore).toBe(true);
+    expect(r.inSqlite).toBe(true);
+    // ⚠⚠ AND THE WINDOW WAS NOT REPAINTED. Going through the store would have run
+    // applySettings and flipped the layer under the user, then closed the window on
+    // top of a half-transitioned UI. The change lands on the way back up.
+    expect(r.layerOn).toBe(true);
+    // And the dialog closed, so a stuck z-index-10000 overlay cannot block the app.
+    expect(r.dialogGone).toBe(true);
   });
 
   test('classicUI fails OPEN — only exactly true means the old UI', async () => {
@@ -914,4 +1001,68 @@ test.describe('desktop redesign', () => {
     // a hopeful one.
     expect(await accent()).toBe('#0a84ff');
   });
+});
+
+// ⚠⚠ OUTSIDE THE DESCRIBE, DELIBERATELY. The block above launches an app in
+// beforeEach, and this test manages its own two launches — the whole point is that
+// it closes the app and brings it back. Sitting inside would give it a second,
+// unused instance and fight the teardown.
+//
+// ⚠⚠ THIS IS THE ONE PART THE TESTS ABOVE CANNOT COVER. They stub the restart,
+// because the preload bridge is frozen — assigning to orbitAPI.relaunchApp silently
+// does nothing — so a real click on "Restart now" would relaunch Electron for real
+// and leak a process. The round trip therefore lives here: save the choice exactly
+// as the toggle does, close, come back up, and check the app is classic.
+test('the classic look survives a relaunch, and is applied before the first paint', async () => {
+  const userDataDir = tmpUserDataDir('classic-look');
+
+  const read = (p) => p.evaluate(() => ({
+    layerOn: !document.getElementById('redesign-css').disabled,
+    iconBtn: getComputedStyle(document.documentElement).getPropertyValue('--icon-btn').trim() || '',
+    searchRadius: (() => {
+      const e = document.querySelector('.search-input-wrapper');
+      return e ? getComputedStyle(e).borderRadius : null;
+    })()
+  }));
+
+  // Launch #1 — the new UI.
+  let { app, page } = await launchApp(userDataDir);
+  const before = await read(page);
+  expect(before.layerOn).toBe(true);
+  expect(before.iconBtn).toBe('32px');
+
+  // ⚠ Save it through commitClassicUI with ONLY the restart stubbed, so the writes
+  // under test are the real ones — both stores, exactly as production does them.
+  await page.evaluate(() => {
+    window.__restarts = 0;
+    window.OrbitRedesign.requestRestart = function () { window.__restarts += 1; return true; };
+    window.OrbitRedesign.commitClassicUI(true);
+  });
+  expect(await page.evaluate(() => window.__restarts)).toBe(1);
+  await app.close();
+
+  // Launch #2 — same data dir. Classic, with no correction after boot.
+  ({ app, page } = await launchApp(userDataDir));
+  const after = await read(page);
+  expect(after.layerOn).toBe(false);
+  expect(after.iconBtn).toBe('');
+  expect(after.searchRadius).not.toBe('34px');
+  // And it is the value the app BOOTED with, not one it fixed up later.
+  expect(await page.evaluate(() => window.store.getState().settings.classicUI)).toBe(true);
+  await app.close();
+
+  // ⚠ And the anti-flash mechanism is pinned STRUCTURALLY, because the difference
+  // between "applied before the first paint" and "applied a moment after" is not
+  // observable from the outside once the app is up. The inline script has to sit
+  // after the <link> it disables and before the app's own scripts, and it has to read
+  // the preference through the synchronous bridge — moving it into app.js would leave
+  // the behaviour identical and the flash back.
+  const html = fs.readFileSync(path.join(__dirname, '../../src/index.html'), 'utf8');
+  const linkAt = html.indexOf('id="redesign-css"');
+  const scriptAt = html.indexOf("storeGet('settings')");
+  const firstSrcAt = html.indexOf('<script src=');
+  expect(linkAt).toBeGreaterThan(-1);
+  expect(scriptAt).toBeGreaterThan(linkAt);
+  expect(scriptAt).toBeLessThan(firstSrcAt);
+  expect(html).toContain("settings.classicUI === true");
 });

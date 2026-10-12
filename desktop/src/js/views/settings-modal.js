@@ -569,7 +569,7 @@ window.SettingsModal = {
                 '<span class="orbit-switch-track"><span class="orbit-switch-knob"></span></span>' +
               '</span>' +
             '</label>' +
-            '<div style="font-size:11.5px;color:var(--text-muted);margin-top:10px;padding-top:10px;border-top:1px solid var(--border-subtle);line-height:1.5;">Takes effect straight away — no restart. Your theme, and everything else in this panel, keeps working either way.</div>' +
+            '<div style="font-size:11.5px;color:var(--text-muted);margin-top:10px;padding-top:10px;border-top:1px solid var(--border-subtle);line-height:1.5;">Orbit restarts to apply this, so it asks first. Your theme, and everything else in this panel, keeps working either way.</div>' +
           '</div>' +
         '</div>' +
 
@@ -1038,14 +1038,32 @@ window.SettingsModal = {
       content.querySelector('#set-msg-anim').addEventListener('change', function(e) { updateSettings('messageAnim', e.target.value); });
       content.querySelector('#set-24h').addEventListener('change', function(e) { updateSettings('timeFormat24', e.target.checked); });
 
-      // The Classic look toggle. ⚠ Nothing here touches the stylesheet — the store
-      // write is the whole handler. applySettings runs from the store subscription
-      // and owns the layer, so the toggle and the inline pre-paint script in
-      // index.html cannot disagree about what "classic" means.
+      // The Classic look toggle.
+      //
+      // ⚠⚠ IT CONFIRMS FIRST, AND THE SWITCH GOES BACK IMMEDIATELY. Changing the
+      // look restarts the app, so this is not a control that may act on the click:
+      // a switch that moves and then asks permission is showing a state that is not
+      // saved. It is put back at once, and only a confirmed choice — followed by the
+      // restart that applies it — may move it.
+      //
+      // ⚠ It does NOT go through updateSettings. That funnels into the store, whose
+      // subscription repaints the window through applySettings — so the UI would
+      // change under the user and *then* the app would close. See commitClassicUI.
       var classicToggle = content.querySelector('#set-classic-ui');
       if (classicToggle) {
         classicToggle.addEventListener('change', function(e) {
-          updateSettings('classicUI', e.target.checked);
+          var wantClassic = e.target.checked;
+          e.target.checked = !wantClassic;
+
+          window.ConfirmModal.show({
+            title: wantClassic ? 'Switch to the classic look?' : 'Switch back to the new look?',
+            message: 'Orbit will close and reopen to apply it. Nothing else changes — your messages, accounts and settings are untouched.',
+            confirmText: 'Restart now',
+            cancelText: 'Not now',
+            onConfirm: function() {
+              if (window.OrbitRedesign) window.OrbitRedesign.commitClassicUI(wantClassic);
+            }
+          });
         });
       }
       content.querySelector('#set-translate').addEventListener('change', function(e) {
