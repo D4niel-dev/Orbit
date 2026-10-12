@@ -1,0 +1,1044 @@
+/* src/styles/redesign.css
+   ────────────────────────────────────────────────────────────────────────────
+   v0.9.0-beta — the desktop redesign.
+
+   ⚠ THIS FILE IS A LAYER, NOT A REPLACEMENT, AND THAT IS THE POINT.
+
+   components.css is 73 KB and redefines plenty of selectors more than once, so
+   editing it in place means guessing which copy wins. This sheet loads LAST and
+   restates the parts of the UI the redesign changes. Delete the one <link> in
+   index.html and the previous design is back, exactly — which is the safety net
+   Dan asked for, and a better one than a copy of the old files, because there is
+   nothing to restore *from*.
+
+   The authoritative copy of the previous UI is the git tag
+   `desktop-ui-pre-v0.9.0`; `.design-backup/` holds a working copy.
+
+   The language is the PHONE's ("Refined minimal", mobile/src/styles/redesign.css
+   v0.8.1) at desktop density — same product, same surfaces, same accent, same
+   radii ladder. Only the density differs: 32px rows rather than 56, a 260px
+   sidebar rather than a full-width list, hover instead of touch.
+
+   Sections
+     1. Tokens
+     2. Base chrome — the glow, scrollbars, focus
+     3. The titlebar
+     4. The icon rail
+     5. The middle panel — search, tabs, list rows
+     6. The chat header
+     7. The conversation — bubbles, day separators, system notes
+     8. The composer
+     9. Overlays — modals, menus, toasts, sidebars
+    10. Motion
+   ──────────────────────────────────────────────────────────────────────────── */
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   1. TOKENS
+
+   Four surfaces, three text levels, one accent, whisper-thin hairlines.
+
+   ⚠ `:root[data-theme]` — (0,2,0) — deliberately, not `:root`. Every theme file
+   scopes its tokens to `:root[data-theme="X"]`, which has the same specificity,
+   so a bare `:root` block would LOSE to nord, midnight, sunset and the seasonal
+   themes and the redesign would only ever apply to dark and light. Matching the
+   specificity and coming later in the cascade means the structure lands on every
+   theme — while the accent below is restated for dark and light only, so each
+   named theme keeps the colour it is named for.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root[data-theme] {
+  /* Surfaces — each step perceptibly above the last, so elevation is read from
+     luminance rather than from a shadow. On a dark canvas a shadow is invisible
+     anyway; what tells you a panel is above another panel is that it is lighter.
+     `--bg-sidebar` is the desktop's own: the rail sits BELOW the list panel. */
+  --bg-base:      #0A0B0D;
+  --bg-surface:   #101114;
+  --bg-sidebar:   #0C0D10;
+  --bg-raised:    #17191E;   /* ⚠ was never defined anywhere — see the note in §9 */
+  --bg-raised-2:  #1E2127;
+  --bg-hover:     #22252C;
+  --bg-active:    #2A2E36;
+
+  /* Text. Three levels and no more: primary reads, secondary supports, muted
+     labels. Anything that needs a fourth is a hierarchy that has not been
+     decided. */
+  --text-primary:   #F4F5F7;
+  --text-secondary: #9BA1AA;
+  --text-muted:     #5D636C;
+
+  /* Hairlines, not borders. On a dark surface an opaque border draws a box
+     around everything; these read as structure. */
+  --border-subtle:  rgba(255, 255, 255, .07);
+  --border-strong:  rgba(255, 255, 255, .13);
+
+  /* Radii ladder. Three steps, used consistently — the old sheet mixed 4/6/8/9/
+     10/12/16/24/999 with no rule about which meant what. */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+
+  /* Pill heights. A pill is a stadium — fully rounded, radius = half its height —
+     so the RADIUS is never a choice, only the height is. Pick from here. */
+  --pill-sm: 20px;
+  --pill-md: 30px;
+  --pill-lg: 34px;
+
+  /* ⚠ THE SHADOW LADDER, DEFINED AT LAST.
+     `--shadow-xl` was used in EIGHT places — the account switcher, the confirm
+     modal, the context menu, the custom-theme modal, link-phone, the pinned
+     modal, toasts, the update notice — and was defined by no theme and no
+     variables.css. `box-shadow: var(--shadow-xl)` with an undefined token drops
+     the WHOLE declaration and says nothing, so every one of those surfaces has
+     been rendering with no shadow at all. Same family as the rest of this
+     codebase's silent failures.
+
+     These are intentionally deep and dark: on a near-black canvas a shadow is
+     nearly invisible, so its job is only to lift a floating surface off the
+     content behind it. */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, .5);
+  --shadow-lg: 0 10px 32px rgba(0, 0, 0, .6);
+  --shadow-xl: 0 18px 48px rgba(0, 0, 0, .68), 0 2px 8px rgba(0, 0, 0, .45);
+
+  /* Motion. One curve and one duration, so the whole app moves at the same
+     tempo. `--transition` is restated because the existing sheet uses
+     `transition: var(--transition)` in a lot of places — this way all of them
+     pick up the new feel without being rewritten. */
+  --ease: cubic-bezier(.22, .61, .36, 1);
+  --dur: 200ms;
+  --transition: all var(--dur) var(--ease);
+
+  /* A rail icon, a header icon and a composer icon are the same thing at the
+     same size, so they get one size. */
+  --icon-btn: 32px;
+  --row-h: 52px;
+}
+
+/* The accent, unified with the phone — this is the one value the redesign moves
+   in the theme files' territory, and it is restated here rather than edited into
+   dark.css so that deleting this file restores the old accent too.
+
+   `theme.spec.js` asserts these two values; they were updated with the change. */
+:root[data-theme="dark"] {
+  --accent-primary: #4D7CFE;
+  --accent-hover:   #6A93FF;
+  --accent-soft:    rgba(77, 124, 254, .14);
+  --accent-ring:    rgba(77, 124, 254, .32);
+}
+:root[data-theme="light"] {
+  --accent-primary: #3F6EF0;
+  --accent-hover:   #3462E0;
+  --accent-soft:    rgba(63, 110, 240, .10);
+  --accent-ring:    rgba(63, 110, 240, .28);
+}
+
+/* Light theme's surfaces, so the structure is not dark-only. */
+:root[data-theme="light"] {
+  --bg-base:      #F7F8FA;
+  --bg-surface:   #FFFFFF;
+  --bg-sidebar:   #F1F3F7;
+  --bg-raised:    #F1F3F7;
+  --bg-raised-2:  #E8EBF1;
+  --bg-hover:     #E8EBF1;
+  --bg-active:    #DDE2EC;
+
+  --text-primary:   #16181D;
+  --text-secondary: #5A616E;
+  --text-muted:     #8B929E;
+
+  --border-subtle:  rgba(22, 24, 29, .08);
+  --border-strong:  rgba(22, 24, 29, .16);
+
+  --shadow-sm: 0 1px 2px rgba(22, 24, 29, .06);
+  --shadow-md: 0 4px 14px rgba(22, 24, 29, .08);
+  --shadow-lg: 0 10px 32px rgba(22, 24, 29, .10);
+  --shadow-xl: 0 18px 48px rgba(22, 24, 29, .14), 0 2px 8px rgba(22, 24, 29, .06);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2. BASE CHROME
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ⚠ THE WELCOME AURORA — QUIETED, NOT DELETED.
+
+   My first pass at this rule named `#app-layout::before`, `#app-layout::after`,
+   `.welcome-glow` and `.welcome-slides::before`. None of them exist. It matched
+   nothing, did nothing, and said nothing — the exact failure this codebase keeps
+   producing, written by me one file after documenting it. The thing that paints
+   the glow is `#chat-welcome-host::before` (components.css).
+
+   And it is not careless: it is four drifting colour fields with a 26s animation
+   and a comment explaining why there are four rather than one. So the intent —
+   atmosphere behind the welcome slides — is kept and the volume is not.
+
+   Two changes only:
+     • the green field goes. A second brand colour in the background is a second
+       brand colour, whatever alpha you give it, and this app has exactly one.
+     • opacity .4 → .18, and a wider blur. At .4 with 34px it was the brightest
+       surface in the window and it was competing with the card sitting on it. */
+#chat-welcome-host::before {
+  background:
+    radial-gradient(44% 48% at 26% 28%, color-mix(in srgb, var(--accent-primary) 70%, transparent) 0%, transparent 64%),
+    radial-gradient(46% 48% at 66% 80%, color-mix(in srgb, var(--accent-primary) 52%, transparent) 0%, transparent 66%);
+  opacity: .18;
+  filter: blur(42px);
+}
+html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
+
+/* The faint grid behind it stays as it is — that one is texture, it reads as
+   paper rather than as light, and it is what stops the area being a void. */
+
+/* Quieter scrollbars. The old ones turned ACCENT BLUE on hover, which put the
+   loudest colour in the palette on the least important element on screen. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: var(--radius-pill);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+:hover::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+  background-clip: content-box;
+}
+
+/* A focus ring, not a blue box. The old rule painted a solid accent box-shadow
+   with `!important`, which on a dark surface reads as a selection rather than a
+   focus. This is a halo — visible, not loud. */
+*:focus-visible:not(.chat-input-field) {
+  outline: none !important;
+  box-shadow: 0 0 0 2px var(--accent-ring) !important;
+  border-radius: var(--radius-sm);
+}
+
+/* The app's own text selection colour, instead of the browser's blue. */
+::selection {
+  background: var(--accent-soft);
+  color: var(--text-primary);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   3. THE TITLEBAR
+   The old bar painted `--bg-sidebar` behind a 32px strip and then the panels
+   painted their own colours underneath, so the top 32px was a different colour
+   from the panel below it and the window read as two stacked bars. It is now the
+   deepest surface with a single hairline, so it reads as the top of the window.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#titlebar {
+  height: 34px;
+  background-color: var(--bg-base);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.titlebar-nav-btn {
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--text-muted) !important;
+  transition: var(--transition);
+}
+.titlebar-nav-btn:hover {
+  background: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+}
+
+.control-btn {
+  width: 46px;
+  height: 34px;
+  color: var(--text-secondary);
+  transition: var(--transition);
+}
+.control-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+/* Only the close button keeps a colour, and it keeps it — every other platform
+   does this and it is the one hover a user is entitled to be warned about. */
+.control-btn-close:hover {
+  background-color: #E5484D;
+}
+
+#app-layout {
+  /* Matches the titlebar above it, or the grid's first row sits under a strip of
+     a different colour. */
+  padding-top: 34px;
+  transition: grid-template-columns var(--dur) var(--ease);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   4. THE ICON RAIL
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#panel-left {
+  background-color: var(--bg-sidebar);
+  border-right: 1px solid var(--border-subtle);
+  padding: 10px 0;
+}
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  position: relative;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.icon-btn svg {
+  width: 19px;
+  height: 19px;
+}
+.icon-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+/* ⚠ The active item used to be a filled accent SQUARE with a white glyph — the
+   loudest possible treatment for "you are here", in a rail of six. It is now an
+   accent-tinted surface with an accent glyph, which says the same thing at a
+   third of the volume, and a hairline marker on the leading edge for the case
+   where the tint alone is not enough (light theme, low-contrast displays). */
+.icon-btn.active {
+  background-color: var(--accent-soft);
+  color: var(--accent-primary);
+}
+.icon-btn.active::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent-primary);
+}
+.icon-btn:active {
+  transform: scale(.94);
+}
+
+.sidebar-separator {
+  width: 24px;
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 6px auto;
+}
+
+/* The profile avatar at the foot of the rail is an identity, not an action, so
+   it does not get the button hover — it gets a ring. */
+#btn-profile {
+  border-radius: 50%;
+}
+#btn-profile:hover {
+  background: transparent;
+}
+#btn-profile .avatar {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition: outline-color var(--dur) var(--ease);
+}
+#btn-profile:hover .avatar {
+  outline-color: var(--accent-ring);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   5. THE MIDDLE PANEL
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#panel-middle {
+  background-color: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+}
+
+/* ── Search ──────────────────────────────────────────────────────────────── */
+.search-container {
+  padding: 12px 12px 8px;
+}
+.search-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--pill-lg);
+  padding: 0 8px 0 12px;
+  border-radius: var(--pill-lg);
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+/* The field lights up on focus rather than on hover — the hairline is what tells
+   you where you are typing. */
+.search-input-wrapper:focus-within {
+  border-color: var(--accent-ring);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.search-input-wrapper svg {
+  width: 15px;
+  height: 15px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.search-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+#btn-toggle-sidebar {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+#btn-toggle-sidebar:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* ── Tabs ──────────────────────────────────────────────────────────────────
+   ⚠ These were underlined text, and the same screen also had a segmented control
+   inside the "All Friends" modal — two treatments for one control, in one app.
+   A segmented control wins: it shows the available set, not just the selection,
+   and the active item is a surface rather than a line under a word.
+
+   ⚠⚠ WHY THIS BLOCK IS MOSTLY `!important`. sidebar-middle.js writes the tab's
+   appearance as INLINE styles — the initial markup carries
+   `border-bottom: 3px solid var(--accent-primary); color: …; font-weight: 600;
+   background: transparent; padding: 12px 4px`, and the click handler re-applies
+   `borderBottomColor`/`color`/`fontWeight` inline on every switch. An inline
+   declaration beats any stylesheet rule, so without `!important` this block
+   would be a no-op and the tabs would keep the old look while every "did the
+   rule land?" check stayed green.
+
+   ⚠ `display` is deliberately NOT forced. The same handler hides the tab row
+   when you are inside a folder by setting `display: none` inline, and an
+   `!important` here would pin the tabs on screen in that state. */
+.tabs-container {
+  gap: 2px !important;
+  margin: 4px 12px 8px !important;
+  padding: 3px !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--bg-base) !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+.tab {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  /* The shorthand kills the inline 3px underline on all four sides. */
+  border: none !important;
+  border-radius: var(--radius-sm) !important;
+  padding: 0 !important;
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 500 !important;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease) !important;
+}
+.tab:hover {
+  color: var(--text-primary) !important;
+}
+.tab.active {
+  background: var(--bg-raised-2) !important;
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+}
+
+/* ── List rows ───────────────────────────────────────────────────────────── */
+.list-container {
+  padding: 0 8px 12px;
+}
+
+/* Section headers ("ONLINE (1)") — uppercase micro-labels, the one place
+   letter-spacing goes positive because at 10px a label needs air, not density.
+   ⚠ The markup for these is a bare `<span>` with no class, so this is a
+   structural selector on purpose. My first pass invented a `.list-section-label`
+   class, which matched nothing. */
+.list-container > div > span:first-child {
+  display: block;
+  padding: 14px 8px 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.list-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--row-h);
+  padding: 7px 10px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--dur) var(--ease);
+}
+.list-row:hover {
+  background: var(--bg-hover);
+}
+/* ⚠ The selected row was a solid accent-tinted block with a full-height accent
+   bar, which made the list look like a set of buttons. Selection in a list is a
+   surface, not a state — it gets the same tint as a rail icon and nothing else. */
+.list-row.active {
+  background: var(--accent-soft);
+}
+.list-row.active .list-row-title {
+  color: var(--accent-primary);
+}
+
+.list-row-avatar {
+  flex-shrink: 0;
+}
+.list-row-info {
+  flex: 1;
+  min-width: 0;   /* ⚠ or the ellipsis below never fires */
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.list-row-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.list-row-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   6. THE CHAT HEADER
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.chat-header {
+  height: 56px;
+  padding: 0 12px 0 16px;
+  background: var(--bg-base);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+#chat-header-strip {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+.chat-header-avatar {
+  flex-shrink: 0;
+}
+
+/* Header actions: ghost buttons. ⚠ The old icons were bare glyphs with no
+   target — a 16px hit area in a 56px bar. They are now 32px buttons with a
+   near-transparent surface that appears on hover, which is the whole reason a
+   ghost button exists. */
+.chat-header button,
+#btn-gallery,
+#btn-chat-more,
+#btn-group-info {
+  width: var(--icon-btn);
+  height: var(--icon-btn);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--text-secondary);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.chat-header button:hover,
+#btn-gallery:hover,
+#btn-chat-more:hover,
+#btn-group-info:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.chat-header button svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* The name and status line. ⚠ Negative tracking at this size is deliberate:
+   a 15px name set at 600 with default tracking reads loose next to a 12px
+   status line, and the pair stops looking like one block.
+   The name has no class — it is the first `div` inside the strip — so this is
+   structural. My first pass invented `.chat-header-name`, which matched nothing. */
+#chat-header-strip > div > div:first-child {
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  color: var(--text-primary);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   7. THE CONVERSATION
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Day separators and system notes are the same idea — "this is not a message" —
+   so they get the same treatment: a centred muted pill on the base surface. */
+.message-row.message-system span {
+  font-size: 11.5px !important;
+  color: var(--text-secondary) !important;
+  background: var(--bg-raised) !important;
+  border: 1px solid var(--border-subtle);
+  padding: 4px 12px !important;
+  border-radius: var(--radius-pill) !important;
+}
+
+/* ── Bubbles ───────────────────────────────────────────────────────────────
+   ⚠ `!important` below, and it is not laziness: the bubble's radius, font size
+   and background are written as INLINE styles by renderMessages() in
+   chat-panel.js (`border-radius: 16px 16px 0 16px; font-size: 14px;` and
+   `bubbleBgMine`), and an inline style beats any stylesheet rule. Overriding
+   them here rather than in the renderer is what keeps the whole redesign in one
+   file that can be deleted.
+
+   The shape: 14px corners with a 5px "tail" corner on the side the bubble is
+   anchored to — the anchor is what tells you who is speaking, so it is the one
+   corner that is not round. */
+.message-bubble {
+  border-radius: 14px !important;
+  font-size: 14px !important;
+  line-height: 1.45 !important;
+  padding: 9px 13px !important;
+  border: 1px solid transparent;
+}
+.message-row.message-own .message-bubble {
+  background: var(--accent-soft) !important;
+  border-color: var(--accent-ring);
+  border-bottom-right-radius: 5px !important;
+  box-shadow: none !important;
+}
+.message-row:not(.message-own):not(.message-system) .message-bubble {
+  background: var(--bg-raised) !important;
+  border-color: var(--border-subtle);
+  border-bottom-left-radius: 5px !important;
+  box-shadow: none !important;
+}
+
+/* ⚠ The inline `margin-bottom: var(--spacing-md)` (16px) is overridden here, so
+   `!important` is required. The rhythm is tighter than the old one because every
+   row already carries a sender line above and a timestamp line below, and 16px of
+   margin on top of that made a five-message exchange fill a 700px column. */
+.message-row {
+  margin-bottom: 10px !important;
+}
+.message-row + .message-row {
+  margin-top: -4px;
+}
+
+/* Timestamps are metadata: muted, small, and never competing with the text they
+   annotate. Tight line-height so the metadata line reads as a footnote to the
+   bubble rather than as a third row of content.
+   ⚠ `.msg-time` is the real class (chat-panel.js). My first pass also wrote
+   `.msg-meta` and `.message-time`, which do not exist. */
+.msg-time {
+  font-size: 10.5px !important;
+  line-height: 1.3;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The hover action bar floats above the bubble rather than pushing it. */
+.msg-actions-bar {
+  background: var(--bg-raised-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-md);
+  padding: 2px;
+}
+.msg-action-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: var(--text-secondary);
+  transition: var(--transition);
+}
+.msg-action-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* Attachments sit in a rounded frame with the same hairline as everything else,
+   so a photo in the feed reads as part of the app rather than pasted in. */
+.msg-attachments img,
+.msg-attachments video {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   8. THE COMPOSER
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ⚠ The old wrapper was a rounded box with a `border-radius` per corner and no
+   distinction between the field and its buttons, so the textarea and the four
+   controls read as one confused object — and the textarea drew its own scrollbar
+   INSIDE it, arrows and all, as soon as the text wrapped.
+
+   Now: one wrapper that is the surface, a textarea that is transparent and never
+   shows a scrollbar of its own (it grows instead, up to 180px), and the controls
+   sitting in the wrapper beside it. The `+` is at the leading edge, where an
+   "add something" affordance belongs, rather than among the send-side controls. */
+.chat-input-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.chat-input-wrapper:focus-within {
+  border-color: var(--accent-ring);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.chat-input-field {
+  flex: 1;
+  min-width: 0;
+  min-height: 24px;
+  max-height: 180px;
+  padding: 6px 4px;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.45;
+  /* The field grows with the text; it never grows a scrollbar. */
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.chat-input-field::-webkit-scrollbar {
+  display: none;
+}
+.chat-input-field::placeholder {
+  color: var(--text-muted);
+}
+
+/* The three glyph buttons: one size, one hover, no accent — they are utility,
+   and the accent in this bar belongs to Send. */
+.composer-plus,
+.composer-emoji,
+#btn-mic {
+  width: var(--icon-btn);
+  height: var(--icon-btn);
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--text-muted);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.composer-plus:hover,
+.composer-emoji:hover,
+#btn-mic:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.composer-plus svg,
+.composer-emoji svg,
+#btn-mic svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Send keeps the state language components.css already established and does not
+   get a disc: dimmed and inert with nothing to send, accent-coloured when there
+   is. That was a considered decision — the mic and the emoji beside it have no
+   backgrounds, so a filled circle here was the only shape in the row and read as
+   a different KIND of control. My first pass at this rule filled it in accent,
+   which would have undone that and lit a disabled button. Only the geometry and
+   the hover are aligned with the rest of the row. */
+.composer-send,
+.composer-send.ready {
+  width: var(--icon-btn);
+  height: var(--icon-btn);
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+.composer-send svg {
+  width: 17px;
+  height: 17px;
+}
+.composer-send.ready {
+  color: var(--accent-primary);
+}
+.composer-send.ready:hover {
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  transform: none;
+}
+
+/* The staged-attachment strip: the same raised surface as the composer, so the
+   two read as one stack rather than two boxes. */
+#file-preview-area {
+  border-radius: var(--radius-md) !important;
+  background: var(--bg-raised) !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+/* "…is typing" — a muted line, not a competing message.
+   ⚠ An ID, not a class (`<div id="typing-indicator">` in chat-panel.js). My first
+   pass wrote `.typing-indicator`, which matched nothing. */
+#typing-indicator {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.typing-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   9. OVERLAYS
+
+   ⚠⚠ THE FIRST VERSION OF THIS SECTION WAS ALMOST ENTIRELY DEAD CODE.
+
+   It targeted `.modal`, `.modal-content`, `.confirm-modal`, `.context-menu`,
+   `.toast`, `.modal-backdrop`, `.modal-overlay`, `.context-menu-item`,
+   `.modal-btn`, `.modal input[type="text"]` … nineteen selectors, none of which
+   exist. The overlays in this app are built by assigning `style.cssText` to a
+   bare `document.createElement('div')`, so they have an ID and NO class at all.
+   Every one of those rules matched nothing and said nothing — the same failure
+   this file documents three times, committed by me, in this file.
+
+   It was caught by listing every selector in this sheet and counting its matches
+   against the running app. Reading the stylesheet would never have shown it: the
+   rules looked right.
+
+   So this section is written against the elements that are actually there:
+     #settings-overlay          the backdrop (rgba(0,0,0,.6) from JS)
+       └ > div                  the panel, inline `box-shadow: var(--shadow-xl)`
+           ├ > div              the settings nav rail
+           └ > div#settings-content
+     #toast-container > *       toasts
+     #image-viewer-modal        the image viewer
+     #modal-container > *       the documented host for anything else
+
+   ⚠ `--shadow-xl` is defined in §1, and that IS the fix for the missing shadows:
+   those inline `box-shadow: var(--shadow-xl)` declarations resolved to nothing
+   because the token did not exist, so defining it lights up every one of them.
+   The panel above is measured with a real shadow now. The rules below are only
+   for the parts that need more than the token. */
+
+#settings-overlay {
+  background: rgba(0, 0, 0, .68);
+  backdrop-filter: blur(2px);
+}
+#settings-overlay > div {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xl);
+}
+/* The settings nav is a step BELOW the panel it sits in, so it gets the base
+   surface and a hairline — luminance stepping, not a divider line. */
+#settings-overlay > div > div:first-child {
+  background: var(--bg-base);
+  border-right: 1px solid var(--border-subtle);
+}
+#settings-content {
+  background: var(--bg-surface);
+}
+
+#toast-container > * {
+  background: var(--bg-raised-2) !important;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xl);
+}
+
+#modal-container > * {
+  border-radius: var(--radius-md);
+}
+
+/* The overlay sidebars (shared media, profile) sit ON the chat rather than beside
+   it, so they need a visible edge where the panel ends and the conversation
+   starts — a hairline is too quiet for a boundary you are looking across. */
+#panel-gallery,
+#panel-profile {
+  border-left: 1px solid var(--border-strong) !important;
+  background: var(--bg-surface);
+}
+
+/* The gallery's own tab strip: it is a second tab control in the same window as
+   the sidebar's segmented one, and they should not look like two different
+   ideas. Underline here because the panel is narrow and a segmented control
+   would eat the row. */
+.gallery-tab {
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  color: var(--text-secondary) !important;
+  border-bottom-color: transparent !important;
+  transition: color var(--dur) var(--ease);
+}
+.gallery-tab:hover {
+  color: var(--text-primary) !important;
+}
+.gallery-tab.active {
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+  border-bottom-color: var(--accent-primary) !important;
+}
+
+/* Inputs inside any overlay. ⚠ Scoped to the real hosts, not to `.modal`. */
+#settings-content input[type="text"],
+#settings-content input[type="password"],
+#settings-content input[type="search"],
+#settings-content textarea {
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+#settings-content input:focus,
+#settings-content textarea:focus {
+  border-color: var(--accent-ring);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE GLOBAL BUTTON HOVER
+   ⚠ components.css lifts EVERY button in the app 1px and brightens it 10% on
+   hover: `button:hover { filter: brightness(1.1); transform: translateY(-1px); }`.
+   On a row of six toolbar icons that is six things moving under the pointer, and
+   on a dense desktop UI a UI that shifts when you point at it reads as unstable —
+   you notice the movement, not the button. Hover is a SURFACE change here, which
+   is what every other hover in this file does, and the press keeps a small scale
+   so a click still feels like it landed.
+   ═══════════════════════════════════════════════════════════════════════════ */
+button:hover {
+  filter: none;
+  transform: none;
+}
+button:active {
+  transform: scale(.97);
+}
+
+/* A message bubble does not lift. It is text you are reading, and the pointer
+   passes over it constantly on the way to something else — so the hover is the
+   hairline coming up, not the bubble moving. It stays interactive; the action bar
+   appearing on hover is the affordance. */
+.message-bubble:hover {
+  box-shadow: none;
+  transform: none;
+}
+.message-row:not(.message-system) .message-bubble:hover {
+  border-color: var(--border-strong);
+}
+.message-row.message-own .message-bubble:hover {
+  border-color: var(--accent-primary);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   10. MOTION — WHAT THIS SECTION DOES *NOT* DO
+
+   ⚠ MY FIRST PASS PUT `animation: orbit-rise` ON `.message-row` AND `.list-row`.
+   IT WAS WRONG TWICE OVER, AND BOTH WERE FOUND BY MEASURING, NOT BY READING.
+
+   First: the app already has an entry animation — `messageEnter` in
+   animations.css — and it is gated on a `data-msg-anim` ATTRIBUTE that the
+   renderer sets only for messages that are actually new:
+
+       .message-row[data-msg-anim] { animation: messageEnter 0.3s …; }
+
+   That is a better mechanism than anything a stylesheet can do, and my blanket
+   `.message-row { animation: … }` overrode it — so every message re-animated on
+   every render instead of only the new one.
+
+   Second, and this is the visible part: `renderMessages()` rebuilds the feed
+   wholesale, so a blanket animation RESTARTS on every re-render. Sampling the
+   first row's opacity every 250ms showed the whole conversation at 0.84 the
+   moment an incoming message re-rendered the feed — a chat that pulses every
+   time somebody types. The app even carries a guard for exactly this
+   (`[data-refreshing] .message-row { animation: none !important }`), which my
+   rule sat beside and defeated.
+
+   So this section only ADDS the one thing that was missing: honouring the OS's
+   reduced-motion setting. The app's own `.reduce-motion` and `.performance-mode`
+   switches already exist and are left alone. */
+
+@media (prefers-reduced-motion: reduce) {
+  /* The loops that run forever, and the entry animation that does not. */
+  .status-indicator.online,
+  .typing-dot,
+  .message-row[data-msg-anim],
+  .modal-enter {
+    animation: none !important;
+  }
+  .typing-dot {
+    opacity: .6;
+  }
+  /* Nothing decorative moves, but nothing is left invisible either — every
+     entry animation above starts at opacity 0, so removing the animation must
+     also pin the end state or the content disappears. */
+  .message-row[data-msg-anim],
+  .modal-enter {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

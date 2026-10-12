@@ -408,8 +408,11 @@
     _friendFor: function(userId) {
       var friends = (typeof MStore !== 'undefined' && MStore.friends) || [];
       for (var i = 0; i < friends.length; i++) {
-        if (String(friends[i].id) === String(userId) ||
-            String(friends[i].peerId) === String(userId)) return friends[i];
+        // ⚠ Via the shared resolver — a friend record is keyed by `userId`, not
+        // `peerId`, so the old id/peerId pair never matched a real contact.
+        if (window.orbitIsFriend ? window.orbitIsFriend(friends[i], userId)
+                                 : (String(friends[i].id) === String(userId) ||
+                                    String(friends[i].peerId) === String(userId))) return friends[i];
       }
       return null;
     },

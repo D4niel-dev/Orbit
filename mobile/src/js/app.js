@@ -880,7 +880,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Find friend for status (strip 'dm_' prefix if present — chats created from friends list use 'dm_' + peerId)
     var _friendLookupId = chatId.indexOf('dm_') === 0 ? chatId.substring(3) : chatId;
-    var friend = MStore.friends.find(function(f) { return f.id === _friendLookupId || f.peerId === _friendLookupId; });
+    var friend = MStore.friends.find(function(f) { return orbitIsFriend(f, _friendLookupId); });
     var statusText = '';
     var statusDot = '';
     if (group) {
@@ -1071,7 +1071,7 @@ document.addEventListener('DOMContentLoaded', function() {
       memberHtml = '<input id="bs-member-search" class="bs-input" placeholder="Search friends..." style="margin-top:8px;font-size:13px;padding:8px 12px;">';
       memberHtml += '<div id="bs-member-list" style="max-height:150px;overflow-y:auto;margin-top:8px;">';
       friends.forEach(function(f) {
-        var displayName = f.name || f.peerId || 'Unknown';
+        var displayName = f.name || f.peerId || f.userId || f.id || 'Unknown';
         var initial = displayName.charAt(0).toUpperCase();
         var isOnline = f.status === 'online' || f.lastSeen > Date.now() - 45000;
         var avatarHtml = f.avatar 
@@ -1859,9 +1859,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // chat exists before the message is appended or it would be invisible.
         var chat = MStore.chats.find(function (c) { return String(c.id) === peerId; });
         if (!chat) {
-          var friend = MStore.friends.find(function (f) {
-            return String(f.id) === peerId || String(f.peerId) === peerId;
-          });
+          var friend = MStore.friends.find(function (f) { return orbitIsFriend(f, peerId); });
           chat = {
             id: peerId,
             name: (friend && friend.name) || peerId,
@@ -4174,7 +4172,7 @@ document.addEventListener('DOMContentLoaded', function() {
             var uid = typeof m === 'string' ? m : (m.userId || m.id || '');
             var mName = typeof m === 'string' ? m : (m.name || m.username || uid);
             var role = typeof m === 'string' ? 'member' : (m.role || 'member');
-            var friend = MStore.friends.find(function(f) { return f.id === uid || f.peerId === uid; });
+            var friend = MStore.friends.find(function(f) { return orbitIsFriend(f, uid); });
             var displayName = friend ? friend.name : mName;
             var isOnline = friend && (friend.status === 'online' || friend.online);
             if (!isOnline && friend && friend.lastSeen) { try { isOnline = (Date.now() - friend.lastSeen) < 45000; } catch(e) {} }
@@ -6940,7 +6938,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var peers = [];
     var seen = {};
     (MStore.friends || []).forEach(function(f) {
-      var pid = f.id || f.peerId || '';
+      var pid = orbitFriendId(f);
       if (!pid || seen[pid]) return;
       seen[pid] = true;
       peers.push({ id: pid, friend: f });
@@ -7520,7 +7518,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // being folded into "Restore Vault", because a user looking for the file
         // they saved would not think to look inside a directory restore.
         card('file-archive', 'Restore From a Backup File',
-          'Find .orzip or .zip backups in this app\u2019s folder and vault/',
+          'Find .orzip or .zip backups in this app\u2019s folder, vault/ and Downloads',
           '<button id="btn-vault-files" class="settings-btn-secondary" style="white-space:nowrap;">Find backups</button>') +
         // One primary, one secondary. Both were primary, which made the eye
         // choose between two things that are not equal: exporting is the routine
@@ -8155,7 +8153,7 @@ document.addEventListener('DOMContentLoaded', function() {
       '<div class="bk-sheet">' +
         '<div class="bk-head">' +
           '<div class="bk-title">Backup files</div>' +
-          '<div class="bk-sub">Looking in this app\u2019s folder and vault/\u2026</div>' +
+          '<div class="bk-sub">Looking in this app\u2019s folder, vault/ and Downloads\u2026</div>' +
         '</div>' +
         '<div class="bk-busy"><span class="acct-spinner"></span></div>' +
       '</div>');
@@ -8170,7 +8168,8 @@ document.addEventListener('DOMContentLoaded', function() {
           '<div class="bk-empty">' +
             '<div class="bk-empty-title">No backup files found</div>' +
             '<div class="bk-empty-sub">A backup is a single <strong>.orzip</strong> or <strong>.zip</strong> file ' +
-            'made by Orbit on a desktop. Put one in this app\u2019s folder or in <code>vault/</code> and look again.</div>' +
+            'made by Orbit. Put one in this app\u2019s folder, in <code>vault/</code>, or in your ' +
+            '<strong>Downloads</strong> folder and look again.</div>' +
           '</div>';
       } else {
         body = '<div class="bk-list">' + files.map(function (f, i) {
@@ -8184,7 +8183,9 @@ document.addEventListener('DOMContentLoaded', function() {
               // the thing a person is actually choosing between.
               '<span class="bk-meta">' + escapeHtml(_fmtBytes(f.size)) +
                 (f.mtime ? ' \u00b7 ' + escapeHtml(_fmtWhen(f.mtime)) : '') +
-                ' \u00b7 ' + (f.path.indexOf('vault/') === 0 ? 'in vault/' : 'app folder') + '</span>' +
+                ' \u00b7 ' + (f.source === 'vault' ? 'in vault/'
+                            : f.source === 'downloads' ? 'in Downloads'
+                            : 'app folder') + '</span>' +
             '</div>' +
             '<button class="bk-restore" data-i="' + i + '">Restore</button>' +
           '</div>';
@@ -8196,8 +8197,8 @@ document.addEventListener('DOMContentLoaded', function() {
           '<div class="bk-title">Backup files</div>' +
           '<div class="bk-sub">' + (files.length
             ? files.length + (files.length === 1 ? ' file found' : ' files found') +
-              ' \u00b7 looked in this app\u2019s folder and vault/'
-            : 'Looked in this app\u2019s folder and vault/') + '</div>' +
+              ' \u00b7 looked in this app\u2019s folder, vault/ and Downloads'
+            : 'Looked in this app\u2019s folder, vault/ and Downloads') + '</div>' +
         '</div>' + body;
 
       if (window.lucide) { try { lucide.createIcons({ root: root }); } catch (e) {} }
@@ -8216,7 +8217,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var V = window.OrbitVault;
     if (btn) { btn.disabled = true; btn.textContent = 'Reading\u2026'; }
 
-    V.readBackupFile(file.path).then(function (r) {
+    V.readBackupFile(file.path, file.source).then(function (r) {
       if (!r.account || !r.account.user) {
         throw new Error('That backup does not contain an account');
       }
@@ -10525,10 +10526,43 @@ document.addEventListener('DOMContentLoaded', function() {
   /* ---- User Actions Sheet (long-press on a user: sender names, avatars, group member rows, friend rows, DM header) ---- */
 
   /** Resolve a userId to a displayable user (friend first, then group member, then raw id fallback) */
+  /* ── The one place a person's identity is read off a friend record ──────────
+     ⚠ A friend record is keyed by `userId` — that is what MStore.addOrUpdatePeer
+     writes — or by `id`, which is what the seeded bots get. It has NEVER been
+     keyed by `peerId`: no friend record this app writes has that field.
+
+     A dozen lookups across the app matched only `id`/`peerId`, so every real
+     contact was invisible to all of them. The visible symptom was the ⋮ on a
+     contact row doing nothing while the same button on a group worked; the same
+     lookup was also behind the DM header status, the call button, and the group
+     member list. Groups pass a real `g.id`, which is why they were the only ones
+     that behaved.
+
+     Both helpers are ADDITIVE — they can only make a lookup that used to miss now
+     hit, so nothing that worked can stop working. */
+  function orbitFriendId(f) {
+    if (!f) return '';
+    if (typeof f === 'string') return f;
+    return String(f.peerId || f.userId || f.id || '');
+  }
+
+  /** Does this friend record belong to `id`, under any of its id fields? */
+  function orbitIsFriend(f, id) {
+    if (!f || id === undefined || id === null || id === '') return false;
+    var want = String(id);
+    return String(f.id || '') === want ||
+           String(f.peerId || '') === want ||
+           String(f.userId || '') === want;
+  }
+
   function _resolveUserForSheet(userId) {
     if (!userId) return null;
     // 1. Friends — canonical id or peerId alias
-    var friend = MStore.friends.find(function(f) { return f.id === userId || f.peerId === userId; });
+    // ⚠ `userId` is the field MStore.addOrUpdatePeer actually writes. Matching
+    // only `id`/`peerId` meant a real contact was never found here, so the sheet
+    // fell through to the "unknown user" branch: no Mute, no Close DM, and an
+    // "Add Friend" offer for someone who is already a friend.
+    var friend = MStore.friends.find(function(f) { return f.id === userId || f.peerId === userId || f.userId === userId; });
     if (friend) {
       return { id: friend.id, name: friend.name || friend.id, avatar: friend.avatar || null, status: friend.status || 'offline', tag: friend.tag || '', isFriend: true };
     }
@@ -10540,7 +10574,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var m = members[mi];
         var mid = typeof m === 'string' ? m : m.userId;
         if (String(mid) === String(userId)) {
-          var f = MStore.friends.find(function(fr) { return fr.id === mid || fr.peerId === mid; });
+          var f = MStore.friends.find(function(fr) { return fr.id === mid || fr.peerId === mid || fr.userId === mid; });
           return {
             id: mid,
             name: f ? f.name : (m.name || m.username || mid),
@@ -10624,7 +10658,7 @@ document.addEventListener('DOMContentLoaded', function() {
       items.push({ icon: 'user-round-plus', label: 'Add Friend', action: 'user_add_friend' });
       callbacks['user_add_friend'] = function() {
         var peerId = u.id;
-        var existing = MStore.friends.find(function(f) { return f.id === peerId || f.peerId === peerId; });
+        var existing = MStore.friends.find(function(f) { return orbitIsFriend(f, peerId); });
         if (existing) {
           showToast(u.name + ' is already a friend', 'info');
           return;
@@ -10691,6 +10725,10 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   window.showUserActionsSheet = showUserActionsSheet;
+  // Shared with the component files (home-screen, chat-screen, call-manager),
+  // which are loaded after this one and must resolve a friend the same way.
+  window.orbitFriendId = orbitFriendId;
+  window.orbitIsFriend = orbitIsFriend;
 
   // The composer's attach sheet (js/components/attach-sheet.js) is a separate file
   // and cannot see inside this closure, so the two things it opens are handed out
@@ -14006,8 +14044,8 @@ document.addEventListener('DOMContentLoaded', function() {
     var peerId = (activeChatId && activeChatId.indexOf('dm_') === 0)
       ? activeChatId.substring(3)
       : activeChatId;
-    var friend = MStore.friends.find(function(f) { return f.id === peerId || f.peerId === peerId; });
-    if (friend) peerId = friend.id;
+    var friend = MStore.friends.find(function(f) { return orbitIsFriend(f, peerId); });
+    if (friend) peerId = orbitFriendId(friend);
     if (!peerId) { showToast('Cannot tell who to call', 'error'); return; }
     window.OrbitCall.startCall(!!isVideo, peerId);
   }
@@ -14845,27 +14883,21 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Friends tab: click to start chat
-  document.addEventListener('click', function(e) {
-    // Don't open chat if context menu is showing
-    if (document.getElementById('friend-context-overlay')) return;
-    var friendRow = e.target.closest('.friend-row');
-    if (friendRow) {
-      var fid = friendRow.getAttribute('data-friend');
-      // Ensure a chat exists for this friend
-      var existing = MStore.chats.find(function(c) { return c.id === fid; });
-      if (!existing) {
-        var friend = MStore.friends.find(function(f) { return f.id === fid; });
-        if (friend) {
-          MStore.chats.push({ id: fid, name: friend.name, lastMessage: '', lastTime: '', unread: 0 });
-          MStore.save();
-          renderChatList();
-        }
-      }
-      // Switch to chats tab
-      document.querySelector('.nav-btn[data-view="chats"]').click();
-      openChat(fid);
-    }
-  });
+  //
+  // ⚠ REMOVED — it could not work, and it threw on every tap.
+  //
+  // It read `data-friend`, which no renderer has ever emitted (the rows carry
+  // `data-peerid`/`data-user-id`), so `fid` was always null; and it then called
+  // `document.querySelector('.nav-btn[data-view="chats"]').click()` on a selector
+  // that does not exist in index.html, so it died with
+  // "Cannot read properties of null (reading 'click')" BEFORE reaching openChat.
+  // Net effect: tapping a contact row did nothing and logged an error.
+  //
+  // The row already carries its own inline onclick (`OrbitHome._onFriendClick`),
+  // which now resolves the id properly. Two handlers for one job is how the two
+  // implementations drifted apart in the first place — so this one is gone rather
+  // than repaired. The long-press → user actions sheet handler below is separate
+  // and stays.
 
   /* -- Long-press context menu for friend rows -- */
   // NOTE: legacy functions below (showFriendContextMenu / showMessageContextMenu / showChatContextMenu)

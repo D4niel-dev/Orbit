@@ -1,5 +1,6 @@
 package com.orbit.app.plugins;
 
+import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -26,6 +27,10 @@ import com.orbit.app.services.OrbitForegroundService.FgEvent;
 public class OrbitP2PPlugin extends Plugin {
 
     private static final String TAG = "OrbitP2P";
+    // Ceiling for reading a backup file out of Downloads in one go. The JS reader
+    // holds the whole file too, so this is not a new limit — it turns an
+    // uncatchable WebView OOM into a message that names the size.
+    private static final long MAX_BACKUP_BYTES = 128L * 1024 * 1024;
     private final Handler drainHandler = new Handler(Looper.getMainLooper());
     private volatile OrbitForegroundService boundService = null;
     private boolean serviceBound = false;
@@ -527,6 +532,204 @@ public class OrbitP2PPlugin extends Plugin {
             Log.w(TAG, "saveToDownloads failed", e);
             call.reject("NEED_SHARE", "Could not save to Downloads: " + e.getMessage());
         }
+    }
+
+    /**
+     * Lists backup files sitting in the public Downloads folder.
+     *
+     * ⚠ WHY THIS EXISTS — the export and the restore disagreed about where a
+     * backup lives. saveToDownloads() below writes the exported .zip into the
+     * PUBLIC Downloads folder via MediaStore, and nothing ever read that folder
+     * back: findBackupFiles() in components/vault.js scanned only the app's own
+     * data directory. So the one copy that survives deleting the app was invisible
+     * to "Find backups" — the export worked, the restore worked, and the file
+     * could not be found.
+     *
+     * No permission on API 29+: scoped storage lets an app read back the rows it
+     * contributed itself, which is exactly the set we want. On API 24-28 it lists
+     * the public directory, which needs READ_EXTERNAL_STORAGE (declared with
+     * maxSdkVersion="32"); if that is refused we return an empty list rather than
+     * failing, because "nothing found" is the honest answer and a crash inside
+     * Settings is not.
+     */
+    @PluginMethod
+    public void listDownloadBackups(PluginCall call) {
+        JSObject res = new JSObject();
+        JSArray files = new JSArray();
+        try {
+            Context ctx = getContext();
+            if (ctx == null) { res.put("files", files); call.resolve(res); return; }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                String[] proj = {
+                        android.provider.MediaStore.MediaColumns.DISPLAY_NAME,
+                        android.provider.MediaStore.MediaColumns.SIZE,
+                        android.provider.MediaStore.MediaColumns.DATE_MODIFIED
+                };
+                // A name filter keeps other apps' zips out of the list even when a
+                // storage permission happens to have been granted. SQLite LIKE is
+                // case-insensitive for ASCII, so this covers Orbit/orbit.
+                String sel = android.provider.MediaStore.MediaColumns.DISPLAY_NAME + " LIKE ?";
+                String[] args = { "%orbit%" };
+
+                android.database.Cursor c = ctx.getContentResolver().query(
+                        android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                        proj, sel, args,
+                        android.provider.MediaStore.MediaColumns.DATE_MODIFIED + " DESC");
+                if (c != null) {
+                    int iName = c.getColumnIndex(android.provider.MediaStore.MediaColumns.DISPLAY_NAME);
+                    int iSize = c.getColumnIndex(android.provider.MediaStore.MediaColumns.SIZE);
+                    int iMod = c.getColumnIndex(android.provider.MediaStore.MediaColumns.DATE_MODIFIED);
+                    while (c.moveToNext()) {
+                        String name = iName >= 0 ? c.getString(iName) : null;
+                        if (!isBackupName(name)) continue;
+                        JSObject row = new JSObject();
+                        row.put("name", name);
+                        row.put("size", iSize >= 0 ? c.getLong(iSize) : 0);
+                        // ⚠ DATE_MODIFIED is in SECONDS; every other mtime in this
+                        // app is in ms, and a seconds value read as ms lands in 1970.
+                        row.put("mtime", (iMod >= 0 ? c.getLong(iMod) : 0) * 1000L);
+                        files.put(row);
+                    }
+                    c.close();
+                }
+                res.put("files", files);
+                call.resolve(res);
+                return;
+            }
+
+            // API 24-28: the public directory directly.
+            java.io.File dir = android.os.Environment.getExternalStoragePublicDirectory(
+                    android.os.Environment.DIRECTORY_DOWNLOADS);
+            if (dir != null && dir.isDirectory()) {
+                java.io.File[] children = dir.listFiles();
+                if (children != null) {
+                    for (java.io.File f : children) {
+                        if (f == null || !f.isFile()) continue;
+                        if (!isBackupName(f.getName())) continue;
+                        JSObject row = new JSObject();
+                        row.put("name", f.getName());
+                        row.put("size", f.length());
+                        row.put("mtime", f.lastModified());
+                        files.put(row);
+                    }
+                }
+            }
+            res.put("files", files);
+            call.resolve(res);
+        } catch (Exception e) {
+            // Never fail the caller. An unreadable Downloads folder means "nothing
+            // found", not a broken Settings screen.
+            Log.w(TAG, "listDownloadBackups failed", e);
+            JSObject empty = new JSObject();
+            empty.put("files", new JSArray());
+            call.resolve(empty);
+        }
+    }
+
+    /**
+     * Reads one backup back out of Downloads, as base64.
+     *
+     * The exact mirror of saveToDownloads(). Base64 because that is what the JS
+     * reader already expects from the Filesystem plugin — the bytes go into the
+     * same OrbitBackupArchive.read(), so a file restored from Downloads and a file
+     * restored from the app folder cannot disagree about the format.
+     *
+     * ⚠ The whole file is held in memory (as the JS path already did), so it is
+     * capped. A backup past the cap is refused with a message that names the size
+     * rather than killed by an OOM, which on Android is not catchable.
+     */
+    @PluginMethod
+    public void readDownloadBackup(PluginCall call) {
+        try {
+            String name = call.getString("name", "");
+            Context ctx = getContext();
+            if (ctx == null) { call.reject("no context"); return; }
+            if (name == null || name.isEmpty()) { call.reject("name is required"); return; }
+
+            java.io.InputStream in;
+            long declared = 0;
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                android.net.Uri item = findDownloadByName(ctx, name);
+                if (item == null) { call.reject("That backup is no longer in Downloads"); return; }
+                in = ctx.getContentResolver().openInputStream(item);
+            } else {
+                java.io.File dir = android.os.Environment.getExternalStoragePublicDirectory(
+                        android.os.Environment.DIRECTORY_DOWNLOADS);
+                java.io.File f = dir == null ? null : new java.io.File(dir, name);
+                if (f == null || !f.isFile()) { call.reject("That backup is no longer in Downloads"); return; }
+                declared = f.length();
+                if (declared > MAX_BACKUP_BYTES) {
+                    call.reject("That backup is " + (declared / (1024 * 1024)) +
+                                " MB, too large to restore on this device");
+                    return;
+                }
+                in = new java.io.FileInputStream(f);
+            }
+
+            if (in == null) { call.reject("Could not open that backup"); return; }
+
+            java.io.ByteArrayOutputStream buf = new java.io.ByteArrayOutputStream();
+            try {
+                byte[] chunk = new byte[64 * 1024];
+                long total = 0;
+                int n;
+                while ((n = in.read(chunk)) > 0) {
+                    total += n;
+                    if (total > MAX_BACKUP_BYTES) {
+                        call.reject("That backup is larger than this app can restore (" +
+                                    (MAX_BACKUP_BYTES / (1024 * 1024)) + " MB limit)");
+                        return;
+                    }
+                    buf.write(chunk, 0, n);
+                }
+            } finally {
+                try { in.close(); } catch (Exception ignored) {}
+            }
+
+            byte[] bytes = buf.toByteArray();
+            if (bytes.length == 0) { call.reject("That backup file is empty"); return; }
+
+            JSObject res = new JSObject();
+            res.put("name", name);
+            res.put("size", bytes.length);
+            res.put("data", android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP));
+            call.resolve(res);
+        } catch (Exception e) {
+            Log.w(TAG, "readDownloadBackup failed", e);
+            call.reject("Could not read that backup: " + e.getMessage());
+        }
+    }
+
+    /** The MediaStore row for `name`, newest first, as a content:// URI. */
+    private android.net.Uri findDownloadByName(Context ctx, String name) {
+        android.database.Cursor c = null;
+        try {
+            c = ctx.getContentResolver().query(
+                    android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                    new String[] { android.provider.BaseColumns._ID },
+                    android.provider.MediaStore.MediaColumns.DISPLAY_NAME + " = ?",
+                    new String[] { name },
+                    android.provider.MediaStore.MediaColumns.DATE_MODIFIED + " DESC");
+            if (c != null && c.moveToFirst()) {
+                long id = c.getLong(0);
+                return android.content.ContentUris.withAppendedId(
+                        android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, id);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "findDownloadByName failed", e);
+        } finally {
+            if (c != null) { try { c.close(); } catch (Exception ignored) {} }
+        }
+        return null;
+    }
+
+    /** A file name that looks like an Orbit backup. Mirrors BACKUP_EXT in vault.js. */
+    private static boolean isBackupName(String name) {
+        if (name == null) return false;
+        String lower = name.toLowerCase(java.util.Locale.US);
+        return lower.endsWith(".orzip") || lower.endsWith(".zip");
     }
 
     /** Closes the app so a freshly installed update can take effect. */

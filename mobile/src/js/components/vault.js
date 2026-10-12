@@ -407,23 +407,61 @@
 
        a VAULT   — a directory this app writes (vault/OrbitVault-…), chunked, and
                    optionally encrypted. listVaults()/restoreVault() handle it.
-       a BACKUP  — a single .orzip/.zip file the DESKTOP writes, holding the whole
-                   account as one JSON blob.
+       a BACKUP  — a single .orzip/.zip file, holding the whole account as one
+                   JSON blob.
 
      Dan's ask is the second one, and the reason is recovery: **deleting and
      reinstalling the app does not remove a file you saved, but it does remove
      everything in the app's own data directory** — so a fresh install should
      look for its own old backups instead of making the user go hunting.
 
-     So this scans BOTH places a file could plausibly be:
+     So this scans every place a file can plausibly be:
        • the app data root   (what survived, or what a share put there)
        • vault/              (where a user is told to put things)
+       • the public Downloads folder  ← see below
 
-     Nothing here is allowed to throw: a missing directory is the normal case on
-     a fresh install, and a scan that fails must look like "nothing found", not
-     like a crash in Settings. */
+     ⚠⚠ THE EXPORT AND THE RESTORE USED TO DISAGREE ABOUT WHERE A BACKUP LIVES.
+
+     runVaultExport() offers "Save a copy to Downloads now?", and that copy is the
+     ONLY one that survives deleting the app — everything under the app's data
+     directory goes with the reinstall. It is written through MediaStore into the
+     PUBLIC Downloads folder. This scan only ever looked at app-private storage,
+     so the recovery path for the exact case it exists for found nothing: the
+     export worked, the restore worked, and the file was invisible.
+
+     Listing and reading Downloads is native (OrbitP2PPlugin) because a WebView
+     cannot reach that folder itself. Both fail closed — no plugin, no permission,
+     or no folder all mean "no files found", never an exception. */
 
   var BACKUP_EXT = /\.(orzip|zip)$/i;
+
+  /** The native plugin that can see the public Downloads folder, or null. */
+  function _downloadsPlugin() {
+    var plugins = (window.Capacitor && window.Capacitor.Plugins) || {};
+    var P2P = plugins.OrbitP2P;
+    return (P2P && typeof P2P.listDownloadBackups === 'function') ? P2P : null;
+  }
+
+  /** Backups sitting in the public Downloads folder. Never rejects. */
+  function _listDownloadBackups() {
+    var P2P = _downloadsPlugin();
+    if (!P2P) return Promise.resolve([]);
+    return P2P.listDownloadBackups()
+      .then(function (res) {
+        return ((res && res.files) || []).map(function (f) {
+          return {
+            name: f.name,
+            // Prefixed so it can never collide with a private-storage path in the
+            // de-dup below, and so the sheet has something to show.
+            path: 'downloads/' + f.name,
+            source: 'downloads',
+            size: f.size || 0,
+            mtime: f.mtime || null
+          };
+        }).filter(function (f) { return f.name && BACKUP_EXT.test(f.name); });
+      })
+      .catch(function () { return []; });
+  }
 
   function _readDir(F, path) {
     return F.readdir({ path: path, directory: 'DATA' })
@@ -443,12 +481,13 @@
         return {
           name: entry.name,
           path: full,
+          source: dirPath ? 'vault' : 'app',
           size: st.size || 0,
           mtime: st.mtime || null
         };
       })
       .catch(function () {
-        return { name: entry.name, path: full, size: 0, mtime: null };
+        return { name: entry.name, path: full, source: dirPath ? 'vault' : 'app', size: 0, mtime: null };
       });
   }
 
@@ -456,52 +495,81 @@
    * Every restorable backup file, newest first.
    *
    * ⚠ The app root is read with path '' — Capacitor's readdir on the Data
-   * directory with an empty path lists the root itself. Both listings are
+   * directory with an empty path lists the root itself. Listings are
    * de-duplicated by path, because a user who put a file in vault/ AND left a
    * copy at the root should not see it twice.
    */
   function findBackupFiles() {
     var F = fs();
-    if (!F) return Promise.resolve([]);
 
-    return Promise.all([_readDir(F, ''), _readDir(F, 'vault')]).then(function (results) {
-      var jobs = [];
-      results.forEach(function (entries, i) {
-        var dirPath = i === 0 ? '' : 'vault';
-        entries.forEach(function (e) {
-          if (!e || !e.name || !BACKUP_EXT.test(e.name)) return;
-          jobs.push(_describeFile(F, dirPath, e));
+    var privateFiles = F
+      ? Promise.all([_readDir(F, ''), _readDir(F, 'vault')]).then(function (results) {
+          var jobs = [];
+          results.forEach(function (entries, i) {
+            var dirPath = i === 0 ? '' : 'vault';
+            entries.forEach(function (e) {
+              if (!e || !e.name || !BACKUP_EXT.test(e.name)) return;
+              jobs.push(_describeFile(F, dirPath, e));
+            });
+          });
+          return Promise.all(jobs);
+        })
+      : Promise.resolve([]);
+
+    return Promise.all([privateFiles, _listDownloadBackups()])
+      .then(function (both) {
+        var seen = {};
+        return both[0].concat(both[1]).filter(function (f) {
+          if (seen[f.path]) return false;
+          seen[f.path] = true;
+          return true;
+        }).sort(function (a, b) {
+          // Newest first; a file with no mtime sorts last rather than winning.
+          var am = a.mtime || 0, bm = b.mtime || 0;
+          return bm - am;
         });
-      });
-      return Promise.all(jobs);
-    }).then(function (files) {
-      var seen = {};
-      return files.filter(function (f) {
-        if (seen[f.path]) return false;
-        seen[f.path] = true;
-        return true;
-      }).sort(function (a, b) {
-        // Newest first; a file with no mtime sorts last rather than winning.
-        var am = a.mtime || 0, bm = b.mtime || 0;
-        return bm - am;
-      });
-    }).catch(function () { return []; });
+      })
+      .catch(function () { return []; });
   }
 
-  /** Read one candidate. Returns {kind, backup, account} ready to restore. */
-  function readBackupFile(path) {
-    var F = fs();
-    if (!F) return Promise.reject(new Error('Filesystem plugin unavailable'));
+  /**
+   * Read one candidate. Returns {kind, backup, account} ready to restore.
+   *
+   * `source` decides the reader: 'downloads' goes through the native plugin (a
+   * WebView cannot open a public Downloads file), everything else through the
+   * Filesystem plugin. Both hand back the same bytes, and both feed the same
+   * OrbitBackupArchive.read() — so a file from Downloads and a file from the app
+   * folder cannot disagree about the format.
+   */
+  function readBackupFile(path, source) {
     if (!window.OrbitBackupArchive) return Promise.reject(new Error('Backup reader unavailable'));
 
-    return F.readFile({ path: path, directory: 'DATA' })
-      .then(function (res) {
+    var bytesPromise;
+
+    if (source === 'downloads') {
+      var P2P = _downloadsPlugin();
+      if (!P2P || typeof P2P.readDownloadBackup !== 'function') {
+        return Promise.reject(new Error('Restoring from Downloads needs a newer Android build'));
+      }
+      var name = String(path).replace(/^downloads\//, '');
+      bytesPromise = P2P.readDownloadBackup({ name: name }).then(function (res) {
+        var b64 = (res && res.data) ? String(res.data) : '';
+        if (!b64) throw new Error('The file is empty');
+        return b64ToBytes(b64);
+      });
+    } else {
+      var F = fs();
+      if (!F) return Promise.reject(new Error('Filesystem plugin unavailable'));
+      bytesPromise = F.readFile({ path: path, directory: 'DATA' }).then(function (res) {
         // Capacitor hands back base64 for binary reads.
         var b64 = typeof res.data === 'string' ? res.data : '';
         if (!b64) throw new Error('The file is empty');
-        var bytes = b64ToBytes(b64);
-        return window.OrbitBackupArchive.read(bytes);
-      })
+        return b64ToBytes(b64);
+      });
+    }
+
+    return bytesPromise
+      .then(function (bytes) { return window.OrbitBackupArchive.read(bytes); })
       .then(function (r) {
         // The translator already exists (shared/network/transfer.js) — the same
         // one "Link a phone" uses, so a restored file and a transferred account

@@ -46,5 +46,9 @@ graphify-out/
 # Webside
 docs/
 
+# Snapshot of a previous UI, kept so a redesign can be undone. The authoritative
+# copy is the git tag it names (e.g. desktop-ui-pre-v0.9.0).
+.design-backup/
+
 # Screenshots written by mobile/tests (the harness saves them next to the specs)
 mobile/tests/.shots/

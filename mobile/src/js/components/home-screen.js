@@ -54,14 +54,14 @@ var OrbitHome = {
     '</div>';
     
     displayFriends.forEach(function(friend) {
-      var displayName = friend.name || friend.peerId || '?';
+      var displayName = friend.name || OrbitHome._friendId(friend) || '?';
       var initial = displayName.charAt(0).toUpperCase();
       var safeAvatarSrc = OrbitHome._safeAvatarSrc(friend.avatar);
       var avatarHtml = safeAvatarSrc
         ? '<img src="' + safeAvatarSrc + '" alt="' + OrbitHome._escapeAttr(displayName) + '" loading="lazy">'
         : OrbitHome._escape(initial);
       
-      html += '<div class="online-friend-item" data-peerid="' + OrbitHome._escapeAttr(friend.peerId || friend.id || '') + '">';
+      html += '<div class="online-friend-item" data-peerid="' + OrbitHome._escapeAttr(OrbitHome._friendId(friend)) + '">';
       var isDefOnline = friend.status === 'online' || (friend.lastSeen || 0) > Date.now() - 30000;
       html += '  <div class="online-friend-avatar">' + avatarHtml + '<span class="online-indicator' + (isDefOnline ? '' : ' idle') + '"></span></div>';
       html += '  <span class="online-friend-name">' + OrbitHome._escape(displayName) + '</span>';
@@ -95,45 +95,63 @@ var OrbitHome = {
   },
 
 
-  /** Click an online friend to open chat */
-  _onFriendClick: function(peerId) {
-    if (!peerId) return;
-    var chat = null;
+  /* ── One place a friend's identity is decided ───────────────────────────────
+     ⚠ A friend record is keyed by `userId` — that is what MStore.addOrUpdatePeer
+     writes — or by `id`, which is what the seeded bots get. It is NOT keyed by
+     `peerId`: no friend record this app writes has ever had a `peerId` field.
+
+     Reading `friend.peerId` alone therefore resolved to '' for EVERY real
+     contact, and every action built from it early-returned on the empty string.
+     The ⋮ opened nothing, Message did nothing, and neither said a word — while
+     groups, which pass a real `g.id`, worked fine. That asymmetry was the whole
+     clue: the menu was not broken, the id was empty.
+
+     Same shape as the rest of this codebase's silent failures — a lookup against
+     a field that is not there matches nothing, and matches it silently. */
+  _friendId: function(f) {
+    // Delegates to the app-wide resolver so there is exactly one definition of
+    // "which field is this person's id". The inline fallback only matters if this
+    // file is somehow loaded without app.js.
+    if (typeof window.orbitFriendId === 'function') return window.orbitFriendId(f);
+    if (!f) return '';
+    return String(f.peerId || f.userId || f.id || '');
+  },
+
+  /**
+   * Open a friend's DM. Creates the chat if the store has none.
+   *
+   * ⚠ THERE WERE TWO DEFINITIONS OF THIS METHOD in this object literal, and the
+   * second silently won — so the careful lookup below it was unreachable dead
+   * code that still looked like the implementation. One definition now.
+   */
+  _onFriendClick: function(friendId) {
+    if (!friendId) return;
+    var id = String(friendId);
+
+    // Three chat shapes exist in the wild: the plain peer id, a 'dm_' prefix, and
+    // a chat whose own id differs from its peerId. Match all three.
     var chats = MStore.chats || [];
+    var chat = null;
     for (var i = 0; i < chats.length; i++) {
-      if (chats[i].peerId === peerId || chats[i].id === peerId) {
-        chat = chats[i];
-        break;
-      }
+      var c = chats[i];
+      if (c.id === id || c.id === 'dm_' + id || c.peerId === id) { chat = c; break; }
     }
+
     if (!chat) {
-      var friends = MStore.friends || [];
-      var friend = null;
-      for (var i = 0; i < friends.length; i++) {
-        if (friends[i].peerId === peerId || friends[i].id === peerId) {
-          friend = friends[i];
-          break;
-        }
-      }
+      var friend = (MStore.friends || []).filter(function(f) {
+        return OrbitHome._friendId(f) === id;
+      })[0];
       if (friend) {
-        chat = {
-          id: 'dm_' + peerId,
-          peerId: friend.peerId || peerId,
-          name: friend.name || peerId,
-          type: 'dm',
-          messages: []
-        };
+        // Plain peer id, matching MStore's own _ensureDmChatForUser convention.
+        chat = { id: id, peerId: id, name: friend.name || id, type: 'dm', messages: [] };
         MStore.chats.push(chat);
         MStore.save();
       }
     }
-    if (chat) {
-      if (typeof window.openChat === 'function') {
-        window.openChat(chat.id);
-      } else if (typeof openChat === 'function') {
-        openChat(chat.id);
-      }
-    }
+    if (!chat) return;
+
+    if (typeof window.openChat === 'function') window.openChat(chat.id);
+    else if (typeof openChat === 'function') openChat(chat.id);
   },
   _escape: function(str) {
     var div = document.createElement('div');
@@ -268,15 +286,6 @@ var OrbitHome = {
     }
   },
 
-  _onFriendClick: function(peerId) {
-    if (!peerId) return;
-    // Open direct chat with this friend
-    var chatId = 'dm_' + peerId;
-    if (window.openChat) {
-      window.openChat(chatId);
-    }
-  },
-
   /** Render the chat list with card-style items */
   renderChatList: function(filter) {
     var container = document.getElementById('chat-list');
@@ -380,7 +389,7 @@ var OrbitHome = {
       // the chat record hasn't been seeded yet (previously the DMs tab showed
       // the single-letter initial instead — v0.4.1-beta fix).
       if (!avatarUrl && !isGroup) {
-        var avF = MStore.friends.find(function(f) { return f.id === (chat.peerId || chat.id); });
+        var avF = MStore.friends.find(function(f) { return OrbitHome._friendId(f) === (chat.peerId || chat.id); });
         avatarUrl = avF ? avF.avatar : null;
       }
 
@@ -648,7 +657,7 @@ var OrbitHome = {
       
       if (section.type === 'friends') {
         section.items.forEach(function(f) {
-          var fName = f.name || f.peerId || 'Unknown';
+          var fName = f.name || OrbitHome._friendId(f) || 'Unknown';
           var fInitial = fName.charAt(0).toUpperCase();
           var fStatus = f.status || 'offline';
           var statusColors = { online: 'var(--accent-success)', away: 'var(--accent-warning)', dnd: 'var(--accent-danger)', invisible: 'var(--text-muted)' };
@@ -802,13 +811,15 @@ var OrbitHome = {
         ? '<img src="' + safeAvatarSrc + '" alt="' + OrbitHome._escapeAttr(initial) + '" loading="lazy" onerror="var f=this;f.onerror=null;var i=f.getAttribute(\'data-init\')||\'' + OrbitHome._escapeJs(initial) + '\';f.style.display=\'none\';var d=document.createElement(\'div\');d.textContent=i;d.style.cssText=\'width:40px;height:40px;border-radius:50%;background:var(--accent-soft);color:var(--accent-primary);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;\';f.parentNode.insertBefore(d,f);" data-init="' + OrbitHome._escapeAttr(initial) + '">'
         : OrbitHome._escape(initial);
       var isOn = isFriendOnline(friend);
-      var peerId = friend.peerId || '';
+      // ⚠ Not `friend.peerId` — see OrbitHome._friendId. This one line is why the
+      // ⋮ and Message were dead for every contact and alive for every group.
+      var peerId = OrbitHome._friendId(friend);
       var openIt = 'OrbitHome._onFriendClick(\'' + OrbitHome._escapeJs(peerId) + '\')';
 
       // The presence dot sits ON the avatar, as it does in the chat list and in
       // the design. It used to be an inline <span> under the name, which read as
       // a stray green circle floating in the info column, unattached to anything.
-      var row = '<div class="friend-row" data-peerid="' + OrbitHome._escapeAttr(peerId) + '" data-user-id="' + OrbitHome._escapeAttr(friend.id || peerId) + '" onclick="' + openIt + '">';
+      var row = '<div class="friend-row" data-peerid="' + OrbitHome._escapeAttr(peerId) + '" data-user-id="' + OrbitHome._escapeAttr(peerId) + '" onclick="' + openIt + '">';
       row += '  <div class="chat-row-avatar">' + avatarHtml +
              '<span class="chat-row-status-dot ' + (isOn ? 'online' : 'offline') + '"></span></div>';
       row += '  <div class="chat-row-info">';
@@ -1487,43 +1498,12 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
     
-    // Friend click - open DM
-    var peerId = item.getAttribute('data-peerid');
-    if (!peerId) return;
-    var chats = MStore.chats || [];
-    var chat = null;
-    for (var i = 0; i < chats.length; i++) {
-      if (chats[i].peerId === peerId || chats[i].id === peerId) {
-        chat = chats[i];
-        break;
-      }
-    }
-    if (!chat) {
-      var friends = MStore.friends || [];
-      var friend = null;
-      for (var i = 0; i < friends.length; i++) {
-        if (friends[i].peerId === peerId || friends[i].id === peerId) {
-          friend = friends[i];
-          break;
-        }
-      }
-      if (friend) {
-        chat = {
-          id: peerId,
-          peerId: friend.peerId || peerId,
-          name: friend.name || peerId,
-          type: 'dm',
-          messages: []
-        };
-        MStore.chats.push(chat);
-        MStore.save();
-      }
-    }
-    if (chat) {
-      if (typeof window.openChat === 'function') {
-        window.openChat(chat.id);
-      }
-    }
+    // Friend click — open their DM.
+    // ⚠ This used to carry its own copy of the chat lookup, which is how the two
+    // copies drifted: this one matched `peerId`/`id` and the row above rendered
+    // `peerId` only, so both were broken together and neither was obviously the
+    // bug. One implementation now (_onFriendClick), called from here.
+    OrbitHome._onFriendClick(item.getAttribute('data-peerid'));
   });
   
   // Wire home tabs (Friends | Groups | Folders) — use event delegation for dynamic tabs

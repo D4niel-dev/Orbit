@@ -122,7 +122,8 @@ var OrbitChat = {
     if (peerId && !isGroup) {
       var friends = MStore.friends || [];
       for (var i = 0; i < friends.length; i++) {
-        if (friends[i].id === peerId || friends[i].peerId === peerId) {
+        if (window.orbitIsFriend ? window.orbitIsFriend(friends[i], peerId)
+                                 : (friends[i].id === peerId || friends[i].peerId === peerId)) {
           var friend = friends[i];
           if (chat) {
             // Merge friend data with chat data (friend avatar/status takes priority)
