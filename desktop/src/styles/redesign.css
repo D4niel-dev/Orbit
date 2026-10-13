@@ -2194,6 +2194,78 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   9f. THE CONTEXT MENU
+
+   ⚠⚠ THE RULE THAT WAS ALREADY HERE MATCHED NOTHING. §9 lists `.context-menu` and
+   `.context-menu-item` among the class names that "do not exist" — and it was half
+   right: the ELEMENT carries `context-item`, so the rule was written against a name
+   that is one word out, and the menu has been unstyled the whole time.
+
+   ⚠ AND IT CLOSED ITSELF AFTER 1.5 SECONDS. The message menu pushes six or more
+   items, so you had a second and a half to read the list and hit one. Measured in the
+   running app: visible at 600ms, gone by 1200ms. It was never needed — all seven call
+   sites are click-driven and a click outside already closed it. Removed in
+   components/context-menu.js; Escape now closes it, which it never did.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#context-menu-container {
+  position: fixed;
+  /* ⚠ Load-bearing: the container's chrome is no longer inline, so this is what keeps
+     it hidden between init() and the first show(). show() and close() set `display`
+     inline from then on, and inline wins. */
+  display: none;
+  flex-direction: column;
+  z-index: 10000;
+  min-width: 180px;
+  max-width: 260px;
+  padding: 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xl);
+}
+
+.context-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  /* ⚠ Overridden INLINE by the caller for destructive items, which is the one thing
+     that stays inline here — and it is why this rule has no `!important`. */
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease);
+}
+.context-item svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: .8;
+  transition: opacity var(--dur) var(--ease);
+}
+/* ⚠ Background only. The old hover was two inline handlers writing `background`, and
+   nothing else — so a danger item kept its colour and that was right. */
+.context-item:hover {
+  background: var(--bg-hover);
+}
+.context-item:hover svg {
+  opacity: 1;
+}
+
+.context-menu-sep {
+  height: 1px;
+  margin: 4px 8px;
+  background: var(--border-subtle);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    THE GLOBAL BUTTON HOVER
    ⚠ components.css lifts EVERY button in the app 1px and brightens it 10% on
    hover: `button:hover { filter: brightness(1.1); transform: translateY(-1px); }`.

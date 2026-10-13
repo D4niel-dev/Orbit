@@ -1511,6 +1511,78 @@ test.describe('desktop redesign', () => {
     await page.waitForTimeout(400);
   });
 
+  test('the context menu stays open long enough to use it', async () => {
+    // ⚠⚠ IT CLOSED ITSELF AFTER 1.5 SECONDS. `show()` set a timer — "so cursor doesn't
+    // block buttons" — and the message menu pushes six or more items, so you had a
+    // second and a half to read the list and hit one. Measured before the fix: visible
+    // at 600ms, GONE BY 1200ms.
+    //
+    // ⚠ It was never needed. All seven call sites are click-driven — a `contextmenu`
+    // event or a button click, never a hover — and a click anywhere outside already
+    // closed it through the document listener. Nothing could be blocked.
+    const show = () => page.evaluate(() => window.ContextMenu.show(140, 150, [
+      { label: 'Reply', icon: 'reply', onClick: function () {} },
+      { label: 'Copy Text', icon: 'copy', onClick: function () {} },
+      'separator',
+      { label: 'Pin Message', icon: 'pin', onClick: function () {} },
+      { label: 'Delete Message', icon: 'trash-2', color: 'var(--accent-danger)', onClick: function () {} }
+    ]));
+    const visible = () => page.evaluate(() => {
+      const c = document.getElementById('context-menu-container');
+      return c ? getComputedStyle(c).display !== 'none' : null;
+    });
+
+    await show();
+    // ⚠ Well past the old 1500ms timer.
+    await page.waitForTimeout(2600);
+    expect(await visible()).toBe(true);
+
+    const parts = await page.evaluate(() => {
+      const c = document.getElementById('context-menu-container');
+      const items = Array.from(c.querySelectorAll('.context-item'));
+      const danger = items.find((b) => /Delete/.test(b.textContent));
+      const normal = items.find((b) => /Reply/.test(b.textContent));
+      const sep = c.querySelector('.context-menu-sep');
+      return {
+        itemCount: items.length,
+        // ⚠ The separator is a CLASS now. It was an inline `height:1px;background:…`
+        // div, which no stylesheet can see — and §9 of the layer had a rule for
+        // `.context-menu-item`, a name one word out from the `context-item` the
+        // element actually carries.
+        separator: !!sep,
+        sepHeight: sep ? Math.round(sep.getBoundingClientRect().height) : null,
+        dangerColor: danger ? getComputedStyle(danger).color : null,
+        normalColor: normal ? getComputedStyle(normal).color : null,
+        // ⚠ The hover handlers are gone; this is the stylesheet's, and it must not
+        // touch the colour or a danger item would lose its red on hover.
+        hoverRule: !!Array.from(document.styleSheets).some((s) => {
+          try { return Array.from(s.cssRules || []).some((r) => r.selectorText === '.context-item:hover'); }
+          catch (e) { return false; }
+        })
+      };
+    });
+    expect(parts.itemCount).toBe(4);
+    expect(parts.separator).toBe(true);
+    expect(parts.sepHeight).toBe(1);
+    // The caller's danger colour survives, and a normal item is the primary text.
+    expect(parts.dangerColor).toBe('rgb(255, 69, 58)');
+    expect(parts.normalColor).not.toBe(parts.dangerColor);
+    expect(parts.hoverRule).toBe(true);
+
+    // ⚠ Escape closes it — it never did.
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(400);
+    expect(await visible()).toBe(false);
+
+    // And a click outside still does.
+    await show();
+    await page.waitForTimeout(300);
+    expect(await visible()).toBe(true);
+    await page.mouse.click(700, 500);
+    await page.waitForTimeout(400);
+    expect(await visible()).toBe(false);
+  });
+
   test('the layer is the ONLY difference — disabling it restores the old accent', async () => {
     const accent = () =>
       page.evaluate(() => {
