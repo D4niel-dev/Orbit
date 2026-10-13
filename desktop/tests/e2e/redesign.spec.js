@@ -1404,6 +1404,113 @@ test.describe('desktop redesign', () => {
     await page.waitForTimeout(500);
   });
 
+  test('the settings nav collapses to icons — and only in the redesign', async () => {
+    // ⚠ A REDESIGN-ONLY FEATURE. The class is applied either way; every rule that acts
+    // on it lives in the layer, so with the layer off it is inert and the rail is
+    // always the full 240px. This asserts BOTH halves — a control that visibly does
+    // nothing in the classic look is worse than one that is not there.
+    const nav = () => page.evaluate(() => {
+      const ov = document.getElementById('settings-overlay');
+      if (!ov) return null;
+      const rail = ov.firstElementChild.children[0];
+      const btn = document.getElementById('settings-nav-toggle');
+      const tab = ov.querySelector('.settings-tab');
+      const label = tab ? tab.querySelector('span') : null;
+      const closeSpan = document.querySelector('#btn-close-settings > span');
+      const closeSvg = document.querySelector('#btn-close-settings svg');
+      const vis = (el) => !!el && getComputedStyle(el).display !== 'none';
+      const box = (el) => {
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        return Math.round(r.width) + 'x' + Math.round(r.height);
+      };
+      return {
+        collapsed: ov.classList.contains('nav-collapsed'),
+        railW: Math.round(rail.getBoundingClientRect().width),
+        toggleVisible: vis(btn),
+        toggleBox: box(btn),
+        toggleTitle: btn ? btn.title : null,
+        // ⚠ The glyph, not just "has an svg" — the icon is swapped by re-emitting it.
+        // ⚠ lucide leaves BOTH classes on the svg: `lucide lucide-chevrons-left`. The
+        // first version of this stripped the first `lucide ` and left `lucide-` on the
+        // front, so it compared against a name that was never going to match.
+        toggleIcon: (() => {
+          const svg = btn && btn.querySelector('svg');
+          if (!svg) return null;
+          const c = Array.from(svg.classList).find((x) => x.startsWith('lucide-'));
+          return c ? c.slice('lucide-'.length) : null;
+        })(),
+        labelShown: vis(label),
+        tabBox: box(tab),
+        closeWord: vis(closeSpan),
+        closeGlyph: vis(closeSvg),
+        saved: (window.orbitAPI.storeGet('settings') || {}).settingsNavCollapsed,
+        inStore: window.store.getState().settings.settingsNavCollapsed
+      };
+    });
+
+    await page.click('#btn-nav-settings');
+    await page.waitForTimeout(1000);
+    const open = await nav();
+    expect(open.collapsed).toBe(false);
+    expect(open.railW).toBe(240);
+    expect(open.toggleVisible).toBe(true);
+    expect(open.toggleIcon).toBe('chevrons-left');
+    expect(open.labelShown).toBe(true);
+    expect(open.closeWord).toBe(true);
+    // The word, not the glyph — the expanded rail keeps what it always said.
+    expect(open.closeGlyph).toBe(false);
+
+    await page.evaluate(() => document.getElementById('settings-nav-toggle').click());
+    await page.waitForTimeout(800);
+    const shut = await nav();
+    expect(shut.collapsed).toBe(true);
+    // 64px, so the icons have a rail of their own and the content pane takes the rest.
+    expect(shut.railW).toBe(64);
+    expect(shut.labelShown).toBe(false);
+    // ⚠ Centred, not left-aligned against a 64px box.
+    expect(shut.tabBox).toBe('39x34');
+    // The control stays, with the opposite glyph and a title that says what it does.
+    expect(shut.toggleVisible).toBe(true);
+    expect(shut.toggleIcon).toBe('chevrons-right');
+    expect(shut.toggleTitle).toBe('Show labels');
+    // "Close" is 40px of text and the rail is 64px wide.
+    expect(shut.closeWord).toBe(false);
+    expect(shut.closeGlyph).toBe(true);
+    // ⚠ BOTH stores, and the store state — persisting without moving the store is how
+    // the gallery's view mode came to be silently reverted by its own subscription.
+    expect(shut.saved).toBe(true);
+    expect(shut.inStore).toBe(true);
+
+    // The nav still works collapsed.
+    await page.evaluate(() => document.querySelector('.settings-tab[data-tab="notifications"]').click());
+    await page.waitForTimeout(700);
+    expect(await page.evaluate(() => {
+      const a = document.querySelector('.settings-tab.active');
+      return a ? a.dataset.tab : null;
+    })).toBe('notifications');
+    expect(await page.evaluate(() => document.getElementById('settings-overlay').classList.contains('nav-collapsed'))).toBe(true);
+
+    // ── And with the layer OFF, there is no control and the rail is untouched ────
+    await page.evaluate(() => { window.SettingsModal.close(); window.OrbitRedesign.apply(false); });
+    await page.waitForTimeout(400);
+    await page.evaluate(() => window.SettingsModal.open());
+    await page.waitForTimeout(1000);
+    const classic = await nav();
+    expect(classic.collapsed).toBe(false);
+    expect(classic.railW).toBe(240);
+    expect(classic.toggleVisible).toBe(false);
+    expect(classic.labelShown).toBe(true);
+    // ⚠ And the glyph is hidden here too — the rule that hides it is in the
+    // always-loaded sheet for exactly this reason. In the layer, classic would grow an
+    // icon nobody asked for.
+    expect(classic.closeGlyph).toBe(false);
+    expect(classic.closeWord).toBe(true);
+
+    await page.evaluate(() => { window.SettingsModal.close(); window.OrbitRedesign.apply(true); });
+    await page.waitForTimeout(400);
+  });
+
   test('the layer is the ONLY difference — disabling it restores the old accent', async () => {
     const accent = () =>
       page.evaluate(() => {

@@ -91,16 +91,58 @@ window.SettingsModal = {
     this.container.innerHTML =
       '<div style="width:800px;height:600px;background:var(--bg-surface);border-radius:12px;display:flex;overflow:hidden;box-shadow:var(--shadow-xl);border:1px solid var(--border-subtle);">' +
         '<div style="width:240px;background:var(--bg-base);padding:24px;border-right:1px solid var(--border-subtle);display:flex;flex-direction:column;">' +
-          '<h2 style="font-family:var(--font-display);font-size:20px;margin-bottom:24px;color:var(--text-primary);font-weight:bold;">Settings</h2>' +
+          // ⚠ The heading and the collapse control share a row, so the h2 is no longer
+          // a DIRECT child of the rail — the layer's selector for it moved with it.
+          '<div class="settings-rail-head">' +
+            '<h2 style="font-family:var(--font-display);font-size:20px;margin-bottom:24px;color:var(--text-primary);font-weight:bold;">Settings</h2>' +
+            // ⚠ Rendered ALWAYS and hidden by `_syncNavToggle` when the redesign is off.
+            // Deciding it here would read `OrbitRedesign` during init, and init runs on
+            // DOMContentLoaded — before the settings are hydrated and, on some load
+            // orders, before app.js has defined the object. That is the same trap the
+            // gallery's view mode fell into.
+            '<button id="settings-nav-toggle" class="settings-rail-toggle" type="button" title="Collapse to icons">' +
+              '<i data-lucide="chevrons-left"></i>' +
+            '</button>' +
+          '</div>' +
           '<div style="display:flex;flex-direction:column;gap:8px;">' +
             navItems +
           '</div>' +
           '<div style="flex:1;"></div>' +
-          '<button id="btn-close-settings" style="padding:10px;border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-secondary);background:transparent;cursor:pointer;">Close</button>' +
+          // ⚠ An icon for the collapsed rail: "Close" is 40px of text and the rail is
+          // 64px wide. Shown only when collapsed — the expanded rail keeps the word.
+          '<button id="btn-close-settings" style="padding:10px;border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-secondary);background:transparent;cursor:pointer;"><i data-lucide="x"></i><span>Close</span></button>' +
         '</div>' +
         '<div id="settings-content" style="flex:1;padding:32px;overflow-y:auto;background:var(--bg-surface);"></div>' +
       '</div>';
     this.attachEvents();
+  },
+
+  /**
+   * Apply the collapsed-nav preference — and decide whether the control exists at all.
+   *
+   * ⚠⚠ CALLED FROM open() AS WELL AS attachEvents(). The modal renders ONCE, in
+   * init(), which runs on DOMContentLoaded — BEFORE the settings are hydrated from the
+   * database. A render-time read of `settingsNavCollapsed` therefore always sees the
+   * default, which is exactly how the gallery's saved view mode came to look like it
+   * never saved. open() is the first moment the value is real.
+   */
+  _syncNavToggle() {
+    var btn = this.container && this.container.querySelector('#settings-nav-toggle');
+    if (!btn) return;
+    // ⚠ A REDESIGN-ONLY control. With the layer off there is no button and no class, so
+    // the classic rail is always the full 240px. The rules that act on the class live
+    // in the layer anyway, so this is belt and braces — but a control that visibly does
+    // nothing is worse than one that is not there.
+    var redesigned = !!(window.OrbitRedesign && window.OrbitRedesign.isOn());
+    var collapsed = !!(window.store.getState().settings || {}).settingsNavCollapsed;
+    btn.style.display = redesigned ? '' : 'none';
+    this.container.classList.toggle('nav-collapsed', redesigned && collapsed);
+    btn.title = collapsed ? 'Show labels' : 'Collapse to icons';
+    // ⚠ Re-emitted rather than two stacked icons toggled by CSS: lucide replaces the
+    // <i> with an <svg>, and whether a class on the <i> survives that is not something
+    // to bet a control on.
+    btn.innerHTML = '<i data-lucide="' + (collapsed ? 'chevrons-right' : 'chevrons-left') + '"></i>';
+    if (window.lucide) window.lucide.createIcons({ root: btn });
   },
 
   attachEvents() {
@@ -118,6 +160,22 @@ window.SettingsModal = {
       });
     });
     this.container.querySelector('#btn-close-settings').addEventListener('click', function() { self.close(); });
+
+    // ⚠ The rail collapse. The STORE moves as well as the disk — persisting without it
+    // is how the gallery's view mode came to be silently reverted by its own
+    // subscription on the next settings change.
+    var navToggle = this.container.querySelector('#settings-nav-toggle');
+    if (navToggle) {
+      navToggle.addEventListener('click', function() {
+        var live = window.store.getState().settings || {};
+        var next = Object.assign({}, live, { settingsNavCollapsed: !live.settingsNavCollapsed });
+        window.store.setState({ settings: next });
+        if (window.Storage) window.Storage.set('settings', next);
+        if (window.orbitAPI && window.orbitAPI.dbSetSetting) window.orbitAPI.dbSetSetting('settings', next);
+        self._syncNavToggle();
+      });
+    }
+    self._syncNavToggle();
   },
 
   renderTab(tabName) {
@@ -2824,6 +2882,9 @@ window.SettingsModal = {
     }
     this.container.style.display = 'flex';
     this.isOpen = true;
+    // ⚠ Before the tab click, and for a reason: this is the first moment the hydrated
+    // settings exist. See _syncNavToggle.
+    this._syncNavToggle();
     var tabEl = this.container.querySelector('.settings-tab[data-tab="' + tab + '"]');
     if (tabEl) tabEl.click();
   },

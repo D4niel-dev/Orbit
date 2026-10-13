@@ -3309,3 +3309,60 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: 0.3; }
   color: var(--accent-primary);
   cursor: pointer;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE SETTINGS NAV — THE BASE, AND WHY IT LIVES IN THIS SHEET
+
+   ⚠⚠ THE ALWAYS-LOADED SHEET, DELIBERATELY. These buttons used to carry their whole
+   appearance as INLINE styles in settings-modal.js. When the icons went in, those
+   inline styles came out — and putting them only in styles/redesign.css left the
+   CLASSIC look with raw, unstyled buttons: no padding, no rounded row, no selected
+   state. Caught by switching the layer off and looking, which is the only way this
+   class of mistake shows up.
+
+   ⚠ This is the third instance of one rule: **anything the renderer needs in BOTH
+   UIs has to live in a sheet that always loads.** The redesign's own treatment — a
+   tighter row, the accent tint on the selected item, the icon column's opacity — is
+   in redesign.css and layers on top of this.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.settings-tab {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 400;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+/* The icon column. Sized here so it is right in both UIs — the icons are part of the
+   nav, not of the redesign. */
+.settings-tab svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.settings-tab:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.settings-tab.active {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* ⚠ The close button's glyph exists for the COLLAPSED rail, which is a redesign
+   feature — so it is hidden HERE, in the sheet both UIs load, and revealed by the
+   `.nav-collapsed` rule in redesign.css. Put the hiding in the layer instead and the
+   classic look grows an icon nobody asked for. */
+#btn-close-settings svg {
+  display: none;
+}

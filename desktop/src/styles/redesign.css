@@ -1056,13 +1056,110 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
 
 /* ⚠ "Settings" is a LABEL for the nav below it, not the page title — the page
    title is the h3 inside the content ("My Account"). It shipped at 20px bold,
-   larger than the thing it labels, which inverted the hierarchy. */
-#settings-overlay > div > div:first-child > h2 {
+   larger than the thing it labels, which inverted the hierarchy.
+
+   ⚠ It is no longer a DIRECT child of the rail: it shares a row with the collapse
+   control now, so this selector moved with it. */
+#settings-overlay > div > div:first-child > .settings-rail-head > h2 {
   font-size: 14px !important;
   font-weight: 600 !important;
   letter-spacing: .02em;
   color: var(--text-secondary) !important;
-  margin-bottom: 16px !important;
+  /* ⚠ The row carries the gap below it now, not the heading. */
+  margin-bottom: 0 !important;
+}
+
+/* The rail head: the label and the collapse control on one row. */
+.settings-rail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.settings-rail-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  flex-shrink: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.settings-rail-toggle:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.settings-rail-toggle svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* ⚠ The close button's glyph is HIDDEN in components.css, not here — the classic
+   look needs it hidden too, and a rule in this sheet would give classic an icon
+   nobody asked for. This sheet only REVEALS it, in the collapsed rail below. */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE COLLAPSED RAIL
+
+   ⚠ A REDESIGN-ONLY FEATURE, and the layer is what makes it one. The class is
+   applied to #settings-overlay by _syncNavToggle() regardless — but every rule
+   that acts on it is here, so with the layer off (Classic look) the class is
+   inert and the rail is always the full 240px. No second code path, and nothing
+   to keep in sync.
+
+   ⚠ The rail's width and padding are INLINE, so `!important` is load-bearing.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#settings-overlay.nav-collapsed > div > div:first-child {
+  width: 64px !important;
+  padding: 20px 12px !important;
+}
+
+/* The heading goes first — it is a label for a list that is now self-describing,
+   and it cannot fit. That leaves the toggle alone on the row, so it centres. */
+#settings-overlay.nav-collapsed > div > div:first-child > .settings-rail-head {
+  justify-content: center;
+}
+#settings-overlay.nav-collapsed > div > div:first-child > .settings-rail-head > h2 {
+  display: none;
+}
+
+/* Labels gone, icons centred in what is left. */
+#settings-overlay.nav-collapsed .settings-tab {
+  justify-content: center;
+  padding: 9px 0 !important;
+}
+#settings-overlay.nav-collapsed .settings-tab > span {
+  display: none;
+}
+/* At full strength here: the 0.75 opacity is what keeps the icon column from
+   competing with the labels beside it, and there are no labels any more. */
+#settings-overlay.nav-collapsed .settings-tab svg {
+  opacity: 1;
+}
+
+/* "Close" is 40px of text and the rail is 64px — it becomes its glyph. */
+#settings-overlay.nav-collapsed #btn-close-settings {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 0 !important;
+}
+#settings-overlay.nav-collapsed #btn-close-settings > span {
+  display: none;
+}
+#settings-overlay.nav-collapsed #btn-close-settings svg {
+  display: block;
+  width: 15px;
+  height: 15px;
 }
 
 /* ── The group info modal — ⚠ IT IS THE SAME SHELL ───────────────────────── */
@@ -1126,44 +1223,37 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
    `background` because the active item was a raised grey block, the same
    "selected = a filled surface" treatment the rail and the list rows moved away
    from, and `color` because without it the accent tint would sit under grey text. */
+/* ⚠⚠ NO `!important` ANY MORE, AND THAT IS THE POINT. These buttons used to carry
+   their whole appearance INLINE — and the click handler rewrote `background` and
+   `color` on every switch — so every rule here needed `!important` to be seen at all,
+   while looking perfectly correct without it. The inline styles are gone (see the note
+   in settings-modal.js), so these are ordinary overrides on the base in
+   components.css.
+
+   ⚠ The BASE is in components.css and not here, because the classic look needs it
+   too — moving it here is what stripped the classic nav to seven lines of plain text.
+   Only the DELTAS are below. */
 .settings-tab {
-  /* ⚠ Flex, so the icon and the label sit on one line with the icons in a column.
-     That column is the whole point: eight bare words have to be read, an icon
-     column can be scanned. */
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: transparent !important;
-  color: var(--text-secondary) !important;
-  border: none;
-  border-radius: var(--radius-sm) !important;
-  padding: 9px 12px !important;
-  font-size: 13px;
-  font-weight: 500 !important;
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
 }
 .settings-tab svg {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  /* The icon is one step quieter than its label until the row is the active one —
-     at the same weight they compete and the column reads as noise. */
+  /* The icon is one step quieter than its label until the row is the active one — at
+     the same weight they compete and the column reads as noise. */
   opacity: .75;
   transition: opacity var(--dur) var(--ease);
-}
-.settings-tab:hover {
-  background: var(--bg-hover) !important;
-  color: var(--text-primary) !important;
 }
 .settings-tab:hover svg {
   opacity: 1;
 }
+/* ⚠ Equal specificity to the base's `.settings-tab:hover`, so this wins on ORDER —
+   which is what makes hovering the selected row keep its tint instead of flashing to
+   the neutral hover. */
 .settings-tab.active {
-  background: var(--accent-soft) !important;
-  color: var(--accent-primary) !important;
-  font-weight: 600 !important;
+  background: var(--accent-soft);
+  color: var(--accent-primary);
+  font-weight: 600;
 }
 /* ⚠ No opacity here — the accent IS the emphasis, and dimming it would make the
    selected row's icon the faintest thing in the column. */

@@ -78,6 +78,11 @@ class Store {
         // UI: the inline script in index.html (before first paint), applySettings,
         // and the toggle in Settings → Appearance.
         classicUI: false,
+        // The settings modal's nav rail, collapsed to icons only. ⚠ A REDESIGN-ONLY
+        // preference: the rules that act on it live in redesign.css, so in the classic
+        // look the class is applied and does nothing — which is the correct behaviour
+        // and needs no second code path.
+        settingsNavCollapsed: false,
         fontSize: 'Medium',
         messageBubbles: 'Modern',
         appZoom: 100,
