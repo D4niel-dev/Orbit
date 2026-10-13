@@ -955,6 +955,75 @@ test.describe('desktop redesign', () => {
     expect(r.dialogGone).toBe(true);
   });
 
+  test('the restart warning says so when a call is live', async () => {
+    // ⚠ A restart ends a call, and the dialog is the ONLY place that can say so —
+    // after the click there is no warning left to give. CallManager.activeCall is set
+    // on every call start (outgoing, incoming, 1:1, group, and a call that is still
+    // ringing) and cleared in the single cleanup(), so it is the honest signal.
+    //
+    // ⚠⚠ requestRestart IS STUBBED HERE, AND THAT IS NOT OPTIONAL. The first version
+    // of this test did not, and clicking 'Restart now' relaunched Electron for real:
+    // the page closed underneath the assertions ("Target page, context or browser has
+    // been closed") and left a detached process behind. The preload bridge is frozen,
+    // so the stub has to be on our own requestRestart.
+    await page.evaluate(() => {
+      window.__restarts = 0;
+      window.OrbitRedesign.requestRestart = function () { window.__restarts += 1; return true; };
+    });
+    await openAppearance();
+
+    const dialog = () => page.evaluate(() => {
+      const c = document.getElementById('modal-container');
+      const confirm = Array.from(c.querySelectorAll('button'))
+        .find((b) => /restart/i.test(b.textContent));
+      return {
+        text: (c.textContent || '').replace(/\s+/g, ' ').trim(),
+        confirmLabel: confirm ? confirm.textContent.trim() : null,
+        confirmBg: confirm ? getComputedStyle(confirm).backgroundColor : null,
+        accent: getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim(),
+        danger: getComputedStyle(document.documentElement).getPropertyValue('--accent-danger').trim()
+      };
+    });
+
+    const toRgb = (hex) => {
+      const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex.trim());
+      return m ? 'rgb(' + [1, 2, 3].map((i) => parseInt(m[i], 16)).join(', ') + ')' : hex;
+    };
+
+    // No call — the ordinary wording, and no alarm.
+    await page.evaluate(() => document.getElementById('set-classic-ui').closest('label').click());
+    await page.waitForTimeout(400);
+    const quiet = await dialog();
+    expect(quiet.text).not.toMatch(/in a call/i);
+    expect(quiet.confirmLabel).toBe('Restart now');
+    expect(quiet.confirmBg).not.toBe(toRgb(quiet.danger));
+    await clickDialog('Restart now');
+    await page.waitForTimeout(500);
+
+    // Now with a call live.
+    await page.evaluate(() => {
+      window.__savedActiveCall = window.CallManager.activeCall;
+      window.CallManager.activeCall = { isVideo: false, direction: 'outgoing', isGroup: false };
+    });
+    await page.evaluate(() => document.getElementById('set-classic-ui').closest('label').click());
+    await page.waitForTimeout(400);
+    const alarmed = await dialog();
+    // ⚠ It has to SAY it, not merely change colour.
+    expect(alarmed.text).toMatch(/in a call/i);
+    expect(alarmed.text).toMatch(/will end it/i);
+    expect(alarmed.confirmLabel).toBe('End call and restart');
+    // ⚠ And the confirm is the danger colour, because the consequence is no longer
+    // just a restart.
+    expect(alarmed.confirmBg).toBe(toRgb(alarmed.danger));
+    expect(alarmed.confirmBg).not.toBe(toRgb(alarmed.accent));
+
+    // ⚠ Cancel, and put the app back — a live call left in the manager would leak
+    // into every later assertion in this file.
+    await clickDialog('Not now');
+    await page.waitForTimeout(400);
+    await page.evaluate(() => { window.CallManager.activeCall = window.__savedActiveCall; });
+  });
+
   test('classicUI fails OPEN — only exactly true means the old UI', async () => {
     // ⚠⚠ THE SAFETY PROPERTY. A user must never end up in an unstyled app because a
     // preference read went wrong, so anything that is not exactly `true` has to mean

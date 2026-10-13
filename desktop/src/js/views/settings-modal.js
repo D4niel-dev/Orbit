@@ -1055,11 +1055,21 @@ window.SettingsModal = {
           var wantClassic = e.target.checked;
           e.target.checked = !wantClassic;
 
+          // ⚠ A restart ends a call, and the dialog is the only place that can say
+          // so. `CallManager.activeCall` is set on every call start — outgoing,
+          // incoming, 1:1 and group, and a call that is still RINGING — and cleared
+          // in the single cleanup(), so it is the one honest signal for this. The
+          // confirm turns red when it applies, because the consequence is no longer
+          // just a restart.
+          var inCall = !!(window.CallManager && window.CallManager.activeCall);
+
           window.ConfirmModal.show({
             title: wantClassic ? 'Switch to the classic look?' : 'Switch back to the new look?',
-            message: 'Orbit will close and reopen to apply it. Nothing else changes — your messages, accounts and settings are untouched.',
-            confirmText: 'Restart now',
+            message: 'Orbit will close and reopen to apply it. Nothing else changes — your messages, accounts and settings are untouched.'
+              + (inCall ? ' You are in a call right now, and restarting will end it.' : ''),
+            confirmText: inCall ? 'End call and restart' : 'Restart now',
             cancelText: 'Not now',
+            danger: inCall,
             onConfirm: function() {
               if (window.OrbitRedesign) window.OrbitRedesign.commitClassicUI(wantClassic);
             }
