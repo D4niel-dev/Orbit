@@ -1131,6 +1131,101 @@ test.describe('desktop redesign', () => {
     await page.waitForTimeout(400);
   });
 
+  test('the gallery is a segmented control and a tint, not a fourth copy of each', async () => {
+    // ⚠ The layer made the sidebar tabs, the Activity Center tabs and the settings nav
+    // into ONE segmented control, and the gallery kept a fourth — hand-built from
+    // inline styles, where the SELECTED segment was DARKER than the track behind it.
+    // It also drew a selected filter as a fully saturated `--accent-primary` pill with
+    // white text, i.e. a primary-button treatment on the one control that is not an
+    // action. "All Chats" was the only saturated thing on the screen.
+    await page.evaluate(() => window.store.setState({ activeTab: 'gallery' }));
+    await page.waitForTimeout(1500);
+
+    const g = await page.evaluate(() => {
+      const hdr = document.querySelector('.gal-header');
+      const chip = document.querySelector('.gallery-filter-btn.active');
+      const seg = document.querySelector('.view-mode-btn.active');
+      const idle = document.querySelector('.view-mode-btn:not(.active)');
+      const track = document.querySelector('.gal-seg');
+      const cs = (el) => (el ? getComputedStyle(el) : null);
+      return {
+        headerHeight: hdr ? Math.round(hdr.getBoundingClientRect().height) : null,
+        imgsInHeader: document.querySelectorAll('.gal-header img').length,
+        chipBg: cs(chip) ? cs(chip).backgroundColor : null,
+        chipColor: cs(chip) ? cs(chip).color : null,
+        segActive: cs(seg) ? cs(seg).backgroundColor : null,
+        segIdle: cs(idle) ? cs(idle).backgroundColor : null,
+        segTrack: cs(track) ? cs(track).backgroundColor : null,
+        accent: cs(document.documentElement).getPropertyValue('--accent-primary').trim()
+      };
+    });
+
+    // 48px, matching every other panel header — it was 64.
+    expect(g.headerHeight).toBe(48);
+    // ⚠ The app's own .ico used to sit in its own header, drawn in its own colours.
+    expect(g.imgsInHeader).toBe(0);
+
+    // ⚠ A TINT, not a filled block: the chip's background must not be the accent at
+    // full strength. It is `--accent-soft` (the accent at 14%).
+    const toRgb = (hex) => {
+      const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex.trim());
+      return m ? 'rgb(' + [1, 2, 3].map((i) => parseInt(m[i], 16)).join(', ') + ')' : hex;
+    };
+    expect(g.chipBg).not.toBe(toRgb(g.accent));
+    expect(g.chipBg).toMatch(/^rgba\(/);
+    // The text carries the accent instead, which is what makes it read as selected.
+    expect(g.chipColor).toBe(toRgb(g.accent));
+
+    // ⚠ The same assertion the sidebar tabs use: the selected segment is a SURFACE, so
+    // it differs from both its neighbour and the track behind them.
+    expect(g.segActive).not.toBe(g.segIdle);
+    expect(g.segActive).not.toBe(g.segTrack);
+  });
+
+  test('the gallery view switcher actually switches — and saves', async () => {
+    // ⚠⚠ THIS WAS BROKEN AND NOTHING SAID SO. The handler built `newSettings` with the
+    // chosen mode and then never used it: `_persistSettings()` persists
+    // `store.state.settings`, so the OLD mode went to disk, and because the store never
+    // changed, the gallery's own subscription kept re-reading `galleryViewMode` (still
+    // 'grid') and resetting `displayMode` on the next store change. Clicking a view
+    // mode set the field, re-rendered once, and was silently undone.
+    //
+    // ⚠ Checked against the original before touching it — the same probe on the
+    // unmodified file behaved identically, so this is a pre-existing bug, not one the
+    // restyle introduced.
+    await page.evaluate(() => window.store.setState({ activeTab: 'gallery' }));
+    await page.waitForTimeout(1500);
+
+    const read = () => page.evaluate(() => ({
+      displayMode: window.GlobalGallery.displayMode,
+      activeBtn: (() => { const b = document.querySelector('.view-mode-btn.active'); return b ? b.dataset.mode : null; })(),
+      setting: (window.store.getState().settings || {}).galleryViewMode,
+      // Is the list layout actually rendered? The mode is only real if the DOM moved.
+      hasListLayout: !!document.querySelector('.gallery-list, [class*="gallery-list"]')
+    }));
+
+    expect((await read()).activeBtn).toBe('grid');
+
+    await page.evaluate(() => document.querySelector('.view-mode-btn[data-mode="list"]').click());
+    await page.waitForTimeout(900);
+    const after = await read();
+    expect(after.displayMode).toBe('list');
+    expect(after.activeBtn).toBe('list');
+    // ⚠ And it reached the STORE, which is the half that was missing.
+    expect(after.setting).toBe('list');
+
+    // ⚠ And it survives the next store change — the reset is what made it look like the
+    // click did nothing at all.
+    await page.evaluate(() => window.store.setState({ activeTab: 'gallery' }));
+    await page.waitForTimeout(700);
+    expect((await read()).activeBtn).toBe('list');
+
+    // Put it back so nothing downstream inherits a list view.
+    await page.evaluate(() => document.querySelector('.view-mode-btn[data-mode="grid"]').click());
+    await page.waitForTimeout(700);
+    expect((await read()).activeBtn).toBe('grid');
+  });
+
   test('the layer is the ONLY difference — disabling it restores the old accent', async () => {
     const accent = () =>
       page.evaluate(() => {

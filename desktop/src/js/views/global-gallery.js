@@ -310,21 +310,37 @@ window.GlobalGallery = {
     }
 
     // Header + filter bar HTML
+    //
+    // ⚠ THE CHIPS CARRY `active` AND NOTHING ELSE — no inline background, no colour.
+    // They used to write `background: var(--accent-primary)` inline when selected,
+    // which made a FILTER look like the primary action on the screen: "All Chats" was
+    // the only saturated thing in the gallery, and it is not a thing you do, it is a
+    // thing you are looking at. It is a tint now, like every other selected state in
+    // this app.
+    //
+    // ⚠ And the two groups disagreed about how state was expressed: the chat chips
+    // had an `active` class, the type chips did not — so no stylesheet could style
+    // both, and the type chips could only ever be styled by the renderer. They both
+    // use `active` now.
+    var self = this;
     var typeFilterHtml = '';
     if (filteredChats.length > 0) {
-      typeFilterHtml = '<button class="gallery-type-filter" data-type="all" style="padding:4px 10px; border-radius:12px; border:1px solid var(--border-subtle); background:' + (this.mediaType === 'all' ? 'var(--accent-primary)' : 'transparent') + '; color:' + (this.mediaType === 'all' ? 'white' : 'var(--text-secondary)') + '; cursor:pointer; font-size:11px; white-space:nowrap;">All</button>' +
-        '<button class="gallery-type-filter" data-type="images" style="padding:4px 10px; border-radius:12px; border:1px solid var(--border-subtle); background:' + (this.mediaType === 'images' ? 'var(--accent-primary)' : 'transparent') + '; color:' + (this.mediaType === 'images' ? 'white' : 'var(--text-secondary)') + '; cursor:pointer; font-size:11px; white-space:nowrap;">Images</button>' +
-        '<button class="gallery-type-filter" data-type="files" style="padding:4px 10px; border-radius:12px; border:1px solid var(--border-subtle); background:' + (this.mediaType === 'files' ? 'var(--accent-primary)' : 'transparent') + '; color:' + (this.mediaType === 'files' ? 'white' : 'var(--text-secondary)') + '; cursor:pointer; font-size:11px; white-space:nowrap;">Files</button>';
+      var typeChip = function (type, label) {
+        return '<button class="gallery-type-filter' + (self.mediaType === type ? ' active' : '') +
+          '" data-type="' + type + '">' + label + '</button>';
+      };
+      typeFilterHtml = typeChip('all', 'All') + typeChip('images', 'Images') + typeChip('files', 'Files');
     }
 
     var chatFilterHtml = '';
-    chatFilterHtml += '<button class="gallery-filter-btn ' + (this.currentFilter === 'all' ? 'active' : '') + '" data-id="all" style="padding:4px 10px; border-radius:12px; border:1px solid var(--border-subtle); background:' + (this.currentFilter === 'all' ? 'var(--accent-primary)' : 'transparent') + '; color:' + (this.currentFilter === 'all' ? 'white' : 'var(--text-secondary)') + '; cursor:pointer; font-size:11px; white-space:nowrap;">' + (isTypeFilterActive ? (this.mediaType === 'images' ? 'All Images' : 'All Files') : 'All Chats') + '</button>';
+    chatFilterHtml += '<button class="gallery-filter-btn' + (this.currentFilter === 'all' ? ' active' : '') +
+      '" data-id="all">' + (isTypeFilterActive ? (this.mediaType === 'images' ? 'All Images' : 'All Files') : 'All Chats') + '</button>';
     if (this.currentFilter === 'all') {
       filteredChats.forEach(function(chatId) {
-        chatFilterHtml += '<button class="gallery-filter-btn" data-id="' + window.Sanitize.escapeHtml(chatId) + '" style="padding:4px 10px; border-radius:12px; border:1px solid var(--border-subtle); background:transparent; color:var(--text-secondary); cursor:pointer; font-size:11px; white-space:nowrap;">' + window.Sanitize.escapeHtml(chatNameFor(chatId)) + '</button>';
+        chatFilterHtml += '<button class="gallery-filter-btn" data-id="' + window.Sanitize.escapeHtml(chatId) + '">' + window.Sanitize.escapeHtml(chatNameFor(chatId)) + '</button>';
       });
     } else {
-      chatFilterHtml += '<button class="gallery-filter-btn active" data-id="' + window.Sanitize.escapeHtml(this.currentFilter) + '" style="padding:4px 10px; border-radius:12px; border:1px solid var(--border-subtle); background:var(--accent-primary); color:white; cursor:pointer; font-size:11px; white-space:nowrap;">' + window.Sanitize.escapeHtml(chatNameFor(this.currentFilter)) + '</button>';
+      chatFilterHtml += '<button class="gallery-filter-btn active" data-id="' + window.Sanitize.escapeHtml(this.currentFilter) + '">' + window.Sanitize.escapeHtml(chatNameFor(this.currentFilter)) + '</button>';
     }
 
     // Where the space actually goes. Every attachment is on the user's own disk in a local-first
@@ -345,33 +361,43 @@ window.GlobalGallery = {
     }).sort(function (a, b) { return b.bytes - a.bytes; });
     this._storageTotal = { bytes: totalBytes, size: totalSize, count: allAttachments.length };
 
+    // The view switcher, built from one list rather than four hand-written copies of
+    // the same button. ⚠ It carries `active` and nothing else — the inline background,
+    // colour and shadow are gone, so the layer styles it like the two other segmented
+    // controls in the app instead of this being a fourth hand-built one.
+    var modeBtns = [
+      { mode: 'grid', icon: 'grid', title: 'Grid View' },
+      { mode: 'compact', icon: 'layout-grid', title: 'Compact View' },
+      { mode: 'masonry', icon: 'columns', title: 'Masonry View' },
+      { mode: 'list', icon: 'list', title: 'List View' }
+    ].map(function (m) {
+      return '<button class="view-mode-btn' + (self.displayMode === m.mode ? ' active' : '') +
+        '" data-mode="' + m.mode + '" title="' + m.title + '"><i data-lucide="' + m.icon + '"></i></button>';
+    }).join('');
+
     this._galleryRenderSeq = (this._galleryRenderSeq || 0) + 1;
     this.container.innerHTML =
-      '<div style="height:64px; border-bottom:1px solid var(--border-subtle); display:flex; align-items:center; justify-content:space-between; padding:0 var(--spacing-lg);">' +
-        '<div style="display:flex; align-items:center; gap:12px;">' +
-          '<img src="icons/app/orbit.ico" style="width:24px; height:24px; object-fit:contain;">' +
-          '<h2 style="font-family:var(--font-display); font-size:20px; font-weight:600; margin:0;">Global Gallery</h2>' +
-          '<button id="gallery-storage-stat" title="Where the space goes" style="background:transparent; border:none; cursor:pointer; ' +
-            'font-size:12px; color:var(--text-muted); padding:4px 8px; border-radius:7px; display:flex; align-items:center; gap:5px;">' +
+      '<div class="gal-header">' +
+        '<div class="gal-header-left">' +
+          // ⚠ The app's own .ico used to sit here at 24px. It is the icon already in
+          // the dock, drawn in its own colours — which made it the only purple in an
+          // app that has exactly one accent — and it told you nothing you did not
+          // already know. The title carries the header on its own.
+          '<h2 class="gal-title">Global Gallery</h2>' +
+          // ⚠ "0 items · 0 B" sat here as bare muted text and read as a subtitle. It
+          // is a BUTTON — it opens where the space goes — so it looks like one now.
+          '<button id="gallery-storage-stat" class="gal-stat" title="Where the space goes">' +
             '<span>' + allAttachments.length + ' items &middot; ' + totalSize + '</span>' +
-            '<i data-lucide="chevron-down" style="width:12px;height:12px;"></i>' +
+            '<i data-lucide="chevron-down"></i>' +
           '</button>' +
         '</div>' +
-        '<div style="display:flex; align-items:center; gap:16px;">' +
-          '<div style="position:relative; width: 240px;">' +
-            '<i data-lucide="search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:var(--text-muted);"></i>' +
-            '<input type="text" id="gallery-search" value="' + window.Sanitize.escapeHtml(this.searchQuery) + '" placeholder="Search media..." style="width:100%; height:36px; border-radius:18px; border:1px solid var(--border-subtle); background:var(--bg-hover); padding:0 16px 0 36px; color:var(--text-primary); outline:none;">' +
+        '<div class="gal-header-right">' +
+          '<div class="gal-search">' +
+            '<i data-lucide="search" class="gal-search-icon"></i>' +
+            '<input type="text" id="gallery-search" class="gal-search-input" value="' + window.Sanitize.escapeHtml(this.searchQuery) + '" placeholder="Search media...">' +
           '</div>' +
-          '<button id="gallery-select-btn" title="Select items" style="width:30px; height:30px; border-radius:8px; border:1px solid var(--border-subtle); ' +
-            'background:var(--bg-base); color:var(--text-secondary); cursor:pointer; display:flex; align-items:center; justify-content:center;">' +
-            '<i data-lucide="list-checks" style="width:15px;height:15px;"></i>' +
-          '</button>' +
-          '<div style="display:flex; background:var(--bg-hover); border-radius:8px; padding:4px; border:1px solid var(--border-subtle);">' +
-            '<button class="view-mode-btn ' + (this.displayMode === 'grid' ? 'active' : '') + '" data-mode="grid" title="Grid View" style="width:28px; height:28px; border-radius:6px; border:none; background:' + (this.displayMode === 'grid' ? 'var(--bg-surface)' : 'transparent') + '; color:' + (this.displayMode === 'grid' ? 'var(--text-primary)' : 'var(--text-muted)') + '; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:' + (this.displayMode === 'grid' ? 'var(--shadow-sm)' : 'none') + ';"><i data-lucide="grid" style="width:16px; height:16px;"></i></button>' +
-            '<button class="view-mode-btn ' + (this.displayMode === 'compact' ? 'active' : '') + '" data-mode="compact" title="Compact View" style="width:28px; height:28px; border-radius:6px; border:none; background:' + (this.displayMode === 'compact' ? 'var(--bg-surface)' : 'transparent') + '; color:' + (this.displayMode === 'compact' ? 'var(--text-primary)' : 'var(--text-muted)') + '; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:' + (this.displayMode === 'compact' ? 'var(--shadow-sm)' : 'none') + ';"><i data-lucide="layout-grid" style="width:16px; height:16px;"></i></button>' +
-            '<button class="view-mode-btn ' + (this.displayMode === 'masonry' ? 'active' : '') + '" data-mode="masonry" title="Masonry View" style="width:28px; height:28px; border-radius:6px; border:none; background:' + (this.displayMode === 'masonry' ? 'var(--bg-surface)' : 'transparent') + '; color:' + (this.displayMode === 'masonry' ? 'var(--text-primary)' : 'var(--text-muted)') + '; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:' + (this.displayMode === 'masonry' ? 'var(--shadow-sm)' : 'none') + ';"><i data-lucide="columns" style="width:16px; height:16px;"></i></button>' +
-            '<button class="view-mode-btn ' + (this.displayMode === 'list' ? 'active' : '') + '" data-mode="list" title="List View" style="width:28px; height:28px; border-radius:6px; border:none; background:' + (this.displayMode === 'list' ? 'var(--bg-surface)' : 'transparent') + '; color:' + (this.displayMode === 'list' ? 'var(--text-primary)' : 'var(--text-muted)') + '; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:' + (this.displayMode === 'list' ? 'var(--shadow-sm)' : 'none') + ';"><i data-lucide="list" style="width:16px; height:16px;"></i></button>' +
-          '</div>' +
+          '<button id="gallery-select-btn" class="gal-icon-btn" title="Select items"><i data-lucide="list-checks"></i></button>' +
+          '<div class="gal-seg">' + modeBtns + '</div>' +
         '</div>' +
       '</div>' +
       '<div id="gallery-storage-pop" style="display:none; position:absolute; top:60px; left:var(--spacing-lg); z-index:60; width:320px; ' +
@@ -383,9 +409,9 @@ window.GlobalGallery = {
         '<button id="gallery-bulk-delete" style="padding:6px 14px; border-radius:8px; border:none; background:var(--accent-danger); color:#fff; cursor:pointer; font-size:12px; font-weight:600;">Delete</button>' +
         '<button id="gallery-bulk-clear" style="padding:6px 12px; border-radius:8px; border:1px solid var(--border-subtle); background:transparent; color:var(--text-secondary); cursor:pointer; font-size:12px;">Clear</button>' +
       '</div>' +
-      '<div style="display:flex; gap:8px; padding:8px var(--spacing-lg); border-bottom:1px solid var(--border-subtle); overflow-x:auto; align-items:center;">' +
+      '<div class="gal-filters">' +
         typeFilterHtml +
-        (typeFilterHtml ? '<span style="color:var(--border-subtle);">|</span>' : '') +
+        (typeFilterHtml ? '<span class="gal-filters-sep"></span>' : '') +
         chatFilterHtml +
       '</div>' +
       contentHtml;
@@ -682,32 +708,27 @@ window.GlobalGallery = {
       btn.addEventListener('click', function(e) {
         var mode = e.currentTarget.getAttribute('data-mode');
         self.displayMode = mode;
-        var state = window.store.getState();
-        var newSettings = { ...(state.settings || {}), galleryViewMode: mode };
-        // Same reason as the panel: persisting through the store re-rendered the whole app on
-        // every view-mode click. displayMode already holds the new value.
-        
-        // Delegate to the store's own persist rather than writing a store directly.
+
+        // ⚠⚠ THE STORE'S OWN SETTINGS HAVE TO MOVE TOO, AND NOT MOVING THEM IS WHY
+        // THIS SWITCHER DID NOTHING. It built `newSettings` and then never used it —
+        // `_persistSettings()` persists `store.state.settings`, so the OLD mode went
+        // to disk — and because the store never changed, the subscription above kept
+        // re-reading `galleryViewMode` (still 'grid') and resetting `displayMode`
+        // under the user on the very next store change. Clicking a view mode set the
+        // field, re-rendered once, and was silently undone.
         //
-        // This used `if (orbitAPI) { ... } else if (Storage) { ... }` — so in the real
-        // app it wrote SQLite ONLY. But the DB constructor re-runs
-        // migrateFromElectronStore(true) on every launch, and that bypasses its own
-        // "already migrated" guard, copying electron-store's `settings` over SQLite each
-        // boot. A SQLite-only write is therefore reverted on the next launch whenever
-        // electron-store still holds an older snapshot — which is why a renderer reload
-        // showed the chosen mode and a full restart did not. settings-modal.js already
-        // writes both stores for exactly this reason; the gallery never did.
-        //
-        // Routing through store._persistSettings() means there is one implementation of
-        // "save settings" and this cannot drift out of sync with it again.
+        // The earlier note here said persisting through the store "re-rendered the
+        // whole app on every view-mode click", and that is true — but it is exactly
+        // what every other setting does, and avoiding it cost the feature. Measured
+        // before and after: the mode now survives the render and reaches the disk.
+        var live = window.store.getState();
+        window.store.setState({ settings: { ...(live.settings || {}), galleryViewMode: mode } });
         if (typeof window.store._persistSettings === 'function') {
           window.store._persistSettings();
         } else {
-          if (window.Storage) window.Storage.set('settings', newSettings);
-          if (window.orbitAPI && window.orbitAPI.dbSetSetting) window.orbitAPI.dbSetSetting('settings', newSettings);
+          if (window.Storage) window.Storage.set('settings', { ...(live.settings || {}), galleryViewMode: mode });
+          if (window.orbitAPI && window.orbitAPI.dbSetSetting) window.orbitAPI.dbSetSetting('settings', { ...(live.settings || {}), galleryViewMode: mode });
         }
-        // `state` here is the pre-change snapshot — pass the live one so the new mode
-        // is what actually renders.
         self.render(window.store.getState());
       });
     });
