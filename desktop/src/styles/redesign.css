@@ -1037,14 +1037,21 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
 /* ── The settings shell ──────────────────────────────────────────────────── */
 
 /* Softer than the 12px it shipped with — the panel is 800×600 and a 12px corner
-   on a surface that size reads as sharp next to the 18px composer. */
+   on a surface that size reads as sharp next to the 18px composer.
+
+   ⚠⚠ `!important`, AND WITHOUT IT THIS RULE DID NOTHING. The panel's radius is set
+   by `style.cssText` in settings-modal.js, and an inline declaration beats any
+   stylesheet rule — so this and the rail padding below were both silently dead from
+   the day they were written, while looking perfectly correct. Measured in the running
+   app before the fix: panel radius 12px, rail padding 24px. Same family as the
+   `.settings-tab` block further down, which says exactly this about itself. */
 #settings-overlay > div {
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-lg) !important;
 }
 
 /* The nav rail. */
 #settings-overlay > div > div:first-child {
-  padding: 20px 16px;
+  padding: 20px 16px !important;
 }
 
 /* ⚠ "Settings" is a LABEL for the nav below it, not the page title — the page
@@ -1058,6 +1065,61 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
   margin-bottom: 16px !important;
 }
 
+/* ── The group info modal — ⚠ IT IS THE SAME SHELL ───────────────────────── */
+/*
+   It is an 800×600 panel with a 240px rail and a content pane, built by
+   sidebar-middle.js, and it sits one click away from Settings — where it
+   disagreed about every dimension: a 12px corner where Settings has 18, 24px of
+   rail padding where Settings has 20/16, a "Group Info" heading at 20px BOLD
+   where this layer had already decided the rail heading is a 14px LABEL, and a
+   24px "Manage Group" title where Settings' page title is 19.
+
+   ⚠ Both are `style.cssText`/inline, so every property below needs `!important`.
+   The two modals are one object and they are one set of rules now. */
+
+#group-info-overlay > div {
+  border-radius: var(--radius-lg) !important;
+}
+#group-info-overlay > div > div:first-child {
+  padding: 20px 16px !important;
+}
+/* The rail heading is a LABEL for what is under it, not the page title. */
+#group-info-overlay > div > div:first-child > h2 {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: .02em;
+  color: var(--text-secondary) !important;
+  margin-bottom: 16px !important;
+}
+/* And this is the page title, the only thing in the pane allowed to be large. */
+#group-info-overlay > div > div:nth-child(2) {
+  padding: 26px 30px !important;
+}
+#group-info-overlay > div > div:nth-child(2) > h3 {
+  font-size: 19px !important;
+  font-weight: 600 !important;
+  letter-spacing: -.015em;
+  margin: 0 0 20px !important;
+}
+
+/* ⚠ "Overview" was a filled `--bg-hover` row — which is EXACTLY how the settings nav
+   two inches to the right marks the item you have selected. So a static heading read
+   as a control, and the two facts under it read as its siblings. It is a label and a
+   pair of facts, and it looks like one. */
+.gi-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.gi-fact {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
 /* ⚠ The nav items carry their own colours INLINE — `background: var(--bg-hover);
    color: var(--text-primary)` on the active one, `transparent` on the rest — and
    the click handler rewrites them. Both properties need `!important`:
@@ -1065,23 +1127,48 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
    "selected = a filled surface" treatment the rail and the list rows moved away
    from, and `color` because without it the accent tint would sit under grey text. */
 .settings-tab {
+  /* ⚠ Flex, so the icon and the label sit on one line with the icons in a column.
+     That column is the whole point: eight bare words have to be read, an icon
+     column can be scanned. */
+  display: flex;
+  align-items: center;
+  gap: 10px;
   background: transparent !important;
   color: var(--text-secondary) !important;
+  border: none;
   border-radius: var(--radius-sm) !important;
   padding: 9px 12px !important;
   font-size: 13px;
   font-weight: 500 !important;
   text-align: left;
+  cursor: pointer;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.settings-tab svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  /* The icon is one step quieter than its label until the row is the active one —
+     at the same weight they compete and the column reads as noise. */
+  opacity: .75;
+  transition: opacity var(--dur) var(--ease);
 }
 .settings-tab:hover {
   background: var(--bg-hover) !important;
   color: var(--text-primary) !important;
 }
+.settings-tab:hover svg {
+  opacity: 1;
+}
 .settings-tab.active {
   background: var(--accent-soft) !important;
   color: var(--accent-primary) !important;
   font-weight: 600 !important;
+}
+/* ⚠ No opacity here — the accent IS the emphasis, and dimming it would make the
+   selected row's icon the faintest thing in the column. */
+.settings-tab.active svg {
+  opacity: 1;
 }
 
 #btn-close-settings {

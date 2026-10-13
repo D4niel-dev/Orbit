@@ -1304,6 +1304,106 @@ test.describe('desktop redesign', () => {
     expect(skel.titlebarBg).toBe(real.titlebarBg);
   });
 
+  test('the group info modal is the same shell as Settings', async () => {
+    // ⚠⚠ THEY ARE THE SAME OBJECT AND THEY DISAGREED ABOUT EVERY DIMENSION. Both are
+    // an 800x600 panel with a 240px rail and a content pane, one click apart — and the
+    // group modal had a 12px corner where Settings has 18, 24px of rail padding where
+    // Settings has 20/16, a "Group Info" heading at 20px BOLD where this layer had
+    // already decided the rail heading is a 14px LABEL, and a 24px "Manage Group" title
+    // where Settings' page title is 19.
+    //
+    // ⚠⚠ AND MEASURING IT FOUND TWO DEAD RULES IN THE LAYER. The settings panel's
+    // radius and its rail padding were written WITHOUT `!important`, against
+    // `style.cssText` — so they had been silently doing nothing since they were
+    // written, while looking perfectly correct. Measured before the fix: radius 12px
+    // on BOTH panels, and Settings' rail at 24px. This test is what caught it.
+    const seed = () => page.evaluate(() => {
+      const me = window.store.getState().currentUser;
+      window.store.setState({
+        groups: [{
+          groupId: 'shell-group', groupName: 'Design Sync', description: 'Weekly review.',
+          ownerId: me.userId, inviteCode: 'a91f3c07', createdAt: Date.now() - 86400000 * 40,
+          pinned: false, notificationMuted: false,
+          members: [
+            { userId: me.userId, username: me.username, usertag: me.usertag, status: 'online', role: 'owner', avatar: null },
+            { userId: 'u-kai', username: 'Kai Tanaka', usertag: '4417', status: 'online', role: 'admin', avatar: null }
+          ]
+        }]
+      });
+    });
+    const shell = (id) => page.evaluate((sel) => {
+      const ov = document.getElementById(sel);
+      if (!ov) return null;
+      const panel = ov.firstElementChild;
+      const rail = panel.children[0];
+      const content = panel.children[1];
+      const cs = (el, p) => (el ? getComputedStyle(el)[p] : null);
+      return {
+        radius: cs(panel, 'borderRadius'),
+        railPadding: cs(rail, 'padding'),
+        railH2: cs(rail.querySelector('h2'), 'fontSize'),
+        contentPadding: cs(content, 'padding'),
+        contentH3: cs(content.querySelector('h3'), 'fontSize')
+      };
+    }, id);
+
+    await seed();
+    await page.waitForTimeout(600);
+    await page.evaluate(() => window.SidebarMiddle.showGroupInfo('shell-group'));
+    await page.waitForTimeout(1200);
+    const group = await shell('group-info-overlay');
+    expect(group).not.toBeNull();
+
+    // ⚠ "Overview" was a filled --bg-hover row with an 8px radius and 10px of padding —
+    // byte-for-byte the shape of the settings nav's SELECTED item two inches to the
+    // right. A static heading advertising itself as a control.
+    const overview = await page.evaluate(() => {
+      const el = document.querySelector('#group-info-overlay .gi-label');
+      if (!el) return null;
+      return { text: el.textContent.trim(), bg: getComputedStyle(el).backgroundColor, cls: el.className };
+    });
+    expect(overview).not.toBeNull();
+    expect(overview.text).toBe('Overview');
+    expect(overview.bg).toBe('rgba(0, 0, 0, 0)');
+
+    // ⚠ The switches are the shared control, and they are inside a COLLAPSED section —
+    // measured closed, the track is 0x0, which is a hidden element and not a broken one.
+    const prefs = await page.evaluate(() => {
+      const heads = Array.from(document.querySelectorAll('#group-info-overlay .collapsible-header'));
+      const h = heads.find((x) => /Preferences/i.test(x.textContent));
+      if (h && h.nextElementSibling && h.nextElementSibling.style.display === 'none') h.click();
+      return !!h;
+    });
+    expect(prefs).toBe(true);
+    await page.waitForTimeout(700);
+    const sw = await page.evaluate(() => {
+      const t = document.querySelector('#group-info-overlay .orbit-switch-track');
+      if (!t) return null;
+      const r = t.getBoundingClientRect();
+      return Math.round(r.width) + 'x' + Math.round(r.height);
+    });
+    expect(sw).toBe('40x22');
+
+    // Now the settings modal, and the two must agree.
+    await page.evaluate(() => { document.getElementById('group-info-overlay').remove(); window.SettingsModal.open(); });
+    await page.waitForTimeout(1200);
+    const settings = await shell('settings-overlay');
+    expect(settings).not.toBeNull();
+    expect(group.radius).toBe(settings.radius);
+    expect(group.railPadding).toBe(settings.railPadding);
+    expect(group.railH2).toBe(settings.railH2);
+    expect(group.contentPadding).toBe(settings.contentPadding);
+    expect(group.contentH3).toBe(settings.contentH3);
+    // And the value is the softer one, not the 12px both shipped with.
+    expect(group.radius).toBe('18px');
+    expect(group.railPadding).toBe('20px 16px');
+    expect(group.railH2).toBe('14px');
+    expect(group.contentH3).toBe('19px');
+
+    await page.evaluate(() => window.SettingsModal.close());
+    await page.waitForTimeout(500);
+  });
+
   test('the layer is the ONLY difference — disabling it restores the old accent', async () => {
     const accent = () =>
       page.evaluate(() => {

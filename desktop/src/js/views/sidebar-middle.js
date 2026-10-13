@@ -2114,12 +2114,17 @@ window.SidebarMiddle = {
           '<div style="font-size:17px;font-weight:700;color:var(--text-primary);margin-top:12px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + window.Sanitize.escapeHtml(group.groupName || 'Group') + '</div>' +
           '<div style="font-size:12px;color:var(--text-muted);margin-top:2px;">' + onlineCount + ' online, ' + members.length + ' members</div>' +
         '</div>' +
-        '<div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">' +
-          '<div style="padding:10px 12px;border-radius:8px;background:var(--bg-hover);color:var(--text-primary);font-size:13px;font-weight:600;">Overview</div>' +
+        '<div style="margin-top:4px;">' +
+          // ⚠ "Overview" was a filled `--bg-hover` row with a 8px radius and 10px of
+          // padding — byte-for-byte the shape of the settings nav's SELECTED item,
+          // which sits two inches to the right in the modal next door. A static
+          // heading was advertising itself as a control. It is a label over two
+          // facts now.
+          '<div class="gi-label">Overview</div>' +
           ((showCreated && createdDate)
-            ? '<div style="padding:10px 12px;border-radius:8px;color:var(--text-secondary);font-size:13px;">Created ' + createdDate + '</div>'
+            ? '<div class="gi-fact">Created ' + createdDate + '</div>'
             : '') +
-          '<div style="padding:10px 12px;border-radius:8px;color:var(--text-secondary);font-size:13px;">Role: ' + (isOwner ? 'Owner' : (isAdmin ? 'Admin' : 'Member')) + '</div>' +
+          '<div class="gi-fact">Role: ' + (isOwner ? 'Owner' : (isAdmin ? 'Admin' : 'Member')) + '</div>' +
         '</div>' +
         '<div style="flex:1;"></div>' +
         '<button class="btn-ghost" id="group-info-close" style="padding:10px;border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-secondary);background:transparent;cursor:pointer;">Close</button>' +

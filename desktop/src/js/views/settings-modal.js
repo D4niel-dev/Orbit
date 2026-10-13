@@ -65,19 +65,35 @@ window.SettingsModal = {
   render() {
     var s = window.store.getState().settings || {};
     var showSecurity = s.enableExperimental;
+
+    // ⚠ AN ICON PER ITEM, AND THE LIST IS BUILT FROM ONE ARRAY. Eight bare words in a
+    // 240px rail is a list you have to READ; an icon column is one you can SCAN, and
+    // it is the last thing in this modal that did not have one. The array also makes
+    // the Security item's condition a property rather than a string concatenation
+    // spliced into the middle of the markup.
+    //
+    // ⚠ The inline styles are gone — the layer owns `.settings-tab` outright now, so
+    // the active state is a class and there is no second writer left to fight it.
+    var navItems = [
+      { tab: 'account', icon: 'user', label: 'Account' },
+      { tab: 'appearance', icon: 'palette', label: 'Appearance' },
+      { tab: 'network', icon: 'wifi', label: 'Network' },
+      { tab: 'notifications', icon: 'bell', label: 'Notifications' },
+      { tab: 'data', icon: 'database', label: 'Data Manager' },
+      { tab: 'security', icon: 'shield', label: 'Security', experimental: true },
+      { tab: 'advanced', icon: 'sliders-horizontal', label: 'Advanced' },
+      { tab: 'about', icon: 'info', label: 'About' }
+    ].filter(function (it) { return !it.experimental || showSecurity; }).map(function (it) {
+      return '<button class="settings-tab' + (it.tab === 'account' ? ' active' : '') + '" data-tab="' + it.tab + '">' +
+        '<i data-lucide="' + it.icon + '"></i><span>' + it.label + '</span></button>';
+    }).join('');
+
     this.container.innerHTML =
       '<div style="width:800px;height:600px;background:var(--bg-surface);border-radius:12px;display:flex;overflow:hidden;box-shadow:var(--shadow-xl);border:1px solid var(--border-subtle);">' +
         '<div style="width:240px;background:var(--bg-base);padding:24px;border-right:1px solid var(--border-subtle);display:flex;flex-direction:column;">' +
           '<h2 style="font-family:var(--font-display);font-size:20px;margin-bottom:24px;color:var(--text-primary);font-weight:bold;">Settings</h2>' +
           '<div style="display:flex;flex-direction:column;gap:8px;">' +
-            '<button class="settings-tab active" data-tab="account" style="text-align:left;padding:10px 16px;border-radius:8px;background:var(--bg-hover);color:var(--text-primary);font-weight:500;border:none;cursor:pointer;">Account</button>' +
-            '<button class="settings-tab" data-tab="appearance" style="text-align:left;padding:10px 16px;border-radius:8px;color:var(--text-secondary);background:transparent;border:none;cursor:pointer;">Appearance</button>' +
-            '<button class="settings-tab" data-tab="network" style="text-align:left;padding:10px 16px;border-radius:8px;color:var(--text-secondary);background:transparent;border:none;cursor:pointer;">Network</button>' +
-            '<button class="settings-tab" data-tab="notifications" style="text-align:left;padding:10px 16px;border-radius:8px;color:var(--text-secondary);background:transparent;border:none;cursor:pointer;">Notifications</button>' +
-            '<button class="settings-tab" data-tab="data" style="text-align:left;padding:10px 16px;border-radius:8px;color:var(--text-secondary);background:transparent;border:none;cursor:pointer;">Data Manager</button>' +
-            (showSecurity ? '<button class="settings-tab" data-tab="security" style="text-align:left;padding:10px 16px;border-radius:8px;color:var(--text-secondary);background:transparent;border:none;cursor:pointer;">Security</button>' : '') +
-            '<button class="settings-tab" data-tab="advanced" style="text-align:left;padding:10px 16px;border-radius:8px;color:var(--text-secondary);background:transparent;border:none;cursor:pointer;">Advanced</button>' +
-            '<button class="settings-tab" data-tab="about" style="text-align:left;padding:10px 16px;border-radius:8px;color:var(--text-secondary);background:transparent;border:none;cursor:pointer;">About</button>' +
+            navItems +
           '</div>' +
           '<div style="flex:1;"></div>' +
           '<button id="btn-close-settings" style="padding:10px;border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-secondary);background:transparent;cursor:pointer;">Close</button>' +
@@ -92,10 +108,12 @@ window.SettingsModal = {
     var tabs = this.container.querySelectorAll('.settings-tab');
     tabs.forEach(function(tab) {
       tab.addEventListener('click', function(e) {
-        tabs.forEach(function(t) { t.classList.remove('active'); t.style.background='transparent'; t.style.color='var(--text-secondary)'; });
+        // ⚠ The class is the ONLY writer now. This used to also set `background` and
+        // `color` inline on every tab — a second writer for a state the stylesheet
+        // already owns, which is why every rule for `.settings-tab` in the layer needs
+        // `!important` to be seen at all. It is one class toggle.
+        tabs.forEach(function(t) { t.classList.remove('active'); });
         e.currentTarget.classList.add('active');
-        e.currentTarget.style.background='var(--bg-hover)';
-        e.currentTarget.style.color='var(--text-primary)';
         self.renderTab(e.currentTarget.getAttribute('data-tab'));
       });
     });
