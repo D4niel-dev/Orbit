@@ -1226,6 +1226,84 @@ test.describe('desktop redesign', () => {
     expect((await read()).activeBtn).toBe('grid');
   });
 
+  test('the boot skeleton predicts the real chrome', async () => {
+    // ⚠⚠ IT IS THE FIRST THING EVERY LAUNCH SHOWS, AND ITS CSS IS IN components.css —
+    // a sheet this layer never touched. So the app drew a 32px titlebar with a 28px
+    // rail icon and a 36px square search box, then REPLACED all of it with a 34px
+    // titlebar, 40px rail icons and a 34px pill. A visible jump on every single start.
+    //
+    // ⚠ The skeleton is removed after boot, so this re-injects its REAL markup —
+    // parsed out of index.html rather than hand-built here — and compares it against
+    // the chrome that is actually on screen. A skeleton whose whole job is to predict
+    // the layout has to be checked against the layout.
+    const html = fs.readFileSync(path.join(__dirname, '../../src/index.html'), 'utf8');
+    const start = html.indexOf('<div id="app-skeleton">');
+    expect(start).toBeGreaterThan(-1);
+    let depth = 0, end = -1;
+    const re = /<div\b|<\/div>/g;
+    re.lastIndex = start;
+    let m;
+    while ((m = re.exec(html))) {
+      depth += m[0] === '</div>' ? -1 : 1;
+      if (depth === 0) { end = re.lastIndex; break; }
+    }
+    expect(end).toBeGreaterThan(start);
+    const markup = html.slice(start, end);
+
+    const measured = await page.evaluate((sk) => {
+      // What the chrome on screen actually is.
+      const h = (sel) => { const e = document.querySelector(sel); return e ? Math.round(e.getBoundingClientRect().height) : null; };
+      const box = (sel) => {
+        const e = document.querySelector(sel);
+        if (!e) return null;
+        const r = e.getBoundingClientRect();
+        return Math.round(r.width) + 'x' + Math.round(r.height);
+      };
+      const railBtn = document.querySelector('#panel-left .icon-btn') || document.querySelector('#panel-left button');
+      const real = {
+        titlebar: h('#titlebar'),
+        icon: railBtn ? (() => { const r = railBtn.getBoundingClientRect(); return Math.round(r.width) + 'x' + Math.round(r.height); })() : null,
+        searchH: h('.search-input-wrapper'),
+        rowH: h('.list-row'),
+        avatar: box('.list-row-avatar'),
+        titlebarBg: getComputedStyle(document.getElementById('titlebar')).backgroundColor
+      };
+
+      // And what the skeleton declares.
+      const wrap = document.createElement('div');
+      wrap.innerHTML = sk;
+      const node = wrap.firstElementChild;
+      document.body.appendChild(node);
+      const sbox = (sel) => {
+        const n = node.querySelector(sel);
+        if (!n) return null;
+        const r = n.getBoundingClientRect();
+        return Math.round(r.width) + 'x' + Math.round(r.height);
+      };
+      const scs = (sel, prop) => { const n = node.querySelector(sel); return n ? getComputedStyle(n)[prop] : null; };
+      const skel = {
+        titlebarRow: parseFloat(getComputedStyle(node).gridTemplateRows),
+        icon: sbox('.sk-icon'),
+        searchH: Math.round(node.querySelector('.sk-search').getBoundingClientRect().height),
+        rowH: Math.round(node.querySelector('.sk-row').getBoundingClientRect().height),
+        avatar: sbox('.sk-avatar'),
+        titlebarBg: scs('.sk-titlebar', 'backgroundColor')
+      };
+      node.remove();
+      return { real, skel };
+    }, markup);
+
+    const { real, skel } = measured;
+    expect(skel.titlebarRow).toBe(real.titlebar);
+    expect(skel.icon).toBe(real.icon);
+    expect(skel.searchH).toBe(real.searchH);
+    expect(skel.rowH).toBe(real.rowH);
+    expect(skel.avatar).toBe(real.avatar);
+    // The strip changed shade on handover because the skeleton used the rail's colour
+    // for a bar that is --bg-base in this design.
+    expect(skel.titlebarBg).toBe(real.titlebarBg);
+  });
+
   test('the layer is the ONLY difference — disabling it restores the old accent', async () => {
     const accent = () =>
       page.evaluate(() => {

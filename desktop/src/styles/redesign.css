@@ -1945,6 +1945,78 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   9e. THE BOOT SKELETON
+
+   ⚠ IT IS THE FIRST THING EVERY LAUNCH SHOWS, AND IT WAS STILL THE OLD DESIGN'S
+   PROPORTIONS. Its CSS lives in components.css and this layer never touched it, so
+   the app drew a 32px titlebar with a 28px rail icon and a 36px square search box,
+   then REPLACED all of it with a 34px titlebar, 40px rail icons and a 34px pill —
+   a visible jump on every single start, before the user has done anything.
+
+   ⚠ The values below are MEASURED from the real chrome, not read off the
+   stylesheet: titlebar 34, rail button 40x40, search pill 227x34 at radius 34,
+   tab 28, list row 52, list avatar 36. A skeleton whose whole job is to predict
+   the layout has to be checked against the layout.
+
+   ⚠ `#app-skeleton` is `pointer-events: none` and z-index 9997, and it is removed
+   after boot — so nothing here can affect the running app.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* 34px, to match #titlebar. The 2px difference was a seam of a different colour
+   between the skeleton's titlebar and the real one. */
+#app-skeleton {
+  grid-template-rows: 34px 1fr;
+}
+/* And the same colour as #titlebar, which is --bg-base in this design — the
+   skeleton used the rail's colour, so that strip changed shade on handover. */
+.sk-titlebar {
+  background: var(--bg-base);
+}
+
+/* 40x40, to match .icon-btn. */
+.sk-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+}
+
+/* The search pill: 34px, fully round. It was a 36px box at radius 8 — the single
+   most obvious shape change on handover. */
+.sk-search {
+  height: var(--pill-lg);
+  border-radius: var(--radius-pill);
+}
+
+/* The tabs are a segmented control in a track, not two separate bars with 16px
+   between them. */
+.sk-tabs {
+  gap: 2px;
+  padding: 3px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-md);
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+}
+.sk-tab {
+  border-radius: var(--radius-sm);
+}
+
+/* Rows are --row-h tall, not whatever padding happened to add up to. */
+.sk-row {
+  min-height: var(--row-h);
+  gap: 10px;
+  padding: 7px 10px;
+}
+.sk-avatar {
+  width: 36px;
+  height: 36px;
+}
+.sk-avatar.lg {
+  width: 40px;
+  height: 40px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    THE GLOBAL BUTTON HOVER
    ⚠ components.css lifts EVERY button in the app 1px and brightens it 10% on
    hover: `button:hover { filter: brightness(1.1); transform: translateY(-1px); }`.
