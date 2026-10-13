@@ -146,6 +146,37 @@ window.CallModal = {
   seconds: 0,
   isGroup: false,
 
+  /**
+   * Show or hide the "your camera is off" placeholder over the self-view.
+   *
+   * ⚠ ONE DEFINITION. This was written out TWICE — once in the 1:1 camera handler and
+   * once in the group one — byte-for-byte identical, hardcoded white-alpha values and
+   * all. Two copies of anything is one too many, and this pair was already at the
+   * point where a fix to one would have missed the other.
+   *
+   * The disc colour stays `_callAvatarColor`: a per-person hue is what lets you tell
+   * participants apart at a glance, which is a different job from a contact avatar and
+   * deliberately not the accent disc.
+   */
+  _paintLocalPlaceholder(off) {
+    var lv = document.getElementById('local-video');
+    var ph = document.getElementById('local-placeholder');
+    if (!lv || !ph) return;
+    if (!off) {
+      lv.style.display = 'block';
+      ph.style.display = 'none';
+      ph.innerHTML = '';
+      return;
+    }
+    var cu = (window.store.getState() || {}).currentUser || {};
+    lv.style.display = 'none';
+    ph.style.display = 'flex';
+    ph.style.background = _callAvatarColor(cu.username);
+    ph.innerHTML = cu.avatar
+      ? '<img src="' + window.Sanitize.escapeHtml(cu.avatar) + '" class="cal-pip-avatar-img" alt="">'
+      : '<span class="cal-pip-avatar-initial">' + window.Sanitize.escapeHtml((cu.username || '?').charAt(0).toUpperCase()) + '</span>';
+  },
+
   show(callerInfo, isVideo, isIncoming, ring) {
     this.hide();   // also stops any ringtone still playing
     this.isGroup = false;
@@ -157,67 +188,74 @@ window.CallModal = {
     // callee's phone would keep ringing after they picked up.
     if (ring === undefined ? !!isIncoming : !!ring) CallRingtone.start();
     var overlay = document.createElement('div');
+    // ⚠ The overlay's appearance is `cal-*` classes in styles/redesign.css now, not
+    // an inline cssText. It was `rgba(0,0,0,0.85)` with the content floating on it and
+    // NO surface of its own — so 15% of the app showed through and the caller's name
+    // sat on top of whatever chat was behind it.
     overlay.className = 'call-modal-overlay';
-    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;';
 
     var callerName = (callerInfo.username || callerInfo.name || 'Unknown');
     var callStatus = isIncoming ? 'Incoming Call...' : 'Calling...';
 
+    // ⚠ `callerName` is interpolated with escapeHtml now. It went in RAW — the group
+    // title beside it has always been escaped, so a display name containing `<` broke
+    // the markup in one path and not the other.
     var avatarHtml = callerInfo.avatar
-      ? '<img src="' + callerInfo.avatar + '" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid var(--accent-primary);display:block;margin:0 auto;">'
-      : '<div style="width:88px;height:88px;border-radius:50%;background:var(--accent-primary);display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;color:#fff;margin:0 auto;">' + (callerInfo.username || '?').charAt(0).toUpperCase() + '</div>';
+      ? '<img src="' + window.Sanitize.escapeHtml(callerInfo.avatar) + '" class="cal-avatar-img" alt="">'
+      : '<span class="cal-avatar-initial">' + window.Sanitize.escapeHtml((callerInfo.username || '?').charAt(0).toUpperCase()) + '</span>';
 
     var mediaArea;
     if (isVideo) {
+      // The placeholder sits UNDER the video, so it shows only while there is no
+      // stream. It used to be the word "Video" at 15% opacity — a debug artefact
+      // where a face belongs.
       mediaArea =
-        '<div id="call-video-container" style="width:100%;min-height:340px;position:relative;background:#0a0a0a;border-radius:14px;overflow:hidden;margin-bottom:20px;display:flex;align-items:center;justify-content:center;">' +
-          '<video id="remote-video" autoplay playsinline style="width:100%;height:100%;position:absolute;top:0;left:0;object-fit:contain;"></video>' +
-          '<div id="local-video-wrap" style="position:absolute;bottom:14px;right:14px;width:140px;height:100px;border-radius:10px;overflow:hidden;border:2px solid rgba(255,255,255,0.25);background:#111;z-index:10;box-shadow:0 4px 20px rgba(0,0,0,0.5);">' +
-            '<video id="local-video" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;display:block;"></video>' +
-            '<div id="local-placeholder" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;align-items:center;justify-content:center;"></div>' +
+        '<div id="call-video-container" class="cal-video">' +
+          '<div class="cal-remote-empty">' + avatarHtml + '</div>' +
+          '<video id="remote-video" autoplay playsinline class="cal-remote-video"></video>' +
+          '<div id="local-video-wrap" class="cal-pip">' +
+            '<video id="local-video" autoplay playsinline muted class="cal-pip-video"></video>' +
+            '<div id="local-placeholder" class="cal-pip-placeholder"></div>' +
           '</div>' +
-          '<div style="color:rgba(255,255,255,0.15);font-size:13px;">Video</div>' +
         '</div>';
     } else {
+      // ⚠ The five bars are the SAME height and their stagger is CSS, not five
+      // hand-written inline styles. They also stop when the call connects (see
+      // `.is-connected` in the stylesheet): a waveform that animates whether or not
+      // anybody is speaking is decoration pretending to be a level meter.
       mediaArea =
-        '<div id="call-audio-area" style="margin:8px 0 18px 0;display:flex;flex-direction:column;align-items:center;">' +
-          avatarHtml +
-          '<div class="call-audio-wave" style="width:120px;height:32px;margin:14px auto 0;display:flex;align-items:flex-end;justify-content:center;gap:5px;">' +
-            '<span style="display:inline-block;width:5px;height:16px;background:var(--accent-primary);border-radius:3px;animation:audioWave 0.9s ease-in-out infinite;transform-origin:center bottom;"></span>' +
-            '<span style="display:inline-block;width:5px;height:26px;background:var(--accent-primary);border-radius:3px;animation:audioWave 0.9s ease-in-out 0.15s infinite;transform-origin:center bottom;"></span>' +
-            '<span style="display:inline-block;width:5px;height:10px;background:var(--accent-primary);border-radius:3px;animation:audioWave 0.9s ease-in-out 0.3s infinite;transform-origin:center bottom;"></span>' +
-            '<span style="display:inline-block;width:5px;height:20px;background:var(--accent-primary);border-radius:3px;animation:audioWave 0.9s ease-in-out 0.45s infinite;transform-origin:center bottom;"></span>' +
-            '<span style="display:inline-block;width:5px;height:30px;background:var(--accent-primary);border-radius:3px;animation:audioWave 0.9s ease-in-out 0.6s infinite;transform-origin:center bottom;"></span>' +
-          '</div>' +
+        '<div id="call-audio-area" class="cal-audio">' +
+          '<div class="cal-avatar">' + avatarHtml + '</div>' +
+          '<div class="cal-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>' +
         '</div>';
     }
 
     var bottomBtns;
     if (isIncoming) {
       bottomBtns =
-        '<div style="display:flex;align-items:center;justify-content:center;gap:40px;margin-top:20px;">' +
-          '<button id="call-decline-btn" style="width:60px;height:60px;border-radius:50%;border:none;background:var(--accent-danger);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(239,68,68,0.45);transition:transform 0.15s;" onmouseover="this.style.transform=\'scale(1.08)\'" onmouseout="this.style.transform=\'scale(1)\'"><i data-lucide="phone-off" style="width:26px;height:26px;"></i></button>' +
-          '<button id="call-accept-btn" style="width:60px;height:60px;border-radius:50%;border:none;background:var(--accent-success);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(34,197,94,0.45);transition:transform 0.15s;" onmouseover="this.style.transform=\'scale(1.08)\'" onmouseout="this.style.transform=\'scale(1)\'"><i data-lucide="phone" style="width:26px;height:26px;"></i></button>' +
+        '<div class="cal-controls cal-controls-answer">' +
+          '<button id="call-decline-btn" class="cal-btn cal-btn-lg cal-btn-danger" title="Decline"><i data-lucide="phone-off"></i></button>' +
+          '<button id="call-accept-btn" class="cal-btn cal-btn-lg cal-btn-success" title="Accept"><i data-lucide="phone"></i></button>' +
         '</div>';
     } else {
       var cameraBtnHtml = isVideo
-        ? '<button id="call-camera-btn" style="width:50px;height:50px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s,transform 0.15s;" title="Camera" onmouseover="this.style.background=\'rgba(255,255,255,0.15)\';this.style.transform=\'scale(1.05)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.08)\';this.style.transform=\'scale(1)\'"><i data-lucide="video" style="width:20px;height:20px;"></i></button>'
+        ? '<button id="call-camera-btn" class="cal-btn cal-btn-ghost" title="Camera"><i data-lucide="video"></i></button>'
         : '';
       bottomBtns =
-        '<div style="display:flex;align-items:center;justify-content:center;gap:28px;margin-top:22px;">' +
+        '<div class="cal-controls">' +
           cameraBtnHtml +
-          '<button id="call-mute-btn" style="width:50px;height:50px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s,transform 0.15s;" title="Mute" onmouseover="this.style.background=\'rgba(255,255,255,0.15)\';this.style.transform=\'scale(1.05)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.08)\';this.style.transform=\'scale(1)\'"><i data-lucide="mic" style="width:20px;height:20px;"></i></button>' +
-          '<button id="call-end-btn" style="width:60px;height:60px;border-radius:50%;border:none;background:var(--accent-danger);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(239,68,68,0.45);transition:transform 0.15s;" onmouseover="this.style.transform=\'scale(1.08)\'" onmouseout="this.style.transform=\'scale(1)\'"><i data-lucide="phone-off" style="width:26px;height:26px;"></i></button>' +
-          '<button id="call-speaker-btn" style="width:50px;height:50px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s,transform 0.15s;" title="Speaker" onmouseover="this.style.background=\'rgba(255,255,255,0.15)\';this.style.transform=\'scale(1.05)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.08)\';this.style.transform=\'scale(1)\'"><i data-lucide="volume-2" style="width:20px;height:20px;"></i></button>' +
+          '<button id="call-mute-btn" class="cal-btn cal-btn-ghost" title="Mute"><i data-lucide="mic"></i></button>' +
+          '<button id="call-end-btn" class="cal-btn cal-btn-lg cal-btn-danger" title="Hang up"><i data-lucide="phone-off"></i></button>' +
+          '<button id="call-speaker-btn" class="cal-btn cal-btn-ghost" title="Speaker"><i data-lucide="volume-2"></i></button>' +
         '</div>';
     }
 
     overlay.innerHTML =
-      '<div id="call-modal-inner" style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:400px;padding:28px 24px 32px;text-align:center;">' +
+      '<div id="call-modal-inner" class="cal-inner">' +
         mediaArea +
-        '<div id="call-name-text" style="font-size:22px;font-weight:700;color:#fff;font-family:var(--font-display);letter-spacing:0.3px;">' + callerName + '</div>' +
-        '<div id="call-status-text" style="font-size:14px;color:rgba(255,255,255,0.5);margin-top:6px;font-weight:400;">' + callStatus + '</div>' +
-        '<div id="call-timer" style="font-size:13px;color:rgba(255,255,255,0.35);margin-top:6px;display:none;font-variant-numeric:tabular-nums;">00:00</div>' +
+        '<div id="call-name-text" class="cal-name">' + window.Sanitize.escapeHtml(callerName) + '</div>' +
+        '<div id="call-status-text" class="cal-status">' + window.Sanitize.escapeHtml(callStatus) + '</div>' +
+        '<div id="call-timer" class="cal-timer">00:00</div>' +
         bottomBtns +
       '</div>';
 
@@ -268,25 +306,7 @@ window.CallModal = {
           this.querySelector('svg').setAttribute('data-lucide', enabled ? 'video' : 'video-off');
           this.title = enabled ? 'Camera' : 'Camera Off';
           if (window.lucide) window.lucide.createIcons({ root: this });
-          var lv = document.getElementById('local-video');
-          var ph = document.getElementById('local-placeholder');
-          if (lv && ph) {
-            if (!enabled) {
-              lv.style.display = 'none';
-              var cu = (window.store.getState() || {}).currentUser || {};
-              ph.style.display = 'flex';
-              ph.style.background = _callAvatarColor(cu.username);
-              if (cu.avatar) {
-                ph.innerHTML = '<img src="' + cu.avatar + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.35);box-shadow:0 2px 10px rgba(0,0,0,0.3);">';
-              } else {
-                ph.innerHTML = '<div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;border:2px solid rgba(255,255,255,0.35);box-shadow:0 2px 10px rgba(0,0,0,0.3);">' + ((cu.username || '?').charAt(0).toUpperCase()) + '</div>';
-              }
-            } else {
-              lv.style.display = 'block';
-              ph.style.display = 'none';
-              ph.innerHTML = '';
-            }
-          }
+          this._paintLocalPlaceholder(!enabled);
         }
       }
     });
@@ -300,31 +320,30 @@ window.CallModal = {
     this._participants = participants || {};
     var overlay = document.createElement('div');
     overlay.className = 'call-modal-overlay';
-    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;';
 
     var pCount = Object.keys(participants).length;
     var cols = pCount <= 2 ? 'repeat(' + pCount + ', 1fr)' : 'repeat(auto-fit, minmax(180px, 1fr))';
 
     var videoArea = isVideo
-      ? '<div id="call-video-container" style="width:100%;height:380px;position:relative;background:#0a0a0a;border-radius:14px;overflow:hidden;margin-bottom:14px;">' +
-          '<div id="group-remote-videos" style="width:100%;height:100%;display:grid;grid-template-columns:' + cols + ';gap:3px;padding:3px;box-sizing:border-box;"></div>' +
+      ? '<div id="call-video-container" class="cal-video cal-video-group">' +
+          '<div id="group-remote-videos" class="cal-grid" style="grid-template-columns:' + cols + ';"></div>' +
         '</div>'
-      : '<div id="call-audio-area" style="margin:10px 0 16px 0;width:100%;">' +
-          '<div id="group-participant-avatars" style="display:flex;flex-wrap:wrap;justify-content:center;gap:16px;padding:8px 0;"></div>' +
+      : '<div id="call-audio-area" class="cal-audio cal-audio-group">' +
+          '<div id="group-participant-avatars" class="cal-participants"></div>' +
         '</div>';
 
     overlay.innerHTML =
-      '<div id="call-modal-inner" style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:560px;padding:20px 20px 24px;text-align:center;">' +
-        '<div style="font-size:17px;font-weight:700;color:#fff;font-family:var(--font-display);">' + window.Sanitize.escapeHtml(groupTitle) + '</div>' +
-        '<div id="call-participant-count" style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:3px;">' + pCount + ' participant' + (pCount !== 1 ? 's' : '') + '</div>' +
+      '<div id="call-modal-inner" class="cal-inner cal-inner-group">' +
+        '<div class="cal-group-title">' + window.Sanitize.escapeHtml(groupTitle) + '</div>' +
+        '<div id="call-participant-count" class="cal-count">' + pCount + ' participant' + (pCount !== 1 ? 's' : '') + '</div>' +
         videoArea +
-        '<div id="call-timer" style="font-size:13px;color:rgba(255,255,255,0.35);margin-bottom:10px;display:none;font-variant-numeric:tabular-nums;">00:00</div>' +
-        '<div id="call-status-text" style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:12px;">Calling...</div>' +
-        '<div style="display:flex;align-items:center;justify-content:center;gap:28px;">' +
-          (isVideo ? '<button id="call-camera-btn" style="width:50px;height:50px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s,transform 0.15s;" title="Camera" onmouseover="this.style.background=\'rgba(255,255,255,0.15)\';this.style.transform=\'scale(1.05)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.08)\';this.style.transform=\'scale(1)\'"><i data-lucide="video" style="width:20px;height:20px;"></i></button>' : '') +
-          '<button id="call-mute-btn" style="width:50px;height:50px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s,transform 0.15s;" title="Mute" onmouseover="this.style.background=\'rgba(255,255,255,0.15)\';this.style.transform=\'scale(1.05)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.08)\';this.style.transform=\'scale(1)\'"><i data-lucide="mic" style="width:20px;height:20px;"></i></button>' +
-          '<button id="call-end-btn" style="width:60px;height:60px;border-radius:50%;border:none;background:var(--accent-danger);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(239,68,68,0.45);transition:transform 0.15s;" onmouseover="this.style.transform=\'scale(1.08)\'" onmouseout="this.style.transform=\'scale(1)\'"><i data-lucide="phone-off" style="width:26px;height:26px;"></i></button>' +
-          '<button id="call-speaker-btn" style="width:50px;height:50px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s,transform 0.15s;" title="Speaker" onmouseover="this.style.background=\'rgba(255,255,255,0.15)\';this.style.transform=\'scale(1.05)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.08)\';this.style.transform=\'scale(1)\'"><i data-lucide="volume-2" style="width:20px;height:20px;"></i></button>' +
+        '<div id="call-status-text" class="cal-status">Calling...</div>' +
+        '<div id="call-timer" class="cal-timer">00:00</div>' +
+        '<div class="cal-controls">' +
+          (isVideo ? '<button id="call-camera-btn" class="cal-btn cal-btn-ghost" title="Camera"><i data-lucide="video"></i></button>' : '') +
+          '<button id="call-mute-btn" class="cal-btn cal-btn-ghost" title="Mute"><i data-lucide="mic"></i></button>' +
+          '<button id="call-end-btn" class="cal-btn cal-btn-lg cal-btn-danger" title="Hang up"><i data-lucide="phone-off"></i></button>' +
+          '<button id="call-speaker-btn" class="cal-btn cal-btn-ghost" title="Speaker"><i data-lucide="volume-2"></i></button>' +
         '</div>' +
       '</div>';
 
@@ -371,25 +390,7 @@ window.CallModal = {
           this.querySelector('svg').setAttribute('data-lucide', enabled ? 'video' : 'video-off');
           this.title = enabled ? 'Camera' : 'Camera Off';
           if (window.lucide) window.lucide.createIcons({ root: this });
-          var lv = document.getElementById('local-video');
-          var ph = document.getElementById('local-placeholder');
-          if (lv && ph) {
-            if (!enabled) {
-              lv.style.display = 'none';
-              var cu = (window.store.getState() || {}).currentUser || {};
-              ph.style.display = 'flex';
-              ph.style.background = _callAvatarColor(cu.username);
-              if (cu.avatar) {
-                ph.innerHTML = '<img src="' + cu.avatar + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.35);box-shadow:0 2px 10px rgba(0,0,0,0.3);">';
-              } else {
-                ph.innerHTML = '<div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;border:2px solid rgba(255,255,255,0.35);box-shadow:0 2px 10px rgba(0,0,0,0.3);">' + ((cu.username || '?').charAt(0).toUpperCase()) + '</div>';
-              }
-            } else {
-              lv.style.display = 'block';
-              ph.style.display = 'none';
-              ph.innerHTML = '';
-            }
-          }
+          this._paintLocalPlaceholder(!enabled);
         }
       }
     });
@@ -414,14 +415,22 @@ window.CallModal = {
         var p = participants[uid];
         var isMe = uid === currentUserId;
         var wrapper = document.createElement('div');
-        wrapper.style.cssText = 'position:relative;background:#111;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;';
+        wrapper.className = 'cal-tile';
         var nameLabel = isMe ? 'You' : (p.name || '');
         var vidId = isMe ? 'local-video' : 'gvid-' + uid.replace(/[^a-zA-Z0-9]/g, '_');
-        var placeholderHtml = isMe ? '<div id="local-placeholder" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;align-items:center;justify-content:center;"></div>' : '';
+        var placeholderHtml = isMe ? '<div id="local-placeholder" class="cal-pip-placeholder"></div>' : '';
+        // ⚠ Something behind the video. Before their stream arrives a tile was an
+        // empty grey box with a name chip on it — it said "this person is here" and
+        // nothing else. Their avatar goes under the video, the same way the 1:1
+        // screen does it, so it shows only while there is no picture.
+        var tileAvatar = p.avatar
+          ? '<img src="' + window.Sanitize.escapeHtml(p.avatar) + '" class="cal-tile-avatar-img" alt="">'
+          : '<span class="cal-tile-avatar-initial">' + window.Sanitize.escapeHtml((p.name || '?').charAt(0).toUpperCase()) + '</span>';
         wrapper.innerHTML =
-          '<video id="' + vidId + '" autoplay playsinline ' + (isMe ? 'muted' : '') + ' style="width:100%;height:100%;position:absolute;top:0;left:0;object-fit:cover;display:block;"></video>' +
+          '<div class="cal-tile-empty">' + tileAvatar + '</div>' +
+          '<video id="' + vidId + '" autoplay playsinline ' + (isMe ? 'muted' : '') + ' class="cal-tile-video"></video>' +
           placeholderHtml +
-          '<div style="position:absolute;bottom:6px;left:8px;font-size:11px;color:#fff;background:rgba(0,0,0,0.55);padding:2px 10px;border-radius:4px;max-width:calc(100% - 16px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + window.Sanitize.escapeHtml(nameLabel) + '</div>';
+          '<div class="cal-tile-name">' + window.Sanitize.escapeHtml(nameLabel) + '</div>';
         grid.appendChild(wrapper);
         // Attach local stream to local video immediately if available
         if (isMe && window.CallManager && window.CallManager.localStream) {
@@ -438,12 +447,15 @@ window.CallModal = {
         var p = participants[uid];
         var isMe = uid === (window.store.getState().currentUser || {}).userId;
         var nameLabel = isMe ? 'You' : (p.name || '');
+        // ⚠ No accent border on an accent disc — it was `2px solid
+        // var(--accent-primary)` around a `--accent-primary` fill, which is a ring
+        // you cannot see drawn around the thing it matches.
         var avatarHtml = p.avatar
-          ? '<img src="' + p.avatar + '" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid var(--accent-primary);display:block;">'
-          : '<div style="width:56px;height:56px;border-radius:50%;background:var(--accent-primary);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#fff;border:2px solid var(--accent-primary);">' + (p.name || '?').charAt(0).toUpperCase() + '</div>';
+          ? '<img src="' + window.Sanitize.escapeHtml(p.avatar) + '" class="cal-participant-img" alt="">'
+          : '<span class="cal-participant-initial">' + window.Sanitize.escapeHtml((p.name || '?').charAt(0).toUpperCase()) + '</span>';
         var item = document.createElement('div');
-        item.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:5px;min-width:64px;';
-        item.innerHTML = avatarHtml + '<div style="font-size:11px;color:rgba(255,255,255,0.65);max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3;">' + window.Sanitize.escapeHtml(nameLabel) + '</div>';
+        item.className = 'cal-participant';
+        item.innerHTML = avatarHtml + '<div class="cal-participant-name">' + window.Sanitize.escapeHtml(nameLabel) + '</div>';
         container.appendChild(item);
       });
     }
@@ -482,6 +494,12 @@ window.CallModal = {
   startTimer() {
     // Media is flowing — stop ringing.
     CallRingtone.stop();
+    // ⚠ And stop the waveform. `is-connected` settles it into a flat, even row: the
+    // five bars animated whether or not anybody was speaking, which is decoration
+    // pretending to be a level meter. Motion belongs to "connecting"; once the timer
+    // is running, the timer is the sign of life.
+    var inner = this.overlay && this.overlay.querySelector('#call-modal-inner');
+    if (inner) inner.classList.add('is-connected');
     var el = this.overlay && this.overlay.querySelector('#call-timer');
     if (el) el.style.display = 'block';
     var statusEl = this.overlay && this.overlay.querySelector('#call-status-text');

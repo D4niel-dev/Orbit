@@ -1050,6 +1050,87 @@ test.describe('desktop redesign', () => {
     expect(await layerOn()).toBe(false);
   });
 
+  test('the call screen is opaque, still, and one geometry', async () => {
+    // ⚠⚠ THE OVERLAY WAS `rgba(0,0,0,0.85)` WITH NOTHING ON IT. It dimmed the app and
+    // put the caller's name straight onto that dim — so 15% of whatever chat was open
+    // showed through and the name sat on top of the messages behind it. A call is a
+    // mode, not a dialog over the app.
+    const call = () => page.evaluate(() => {
+      const o = document.querySelector('.call-modal-overlay');
+      if (!o) return null;
+      const cs = getComputedStyle(o);
+      return {
+        bg: cs.backgroundColor,
+        alpha: cs.backgroundColor.startsWith('rgba') ? cs.backgroundColor.split(',').pop().trim() : '1)',
+        // ⚠ Every control used to carry an inline `onmouseover` that scaled it 1.08 —
+        // the exact hover this file forbids, and unstylable because it is inline.
+        inlineHover: Array.from(o.querySelectorAll('button')).filter((b) => b.getAttribute('onmouseover')).length,
+        boxes: Array.from(o.querySelectorAll('.cal-btn')).map((b) => {
+          const r = b.getBoundingClientRect();
+          return Math.round(r.width) + 'x' + Math.round(r.height);
+        }),
+        wave: (() => { const s = o.querySelector('.cal-wave span'); return s ? getComputedStyle(s).animationName : null; })(),
+        connected: (() => { const i = o.querySelector('#call-modal-inner'); return i ? i.classList.contains('is-connected') : null; })()
+      };
+    });
+
+    // Incoming audio.
+    await page.evaluate(() => window.CallModal.show({ username: 'Ava Lindqvist', avatar: '' }, false, true, false));
+    await page.waitForTimeout(700);
+    const incoming = await call();
+    expect(incoming).not.toBeNull();
+    // ⚠ Opaque: alpha must be exactly 1.
+    expect(incoming.alpha).toBe('1)');
+    expect(incoming.inlineHover).toBe(0);
+    expect(incoming.boxes).toEqual(['62x62', '62x62']);
+    expect(incoming.wave).toBe('audioWave');
+
+    // ⚠⚠ A display name containing markup must be TEXT, not markup. The 1:1 name went
+    // in raw while the group title beside it was escaped — one path was safe and the
+    // other was not.
+    await page.evaluate(() => {
+      window.CallModal.show({ username: '<img src=x onerror="window.__pwned=1">', avatar: '' }, false, false, false);
+    });
+    await page.waitForTimeout(600);
+    const escaped = await page.evaluate(() => {
+      const n = document.getElementById('call-name-text');
+      return { children: n.children.length, text: n.textContent, pwned: !!window.__pwned };
+    });
+    expect(escaped.children).toBe(0);
+    expect(escaped.text).toContain('<img');
+    expect(escaped.pwned).toBe(false);
+
+    // ⚠ The waveform stops when the call connects. It animated whether or not anybody
+    // was speaking — decoration pretending to be a level meter.
+    await page.evaluate(() => window.CallModal.startTimer());
+    await page.waitForTimeout(600);
+    const connected = await call();
+    expect(connected.connected).toBe(true);
+    expect(connected.wave).toBe('none');
+
+    // One geometry across the group layout too, and the hang-up is the big one.
+    await page.evaluate(() => window.CallModal.showGroup('Design Sync', {
+      p1: { name: 'Ava Lindqvist', avatar: null }, p2: { name: 'Kai Tanaka', avatar: null }
+    }, true, false));
+    await page.waitForTimeout(700);
+    const group = await call();
+    expect(group.alpha).toBe('1)');
+    expect(group.inlineHover).toBe(0);
+    expect(group.boxes.filter((b) => b === '62x62').length).toBe(1);
+    expect(group.boxes.filter((b) => b === '52x52').length).toBe(3);
+    // The participants carry real names, and each tile has something behind its video.
+    const groupBits = await page.evaluate(() => ({
+      names: Array.from(document.querySelectorAll('.cal-tile-name')).map((n) => n.textContent),
+      tilesWithAvatar: document.querySelectorAll('.cal-tile-empty').length
+    }));
+    expect(groupBits.names).toEqual(['Ava Lindqvist', 'Kai Tanaka']);
+    expect(groupBits.tilesWithAvatar).toBe(2);
+
+    // Leave nothing on screen for whatever runs next.
+    await page.evaluate(() => window.CallModal.hide());
+    await page.waitForTimeout(400);
+  });
+
   test('the layer is the ONLY difference — disabling it restores the old accent', async () => {
     const accent = () =>
       page.evaluate(() => {

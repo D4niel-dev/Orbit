@@ -1299,6 +1299,429 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   9c. THE CALL SCREEN
+
+   ⚠ IT WAS `rgba(0,0,0,0.85)` WITH NOTHING ON IT. The overlay dimmed the app and
+   then put the caller's name, the status and the controls straight onto that dim —
+   no surface of its own — so 15% of whatever chat was open showed through and the
+   name sat on top of the messages behind it. A call is a MODE, not a dialog over
+   the app, so the surface is opaque now.
+
+   ⚠ And every control had an inline `onmouseover` that scaled it 1.08. That is the
+   exact hover redesign.spec.js forbids ("hovering a button does not move it"), and
+   inline handlers cannot be styled away — they had to come out of the markup, which
+   is why this needed renderer changes and not just a layer.
+
+   ⚠ The red and green glows were `rgba(239,68,68,.45)` and `rgba(34,197,94,.45)` —
+   literals, so on nord the hang-up button kept a bright red halo. They are gone
+   rather than themed: a filled coloured disc on an opaque backdrop does not need a
+   glow to be the primary action, and nothing else in this design glows.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.call-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* ⚠ OPAQUE. See the note above — the old 85% scrim let the app through. */
+  background: var(--bg-base);
+  /* A single very quiet wash so the surface is not a flat field. It carries no
+     information and it is the only decoration on the screen. */
+  background-image: radial-gradient(120% 90% at 50% 0%,
+    color-mix(in srgb, var(--accent-primary) 9%, transparent), transparent 62%);
+  animation: fadeIn 0.18s var(--ease);
+}
+
+.cal-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  max-width: 400px;
+  padding: 32px 24px 36px;
+  text-align: center;
+}
+.cal-inner-group {
+  max-width: 560px;
+  padding: 22px 20px 26px;
+}
+
+/* ── The identity block ──────────────────────────────────────────────────── */
+.cal-audio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.cal-audio-group {
+  width: 100%;
+  margin: 12px 0 6px;
+}
+
+.cal-avatar-img,
+.cal-avatar-initial {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: block;
+  box-sizing: border-box;
+}
+.cal-avatar-img {
+  object-fit: cover;
+  /* ⚠ A hairline, not the 3px `--accent-primary` ring it used to have — an accent
+     ring around an accent disc is a ring you cannot see, drawn around the thing it
+     matches. */
+  border: 1px solid var(--border-strong);
+}
+.cal-avatar-initial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-primary);
+  color: #fff;
+  font-size: 34px;
+  font-weight: 600;
+}
+
+.cal-name {
+  font-family: var(--font-display);
+  /* ⚠ 20px, down from 22px. It was the largest text in the app — bigger than the
+     page title in Settings — for a name that is already the only thing on screen. */
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+.cal-status {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.cal-timer {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  /* Hidden until media flows; startTimer() sets display inline. */
+  display: none;
+}
+
+.cal-group-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.cal-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+/* ── The waveform ────────────────────────────────────────────────────────── */
+/* ⚠ It used to be five bars of FULL accent animating forever, at five different
+   heights — a level meter that measured nothing. Quieter, slower, and it settles
+   flat once the call connects (`.is-connected`). */
+.cal-wave {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 5px;
+  width: 120px;
+  height: 32px;
+  margin-top: 16px;
+}
+.cal-wave span {
+  display: inline-block;
+  width: 5px;
+  height: 12px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--accent-primary) 55%, transparent);
+  transform-origin: center bottom;
+  animation: audioWave 1.4s ease-in-out infinite;
+  transition: height var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+.cal-wave span:nth-child(1) { height: 16px; animation-delay: 0s; }
+.cal-wave span:nth-child(2) { height: 26px; animation-delay: .2s; }
+.cal-wave span:nth-child(3) { height: 10px; animation-delay: .4s; }
+.cal-wave span:nth-child(4) { height: 20px; animation-delay: .6s; }
+.cal-wave span:nth-child(5) { height: 30px; animation-delay: .8s; }
+
+/* Connected: no motion, and the bars settle into an even row rather than freezing
+   mid-animation. */
+.cal-inner.is-connected .cal-wave span {
+  animation: none;
+  height: 10px;
+  opacity: .45;
+}
+
+/* ── Video ───────────────────────────────────────────────────────────────── */
+.cal-video {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  margin-bottom: 18px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cal-video-group {
+  aspect-ratio: auto;
+  height: 380px;
+  margin-bottom: 14px;
+}
+
+.cal-remote-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+/* Sits UNDER the video, so it shows only while there is no stream. It used to be
+   the word "Video" at 15% opacity — a debug artefact where a face belongs. */
+.cal-remote-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: .55;
+}
+
+.cal-pip {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 2;
+  width: 140px;
+  height: 100px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-raised-2);
+  box-shadow: var(--shadow-md);
+}
+.cal-pip-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.cal-pip-placeholder {
+  position: absolute;
+  inset: 0;
+  /* Hidden until the camera is switched off; the handler sets display inline. */
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.cal-pip-avatar-img,
+.cal-pip-avatar-initial {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+.cal-pip-avatar-img {
+  object-fit: cover;
+}
+.cal-pip-avatar-initial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, .2);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* ── The group grid ──────────────────────────────────────────────────────── */
+.cal-grid {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  gap: 3px;
+  padding: 3px;
+  box-sizing: border-box;
+}
+.cal-tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-raised-2);
+}
+.cal-tile-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* Under the video, so it shows only until their picture arrives. */
+.cal-tile-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: .5;
+}
+.cal-tile-avatar-img,
+.cal-tile-avatar-initial {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+.cal-tile-avatar-img {
+  object-fit: cover;
+}
+.cal-tile-avatar-initial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-primary);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 600;
+}
+.cal-tile-name {
+  position: absolute;
+  left: 8px;
+  bottom: 6px;
+  max-width: calc(100% - 16px);
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  background: color-mix(in srgb, var(--bg-base) 78%, transparent);
+  font-size: 11px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── The group participant list (audio) ──────────────────────────────────── */
+.cal-participants {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  padding: 8px 0;
+}
+.cal-participant {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 64px;
+}
+.cal-participant-img,
+.cal-participant-initial {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+.cal-participant-img {
+  object-fit: cover;
+  display: block;
+}
+.cal-participant-initial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-primary);
+  color: #fff;
+  font-size: 23px;
+  font-weight: 600;
+}
+.cal-participant-name {
+  max-width: 72px;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── The controls ────────────────────────────────────────────────────────── */
+.cal-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 24px;
+}
+.cal-controls-answer {
+  gap: 36px;
+}
+
+.cal-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #fff;
+  transition: background var(--dur) var(--ease), filter var(--dur) var(--ease);
+}
+.cal-btn svg {
+  width: 20px;
+  height: 20px;
+}
+.cal-btn-lg {
+  width: 62px;
+  height: 62px;
+}
+.cal-btn-lg svg {
+  width: 24px;
+  height: 24px;
+}
+
+.cal-btn-ghost {
+  background: var(--bg-raised-2);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+.cal-btn-ghost:hover {
+  background: var(--bg-hover);
+}
+.cal-btn-danger {
+  background: var(--accent-danger);
+}
+.cal-btn-danger:hover {
+  filter: brightness(1.12);
+}
+.cal-btn-success {
+  background: var(--accent-success);
+}
+.cal-btn-success:hover {
+  filter: brightness(1.12);
+}
+
+/* ⚠ Its own reduced-motion rule: the list in §10 names the loops one by one, so a
+   new loop is not covered by adding it. */
+@media (prefers-reduced-motion: reduce) {
+  .call-modal-overlay {
+    animation: none;
+  }
+  .cal-wave span {
+    animation: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    THE GLOBAL BUTTON HOVER
    ⚠ components.css lifts EVERY button in the app 1px and brightens it 10% on
    hover: `button:hover { filter: brightness(1.1); transform: translateY(-1px); }`.
