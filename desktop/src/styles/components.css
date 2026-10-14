@@ -427,6 +427,28 @@ button:active,
   overflow-x: hidden;
 }
 
+/* ⚠⚠ `content-visibility: auto` WAS TRIED HERE AND REVERTED. DO NOT RE-ADD IT WITHOUT AN
+   ALTERNATING A/B.
+   
+   It looked like a clean 2x win — 76.3ms of style recalc down to 37.2ms, layout 18.9 to
+   8.7 — and the whole 81-test suite stayed green. It was measured again with the ON and
+   OFF cases ALTERNATED in one session and every run printed, and it is a REGRESSION:
+
+     ON   layout  311  327    6  305    4    9    avg 160.3ms
+     OFF  layout   10   10   11    8   11   10    avg   9.8ms
+     ON   style    59   80   27   75   22   22    avg  47.6ms
+     OFF  style    41   50   55   38   56   50    avg  48.2ms
+
+   Style is unchanged, and layout spikes to ~300ms in four runs out of six. The likely
+   cause is the feedback loop between `content-visibility: auto` and
+   `contain-intrinsic-size: auto`: a row becomes visible, lays out, and its real size
+   replaces the placeholder — which changes the scroll height, which changes what is
+   visible. With 200 rows that is thrash.
+
+   ⚠ The earlier "win" was a biased comparison: the rule was injected mid-session and the
+   two halves were not interleaved. **A performance change needs an ALTERNATING A/B with
+   every run shown — a median hides exactly this.** */
+
 /* Message action bar */
 .message-row:hover .msg-actions-bar {
   display: flex;
