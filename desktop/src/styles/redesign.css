@@ -248,6 +248,22 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
   border-radius: var(--radius-sm);
 }
 
+/* ⚠⚠ THE HALO IS SUPPRESSED ON THE MODAL SEARCH FIELDS, AND ONLY ON THOSE.
+   Both carry `autofocus`, so the halo is painted the instant the modal opens and
+   NEVER GOES AWAY — a solid blue rounded box drawn around the field, which reads as
+   decoration rather than as "you are here". Measured on the search modal: a 450x20
+   input wearing `box-shadow: 0 0 0 2px var(--accent-ring)` for the whole session.
+
+   ⚠ Deliberately NOT a blanket `outline: none`. Every other field keeps the halo,
+   because for those the USER put the focus there and the halo is the only thing that
+   says so. These two are focused by the app.
+   ⚠ The search modal is not left without a cue either — `.search-modal-header::after`
+   already draws an accent bar while anything in the header has focus. */
+#search-modal-input:focus-visible,
+#forward-search-input:focus-visible {
+  box-shadow: none !important;
+}
+
 /* The app's own text selection colour, instead of the browser's blue. */
 ::selection {
   background: var(--accent-soft);

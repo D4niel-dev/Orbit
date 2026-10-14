@@ -1583,6 +1583,64 @@ test.describe('desktop redesign', () => {
     expect(await visible()).toBe(false);
   });
 
+  test('the modal search fields carry no permanent focus halo', async () => {
+    // ⚠⚠ THEY AUTOFOCUS, SO THE GLOBAL HALO IS ON SCREEN FROM THE MOMENT THE MODAL
+    // OPENS AND NEVER GOES AWAY — a solid blue rounded box drawn around the field,
+    // which reads as decoration rather than as "you are here". The halo itself is
+    // right; on a field the APP focused, it says nothing.
+    //
+    // ⚠ And it is scoped, not a blanket `outline: none`: every other field keeps the
+    // halo, because for those the USER put the focus there and the halo is the only
+    // thing that says so. The second half of this test is that scoping.
+    await page.evaluate(() => window.ChatPanel.showSearchModal());
+    await page.waitForTimeout(1200);
+
+    const read = () => page.evaluate(() => {
+      const input = document.getElementById('search-modal-input');
+      const filter = document.getElementById('search-filter-from');
+      // Focus each in turn and read what it paints.
+      filter.focus();
+      const filterShadow = getComputedStyle(filter).boxShadow;
+      input.focus();
+      const inputShadow = getComputedStyle(input).boxShadow;
+      return {
+        inputShadow,
+        inputOutline: getComputedStyle(input).outlineStyle,
+        filterShadow,
+        // ⚠ And it really is focused — "no ring" must not be passing because nothing
+        // has focus at all.
+        inputIsActive: document.activeElement === input
+      };
+    });
+
+    const r = await read();
+    expect(r.inputIsActive).toBe(true);
+    expect(r.inputShadow).toBe('none');
+    expect(r.inputOutline).toBe('none');
+    // ⚠ The halo is still defined — this is a scoped suppression, not a deletion. A
+    // filter field the user tabbed into still shows it.
+    expect(r.filterShadow).not.toBe('none');
+    expect(r.filterShadow).toMatch(/0px 0px 0px 2px/);
+
+    // The forward modal's search is the same autofocused field, so it gets the same.
+    await page.evaluate(() => {
+      document.querySelector('.search-modal-overlay').remove();
+    });
+    await page.waitForTimeout(300);
+    const forward = await page.evaluate(() => {
+      const el = document.getElementById('forward-search-input');
+      if (!el) return null;
+      el.focus();
+      return { shadow: getComputedStyle(el).boxShadow, active: document.activeElement === el };
+    });
+    // Only assert if that modal is reachable from here; if it is not, the id simply
+    // has no element and there is nothing to check.
+    if (forward) {
+      expect(forward.active).toBe(true);
+      expect(forward.shadow).toBe('none');
+    }
+  });
+
   test('the layer is the ONLY difference — disabling it restores the old accent', async () => {
     const accent = () =>
       page.evaluate(() => {
