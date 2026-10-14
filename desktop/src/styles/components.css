@@ -3434,3 +3434,247 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: 0.3; }
   margin: 4px 8px;
   background: var(--border-subtle);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE GLOBAL GALLERY
+
+   ⚠⚠ THIS WAS IN redesign.css AND THAT WAS A BUG IN BOTH UIs. Every one of the
+   gallery's structural classes — gal-header, gal-search, gal-seg, gal-filters,
+   the filter chips, the view-mode buttons — was styled ONLY in the layer. The
+   layer is switched off by "Classic look", so in classic the entire gallery
+   rendered as bare HTML: the filter row came out as six unstyled <button>s with
+   no padding and no gap, which reads as one run-on word,
+   "AllImagesFilesAllChatsOrbit EchoD4niel-dev".
+
+   ⚠ None of it is a redesign difference. It is the first styling the gallery ever
+   got, in the wrong file. The rule it belongs to: **anything the renderer needs in
+   BOTH UIs has to live in a sheet that always loads** — fourth time this has come
+   up, after the settings nav's base, the context menu, and the close button's
+   glyph. The layer keeps only what genuinely differs between the two UIs.
+
+   ⚠ Every token below was checked to resolve from variables.css or a theme, so
+   nothing drops its declaration in classic.
+   ═══════════════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════════
+   9d. THE GALLERY
+
+   ⚠ IT HAD ITS OWN COPIES OF TWO THINGS THE LAYER HAD ALREADY UNIFIED. The layer
+   made the sidebar tabs, the Activity Center tabs and the settings nav into ONE
+   segmented control — and the gallery kept a fourth, hand-built out of inline
+   styles, where the SELECTED segment was DARKER than the track behind it. It also
+   kept its own filter chips, which drew a selected filter as a fully saturated
+   `--accent-primary` pill with white text: a primary-button treatment on the one
+   control that is not an action. "All Chats" was the only saturated thing on the
+   screen, and it is a thing you are looking AT, not a thing you DO.
+
+   ⚠ The chips also disagreed with each other about how state is expressed — the
+   chat chips carried `active`, the type chips wrote their colour inline — so no
+   stylesheet could style both. Both use `active` now, and neither writes colour.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.gal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 48px;
+  padding: 0 16px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.gal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.gal-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* "0 items · 0 B" — a disclosure, and it looks like one now. As bare muted text it
+   read as a subtitle, which is why it was reported as a mystery control. */
+.gal-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 9px;
+  flex-shrink: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.gal-stat:hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+.gal-stat svg {
+  width: 12px;
+  height: 12px;
+}
+
+.gal-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* The same pill the middle panel's search uses, so the two read as one control. */
+.gal-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 220px;
+  height: 30px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.gal-search:focus-within {
+  border-color: var(--accent-ring);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.gal-search-icon {
+  position: absolute;
+  left: 10px;
+  width: 14px;
+  height: 14px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.gal-search-input {
+  width: 100%;
+  height: 100%;
+  padding: 0 12px 0 30px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 12px;
+  outline: none;
+}
+.gal-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.gal-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  flex-shrink: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.gal-icon-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.gal-icon-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* The third segmented control — the same treatment as `.tabs-container`, which is
+   the point. A selected segment is a SURFACE, so it differs from both its
+   neighbour and the track; it was `--bg-base` on a `--bg-hover` track, i.e. darker
+   than the thing it sits in. */
+.gal-seg {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-md);
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+}
+.view-mode-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.view-mode-btn svg {
+  width: 15px;
+  height: 15px;
+}
+.view-mode-btn:hover {
+  color: var(--text-primary);
+}
+.view-mode-btn.active {
+  background: var(--bg-raised-2);
+  color: var(--text-primary);
+}
+
+/* ── The filter chips ────────────────────────────────────────────────────── */
+.gal-filters {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  overflow-x: auto;
+}
+.gal-filters-sep {
+  width: 1px;
+  height: 16px;
+  margin: 0 2px;
+  flex-shrink: 0;
+  background: var(--border-strong);
+}
+.gallery-type-filter,
+.gallery-filter-btn {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.gallery-type-filter:hover,
+.gallery-filter-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+/* ⚠ A TINT, not a filled block. Selected is a state you are in, and the accent
+   spent at full strength on it is the accent not available to say "this is the
+   button to press". */
+.gallery-type-filter.active,
+.gallery-filter-btn.active {
+  background: var(--accent-soft);
+  color: var(--accent-primary);
+  border-color: color-mix(in srgb, var(--accent-primary) 32%, transparent);
+}
+

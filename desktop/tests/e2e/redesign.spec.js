@@ -1876,6 +1876,81 @@ test.describe('desktop redesign', () => {
     })).toBe(true);
   });
 
+  test('the global gallery is styled in classic too, not just the layer', async () => {
+    // ⚠⚠ EVERY ONE OF THE GALLERY'S 15 STRUCTURAL CLASSES WAS STYLED ONLY IN THE LAYER,
+    // so with the layer off — the Classic look — the whole gallery rendered as bare HTML.
+    // The filter row came out as six unstyled <button>s with no padding and no gap, which
+    // reads as ONE RUN-ON WORD: "AllImagesFilesAllChatsOrbit EchoD4niel-dev". That is
+    // Dan's screenshot.
+    //
+    // ⚠ This is the fourth time the same shape has come up — the settings nav's base, the
+    // context menu, the close button's glyph. **Anything the renderer needs in BOTH UIs
+    // has to live in a sheet that always loads.** The gallery's styling is now in
+    // components.css; the layer keeps only what genuinely differs.
+    const chips = () => page.evaluate(() => {
+      const row = document.querySelector('.gal-filters');
+      if (!row) return null;
+      const all = Array.from(row.querySelectorAll('.gallery-type-filter, .gallery-filter-btn'));
+      if (!all.length) return null;
+      const first = all[0];
+      const cs = getComputedStyle(first);
+      return {
+        count: all.length,
+        // An unstyled <button> has `padding: 1px 6px`, `border-radius: 0` and no gap.
+        padding: cs.padding,
+        radius: cs.borderRadius,
+        borderWidth: cs.borderTopWidth,
+        rowGap: getComputedStyle(row).gap,
+        gapBetween: all.length > 1
+          ? Math.round(all[1].getBoundingClientRect().left - first.getBoundingClientRect().right)
+          : null
+      };
+    });
+
+    // ⚠ The type chips only render when there is media to filter, so the test has to
+    // seed some — otherwise there is one chip and the run-on bug cannot even appear.
+    await page.evaluate(() => {
+      const st = window.store.getState();
+      const att = (id, name, type, size, chatId) => ({
+        id, name, type, size, chatId, msgId: 'm-' + id,
+        url: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><rect width="8" height="8" fill="#4D7CFE"/></svg>'),
+        timestamp: Date.now() - id * 3600000
+      });
+      window.store.setState({
+        messages: Object.assign({}, st.messages, {
+          'local-echo': [{ id: 'm-1', text: 'media', sender: 'local-echo', timestamp: new Date().toISOString(), mine: false, read: true, attachments: [att(1, 'clip.mp4', 'video', 5242880, 'local-echo')] }],
+          'u-kai': [{ id: 'm-2', text: 'song', sender: 'u-kai', timestamp: new Date().toISOString(), mine: false, read: true, attachments: [att(2, 'track.mp3', 'audio', 3145728, 'u-kai')] }]
+        })
+      });
+    });
+    await page.waitForTimeout(1200);
+
+    await page.evaluate(() => { const b = document.getElementById('btn-nav-gallery'); if (b) b.click(); });
+    await page.waitForTimeout(1500);
+    const re = await chips();
+    expect(re).not.toBeNull();
+    // ⚠ More than one, or the run-on bug this guards against is not reachable.
+    expect(re.count).toBeGreaterThan(1);
+    expect(re.padding).toBe('4px 10px');
+    expect(re.radius).toBe('999px');
+    expect(re.rowGap).toBe('6px');
+    expect(re.gapBetween).toBeGreaterThan(0);
+
+    // ⚠ And the CLASSIC look is the same, which is the whole point — this was the mode
+    // that was broken.
+    await page.evaluate(() => window.OrbitRedesign.apply(false));
+    await page.waitForTimeout(700);
+    const classic = await chips();
+    expect(classic.padding).toBe('4px 10px');
+    expect(classic.radius).toBe('999px');
+    expect(classic.gapBetween).toBeGreaterThan(0);
+
+    await page.evaluate(() => { const b = document.getElementById('btn-nav-dms'); if (b) b.click(); });
+    await page.waitForTimeout(700);
+    await page.evaluate(() => window.OrbitRedesign.apply(true));
+    await page.waitForTimeout(400);
+  });
+
   test('the layer is the ONLY difference — disabling it restores the old accent', async () => {
     const accent = () =>
       page.evaluate(() => {
