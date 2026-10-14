@@ -1055,15 +1055,15 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
 /* Softer than the 12px it shipped with — the panel is 800×600 and a 12px corner
    on a surface that size reads as sharp next to the 18px composer.
 
-   ⚠⚠ `!important`, AND WITHOUT IT THIS RULE DID NOTHING. The panel's radius is set
-   by `style.cssText` in settings-modal.js, and an inline declaration beats any
-   stylesheet rule — so this and the rail padding below were both silently dead from
-   the day they were written, while looking perfectly correct. Measured in the running
-   app before the fix: panel radius 12px, rail padding 24px. Same family as the
-   `.settings-tab` block further down, which says exactly this about itself. */
-#settings-overlay > div {
-  border-radius: var(--radius-lg) !important;
-}
+   ⚠⚠ THIS RULE USED TO BE HERE WITH `!important` AND IT NEVER DID ANYTHING. The panel's
+   radius is set by `style.cssText` in settings-modal.js, and an inline declaration beats
+   any stylesheet rule — so it was silently dead from the day it was written while
+   looking perfectly correct. Measured in the running app: 12px, not 18.
+
+   ⚠⚠ AND THE REAL FIX WAS TO STOP HAVING TWO WRITERS. The inline now says
+   `var(--radius-lg)` itself, so the value follows the ladder in BOTH UIs — 18px in the
+   redesign, 16px in classic — and there is nothing here to keep in sync. The rail
+   padding below still needs `!important`, because its inline is still a literal. */
 
 /* The nav rail. */
 #settings-overlay > div > div:first-child {
@@ -1190,12 +1190,11 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
    ⚠ Both are `style.cssText`/inline, so every property below needs `!important`.
    The two modals are one object and they are one set of rules now. */
 
-#group-info-overlay > div {
-  border-radius: var(--radius-lg) !important;
-}
 #group-info-overlay > div > div:first-child {
   padding: 20px 16px !important;
 }
+/* ⚠ No radius rule here any more — the panel's inline carries `var(--radius-lg)` itself,
+   so it follows the ladder in both UIs. One writer, not two. */
 /* The rail heading is a LABEL for what is under it, not the page title. */
 #group-info-overlay > div > div:first-child > h2 {
   font-size: 14px !important;
@@ -2222,63 +2221,26 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
    running app: visible at 600ms, gone by 1200ms. It was never needed — all seven call
    sites are click-driven and a click outside already closed it. Removed in
    components/context-menu.js; Escape now closes it, which it never did.
+
+   ⚠⚠ THE CHROME ITSELF IS IN components.css, NOT HERE, AND THAT IS A CORRECTION.
+   The first version of this section styled the container here — and because the
+   renderer no longer writes the chrome inline, the CLASSIC look was left with a menu
+   at `border-radius: 0` and no surface at all. Measured: 0px. Anything the renderer
+   needs in BOTH UIs has to live in a sheet that always loads; only the deltas belong
+   in the layer.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-#context-menu-container {
-  position: fixed;
-  /* ⚠ Load-bearing: the container's chrome is no longer inline, so this is what keeps
-     it hidden between init() and the first show(). show() and close() set `display`
-     inline from then on, and inline wins. */
-  display: none;
-  flex-direction: column;
-  z-index: 10000;
-  min-width: 180px;
-  max-width: 260px;
-  padding: 4px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-xl);
-}
-
+/* The one delta: the redesign's row is a touch tighter and the icon is quietened
+   until you are on the row. */
 .context-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
   padding: 8px 12px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  /* ⚠ Overridden INLINE by the caller for destructive items, which is the one thing
-     that stays inline here — and it is why this rule has no `!important`. */
-  color: var(--text-primary);
-  font-size: 13px;
-  font-weight: 500;
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--dur) var(--ease);
 }
 .context-item svg {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
   opacity: .8;
   transition: opacity var(--dur) var(--ease);
 }
-/* ⚠ Background only. The old hover was two inline handlers writing `background`, and
-   nothing else — so a danger item kept its colour and that was right. */
-.context-item:hover {
-  background: var(--bg-hover);
-}
 .context-item:hover svg {
   opacity: 1;
-}
-
-.context-menu-sep {
-  height: 1px;
-  margin: 4px 8px;
-  background: var(--border-subtle);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

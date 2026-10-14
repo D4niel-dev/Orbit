@@ -2588,7 +2588,7 @@ window.ChatPanel = {
     overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding-top:80px;';
 
     var panel = document.createElement('div');
-    panel.style.cssText = 'width:560px;max-height:75vh;background:var(--bg-surface);border-radius:16px;border:1px solid var(--border-subtle);box-shadow:var(--shadow-xl);display:flex;flex-direction:column;overflow:hidden;';
+    panel.style.cssText = 'width:560px;max-height:75vh;background:var(--bg-surface);border-radius:var(--radius-lg);border:1px solid var(--border-subtle);box-shadow:var(--shadow-xl);display:flex;flex-direction:column;overflow:hidden;';
 
     var modalTitle = isChatSearch ? 'Search in Chat' : 'Search';
     var placeholder = isChatSearch ? 'Search this chat...' : 'Search messages, people, files...';
@@ -2892,7 +2892,7 @@ window.ChatPanel = {
     overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding-top:80px;';
 
     var panel = document.createElement('div');
-    panel.style.cssText = 'width:460px;max-height:75vh;background:var(--bg-surface);border-radius:16px;border:1px solid var(--border-subtle);box-shadow:var(--shadow-xl);display:flex;flex-direction:column;overflow:hidden;';
+    panel.style.cssText = 'width:460px;max-height:75vh;background:var(--bg-surface);border-radius:var(--radius-lg);border:1px solid var(--border-subtle);box-shadow:var(--shadow-xl);display:flex;flex-direction:column;overflow:hidden;';
 
     var allContacts = [];
 
@@ -3024,7 +3024,7 @@ window.ChatPanel = {
       overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:center;justify-content:center;';
 
       var card = document.createElement('div');
-      card.style.cssText = 'background:var(--bg-surface);border-radius:16px;padding:24px;max-width:400px;width:90%;box-shadow:0 16px 48px rgba(0,0,0,0.3);';
+      card.style.cssText = 'background:var(--bg-surface);border-radius:var(--radius-lg);padding:24px;max-width:400px;width:90%;box-shadow:var(--shadow-xl);';
 
       card.innerHTML =
         '<div style="text-align:center;margin-bottom:16px;">' +
@@ -4046,7 +4046,7 @@ window.ChatPanel = {
 
     var panel = document.createElement('div');
     panel.className = 'thread-panel';
-    panel.style.cssText = 'width:460px;max-height:75vh;background:var(--bg-surface);border-radius:16px;border:1px solid var(--border-subtle);box-shadow:var(--shadow-xl);display:flex;flex-direction:column;overflow:hidden;';
+    panel.style.cssText = 'width:460px;max-height:75vh;background:var(--bg-surface);border-radius:var(--radius-lg);border:1px solid var(--border-subtle);box-shadow:var(--shadow-xl);display:flex;flex-direction:column;overflow:hidden;';
 
     panel.innerHTML =
       '<div style="padding:16px 20px;border-bottom:1px solid var(--border-subtle);">' +
@@ -4240,7 +4240,7 @@ window.ChatPanel = {
           overlay.className = 'slash-invite-overlay';
           overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;';
           var panel = document.createElement('div');
-          panel.style.cssText = 'width:360px;max-width:90vw;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-xl);padding:20px;';
+          panel.style.cssText = 'width:360px;max-width:90vw;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);box-shadow:var(--shadow-xl);padding:20px;';
           var safeCode = window.Sanitize ? window.Sanitize.escapeHtml(_codeInvite) : _codeInvite;
           var safeName = window.Sanitize ? window.Sanitize.escapeHtml(_nameInvite) : _nameInvite;
           panel.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">' +
@@ -4297,7 +4297,7 @@ window.ChatPanel = {
           overlay.className = 'slash-members-overlay';
           overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;';
           var panel = document.createElement('div');
-          panel.style.cssText = 'width:380px;max-width:90vw;max-height:75vh;overflow-y:auto;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-xl);padding:20px;';
+          panel.style.cssText = 'width:380px;max-width:90vw;max-height:75vh;overflow-y:auto;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);box-shadow:var(--shadow-xl);padding:20px;';
           var members = _grpMem.members || [];
           var safeGroupName = window.Sanitize ? window.Sanitize.escapeHtml(_grpMem.groupName || 'Group') : (_grpMem.groupName || 'Group');
           var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">' +
@@ -4631,7 +4631,7 @@ window.ChatPanel = {
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;';
 
     var panel = document.createElement('div');
-    panel.style.cssText = 'width:380px;max-width:90vw;max-height:75vh;overflow-y:auto;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-xl);padding:20px;';
+    panel.style.cssText = 'width:380px;max-width:90vw;max-height:75vh;overflow-y:auto;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);box-shadow:var(--shadow-xl);padding:20px;';
 
     var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">' +
       '<h3 style="margin:0;font-size:17px;font-weight:700;color:var(--text-primary);">Slash Commands</h3>' +
@@ -4726,7 +4726,7 @@ window.ChatPanel = {
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;';
 
     var panel = document.createElement('div');
-    panel.style.cssText = 'width:420px;max-width:90vw;max-height:85vh;overflow-y:auto;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-xl);padding:20px;display:flex;flex-direction:column;gap:16px;';
+    panel.style.cssText = 'width:420px;max-width:90vw;max-height:85vh;overflow-y:auto;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);box-shadow:var(--shadow-xl);padding:20px;display:flex;flex-direction:column;gap:16px;';
     // Build inner HTML: title, question, options container, add btn, footer
     panel.innerHTML =
       '<div style="display:flex;align-items:center;justify-content:space-between;">' +

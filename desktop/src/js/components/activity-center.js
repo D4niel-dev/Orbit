@@ -31,7 +31,7 @@ window.ActivityCenter = {
 
     var modal = document.createElement('div');
     modal.id = 'activity-modal';
-    modal.style.cssText = 'background:var(--bg-surface);border-radius:16px;padding:24px;max-width:520px;width:90%;height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.4);border:1px solid var(--border-subtle);';
+    modal.style.cssText = 'background:var(--bg-surface);border-radius:var(--radius-lg);padding:24px;max-width:520px;width:90%;height:80vh;display:flex;flex-direction:column;box-shadow:var(--shadow-xl);border:1px solid var(--border-subtle);';
 
     modal.innerHTML =
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-shrink:0;">' +

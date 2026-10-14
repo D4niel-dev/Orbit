@@ -2104,7 +2104,7 @@ window.SidebarMiddle = {
     overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:center;justify-content:center;';
 
     var panel = document.createElement('div');
-    panel.style.cssText = 'width:800px;height:600px;background:var(--bg-surface);border-radius:12px;display:flex;overflow:hidden;box-shadow:var(--shadow-xl);border:1px solid var(--border-subtle);';
+    panel.style.cssText = 'width:800px;height:600px;background:var(--bg-surface);border-radius:var(--radius-lg);display:flex;overflow:hidden;box-shadow:var(--shadow-xl);border:1px solid var(--border-subtle);';
     panel.innerHTML =
       '<div style="width:240px;background:var(--bg-base);padding:24px;border-right:1px solid var(--border-subtle);display:flex;flex-direction:column;">' +
         '<h2 style="font-family:var(--font-display);font-size:20px;margin:0 0 24px;color:var(--text-primary);font-weight:bold;">Group Info</h2>' +

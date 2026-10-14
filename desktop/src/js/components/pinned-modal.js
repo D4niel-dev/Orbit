@@ -29,7 +29,7 @@ window.PinnedModal = {
 
     var modal = document.createElement('div');
     modal.style.cssText = 'width:420px;max-width:92vw;max-height:80vh;display:flex;flex-direction:column;' +
-      'background:var(--bg-surface);border:1px solid var(--border-strong);border-radius:14px;overflow:hidden;' +
+      'background:var(--bg-surface);border:1px solid var(--border-strong);border-radius:var(--radius-lg);overflow:hidden;' +
       'box-shadow:var(--shadow-xl);';
 
     modal.innerHTML =

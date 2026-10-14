@@ -115,7 +115,7 @@ window.CustomThemeModal = {
     }).join('');
 
     this.overlay.innerHTML =
-      '<div style="width:960px;height:660px;display:flex;background:var(--bg-surface);border-radius:12px;overflow:hidden;box-shadow:var(--shadow-xl);border:1px solid var(--border-subtle);">' +
+      '<div style="width:960px;height:660px;display:flex;background:var(--bg-surface);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-xl);border:1px solid var(--border-subtle);">' +
         // Left: Color pickers
         '<div style="width:380px;padding:24px;overflow-y:auto;border-right:1px solid var(--border-subtle);">' +
           '<h2 style="font-family:var(--font-display);font-size:20px;margin:0 0 8px;color:var(--text-primary);">Custom Colors</h2>' +

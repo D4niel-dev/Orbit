@@ -89,7 +89,7 @@ window.SettingsModal = {
     }).join('');
 
     this.container.innerHTML =
-      '<div style="width:800px;height:600px;background:var(--bg-surface);border-radius:12px;display:flex;overflow:hidden;box-shadow:var(--shadow-xl);border:1px solid var(--border-subtle);">' +
+      '<div style="width:800px;height:600px;background:var(--bg-surface);border-radius:var(--radius-lg);display:flex;overflow:hidden;box-shadow:var(--shadow-xl);border:1px solid var(--border-subtle);">' +
         '<div style="width:240px;background:var(--bg-base);padding:24px;border-right:1px solid var(--border-subtle);display:flex;flex-direction:column;">' +
           // ⚠ The heading and the collapse control share a row, so the h2 is no longer
           // a DIRECT child of the rail — the layer's selector for it moved with it.

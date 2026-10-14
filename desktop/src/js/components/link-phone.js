@@ -65,7 +65,7 @@ window.OrbitLinkPhone = {
 
     var panel = document.createElement('div');
     panel.style.cssText =
-      'width:420px;background:var(--bg-surface);border-radius:14px;border:1px solid var(--border-subtle);' +
+      'width:420px;background:var(--bg-surface);border-radius:var(--radius-lg);border:1px solid var(--border-subtle);' +
       'box-shadow:var(--shadow-xl);padding:22px;text-align:center;';
 
     panel.innerHTML =

@@ -5,7 +5,12 @@ window.AccountSwitcher = {
   init() {
     this.container = document.createElement('div');
     this.container.id = 'account-switcher-panel';
-    this.container.style.cssText = 'display:none;position:fixed;bottom:12px;left:72px;width:280px;max-height:360px;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-xl);z-index:10000;flex-direction:column;overflow:hidden;';
+    // ⚠ `var(--radius-lg)`, not 16px. Every panel in this app had its own literal —
+    // measured across nine of them: 12, 14, 16 and 18 for the same job. The layer's
+    // ladder is xs 4 / sm 8 / md 12 / lg 18, and a panel is `lg`. Hardcoding the number
+    // also pinned the surface to ONE look: the token is 18 in the redesign and 16 in
+    // classic, so a literal cannot follow the UI mode it is drawn in.
+    this.container.style.cssText = 'display:none;position:fixed;bottom:12px;left:72px;width:280px;max-height:360px;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);box-shadow:var(--shadow-xl);z-index:10000;flex-direction:column;overflow:hidden;';
     document.body.appendChild(this.container);
 
     document.addEventListener('click', function(e) {

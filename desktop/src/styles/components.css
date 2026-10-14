@@ -2272,7 +2272,7 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: 0.3; }
   /* Never taller than the space it has to live in. */
   max-height: calc(100vh - 160px);
   border: 1px solid var(--border-strong);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xl);
   /* It had a shadow and a radius but no edge, which is why it read as a floating
      widget rather than part of the window. */
@@ -3365,4 +3365,65 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: 0.3; }
    classic look grows an icon nobody asked for. */
 #btn-close-settings svg {
   display: none;
+}
+
+/* ─── The context menu ──────────────────────────────────────────────────────
+   ⚠⚠ HERE, NOT IN redesign.css, AND THAT IS A CORRECTION. The renderer used to write
+   this chrome as an inline `cssText`; when it moved to classes the first version put
+   it in the layer — and the CLASSIC look was left with a menu at `border-radius: 0`
+   and no surface at all. Measured: 0px.
+
+   Same rule as the nav above: anything the renderer needs in BOTH UIs lives in a sheet
+   that always loads. Only the deltas are in the layer. */
+
+#context-menu-container {
+  position: fixed;
+  /* ⚠ Load-bearing: the chrome is no longer inline, so this is what keeps the container
+     hidden between init() and the first show(). show() and close() set `display` inline
+     from then on, and inline wins. */
+  display: none;
+  flex-direction: column;
+  z-index: 10000;
+  min-width: 180px;
+  max-width: 260px;
+  padding: 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xl);
+}
+
+.context-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  /* ⚠ Overridden INLINE by the caller for destructive items, which is the one thing
+     that stays inline here — and it is why this rule has no `!important`. */
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease);
+}
+.context-item svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+/* ⚠ Background only. The old hover was two inline handlers writing `background`, and
+   nothing else — so a danger item kept its colour and that was right. */
+.context-item:hover {
+  background: var(--bg-hover);
+}
+
+.context-menu-sep {
+  height: 1px;
+  margin: 4px 8px;
+  background: var(--border-subtle);
 }

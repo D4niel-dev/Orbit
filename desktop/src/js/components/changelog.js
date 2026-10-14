@@ -6,7 +6,7 @@ window.Changelog = {
     overlay.addEventListener('click', function(e) { if (e.target === overlay) window.Changelog.close(); });
 
     var modal = document.createElement('div');
-    modal.style.cssText = 'background:var(--bg-surface);border-radius:16px;padding:24px;max-width:540px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.4);border:1px solid var(--border-subtle);';
+    modal.style.cssText = 'background:var(--bg-surface);border-radius:var(--radius-lg);padding:24px;max-width:540px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:var(--shadow-xl);border:1px solid var(--border-subtle);';
 
     modal.innerHTML =
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">' +

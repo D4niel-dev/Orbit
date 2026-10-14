@@ -6,7 +6,7 @@ window.ProfileCard = {
   init() {
     this.container = document.createElement('div');
     this.container.id = 'profile-card-container';
-    this.container.style.cssText = 'display:none;position:absolute;bottom:80px;left:20px;width:300px;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-lg);z-index:1000;overflow:visible;flex-direction:column;';
+    this.container.style.cssText = 'display:none;position:absolute;bottom:80px;left:20px;width:300px;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);z-index:1000;overflow:visible;flex-direction:column;';
     document.body.appendChild(this.container);
     this.attachEvents();
     var self = this;

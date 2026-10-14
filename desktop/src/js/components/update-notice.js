@@ -220,7 +220,7 @@ window.UpdateNotice = {
 
     overlay.innerHTML =
       '<div style="width:480px;max-width:92vw;max-height:82vh;background:var(--bg-surface);' +
-        'border-radius:16px;border:1px solid var(--border-subtle);box-shadow:var(--shadow-xl);' +
+        'border-radius:var(--radius-lg);border:1px solid var(--border-subtle);box-shadow:var(--shadow-xl);' +
         'display:flex;flex-direction:column;overflow:hidden;">' +
 
         '<div style="padding:22px 24px 0;display:flex;align-items:flex-start;gap:14px;">' +

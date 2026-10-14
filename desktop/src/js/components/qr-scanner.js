@@ -224,7 +224,7 @@
 
     el.innerHTML =
       '<div style="width:440px;max-width:92vw;background:var(--bg-base);border:1px solid var(--border-subtle);' +
-      'border-radius:14px;padding:22px;">' +
+      'border-radius:var(--radius-lg);padding:22px;">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
           '<h3 style="margin:0;font-size:16px;font-weight:600;color:var(--text-primary);">Pair by QR code</h3>' +
           '<button id="qr-scan-close" style="background:transparent;border:none;color:var(--text-muted);' +

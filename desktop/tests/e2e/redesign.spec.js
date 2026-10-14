@@ -1641,6 +1641,77 @@ test.describe('desktop redesign', () => {
     }
   });
 
+  test('every panel takes its corner from the ladder, in both UIs', async () => {
+    // ⚠⚠ THE PANEL RADIUS WAS 12, 14, 16 AND 18 FOR THE SAME JOB. Nine surfaces, four
+    // values, none of them chosen together — the kind of thing that makes an app feel
+    // unfinished without anyone being able to name why. Measured before: settings 12,
+    // account switcher 16, emoji picker 14, search modal 16, pinned modal 14.
+    //
+    // ⚠ The fix is the token, not one number. `--radius-lg` is 18px in the redesign and
+    // 16px in classic, so a surface that uses it follows whichever UI it is drawn in.
+    // A literal cannot: it pins the panel to one look and the other mode inherits a
+    // value nobody chose.
+    const radii = () => page.evaluate(() => {
+      const r = (sel) => {
+        const el = document.querySelector(sel);
+        return el ? getComputedStyle(el).borderRadius : null;
+      };
+      return {
+        tokenLg: getComputedStyle(document.documentElement).getPropertyValue('--radius-lg').trim(),
+        settings: r('#settings-overlay > div'),
+        accountSwitcher: r('#account-switcher-panel'),
+        emojiPicker: r('#emoji-picker-container'),
+        searchModal: r('.search-modal-overlay > div'),
+        // ⚠ The one that is NOT lg, and deliberately: a small transient menu is a `md`.
+        contextMenu: r('#context-menu-container')
+      };
+    });
+
+    const open = () => page.evaluate(() => {
+      window.SettingsModal.open();
+      window.AccountSwitcher.open();
+      window.EmojiPicker.open();
+      window.ChatPanel.showSearchModal();
+      window.ContextMenu.show(300, 300, [{ label: 'x', icon: 'x', onClick: function () {} }]);
+    });
+    const shut = () => page.evaluate(() => {
+      try { window.SettingsModal.close(); } catch (e) {}
+      try { window.AccountSwitcher.close(); } catch (e) {}
+      try { window.EmojiPicker.close(); } catch (e) {}
+      try { window.ContextMenu.close(); } catch (e) {}
+      const sm = document.querySelector('.search-modal-overlay');
+      if (sm) sm.remove();
+    });
+
+    await open();
+    await page.waitForTimeout(1400);
+    const re = await radii();
+    expect(re.tokenLg).toBe('18px');
+    for (const k of ['settings', 'accountSwitcher', 'emojiPicker', 'searchModal']) {
+      expect(re[k]).toBe(re.tokenLg);
+    }
+    // A menu is a `md`, and that is a choice — not an accident of which file it lives in.
+    expect(re.contextMenu).toBe('12px');
+
+    // ⚠ And the CLASSIC look follows its own ladder rather than inheriting the
+    // redesign's numbers. 16px there, 18 here — same rule, different token.
+    await shut();
+    await page.evaluate(() => window.OrbitRedesign.apply(false));
+    await page.waitForTimeout(500);
+    await open();
+    await page.waitForTimeout(1400);
+    const classic = await radii();
+    expect(classic.tokenLg).toBe('16px');
+    for (const k of ['settings', 'accountSwitcher', 'emojiPicker', 'searchModal']) {
+      expect(classic[k]).toBe('16px');
+    }
+    expect(classic.contextMenu).toBe('10px');
+
+    await shut();
+    await page.evaluate(() => window.OrbitRedesign.apply(true));
+    await page.waitForTimeout(400);
+  });
+
   test('the layer is the ONLY difference — disabling it restores the old accent', async () => {
     const accent = () =>
       page.evaluate(() => {

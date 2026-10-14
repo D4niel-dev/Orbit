@@ -30,6 +30,7 @@
   --shadow-md:      0 4px 16px rgba(30, 40, 80, 0.10);
   --shadow-lg:      0 8px 32px rgba(30, 40, 80, 0.14);
 
+  --shadow-xl:      0 18px 48px rgba(30, 40, 80, 0.14);
   /* Transitions */
   --transition:  all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 }

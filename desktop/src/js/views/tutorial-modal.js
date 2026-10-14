@@ -100,7 +100,7 @@ window.TutorialModal = {
       : '<i data-lucide="' + icons[this.currentPage - 1] + '" style="width:32px;height:32px;color:var(--accent-primary);"></i>';
 
     return '' +
-      '<div class="tutorial-card" style="width:' + (page.width || 420) + 'px;background:var(--bg-surface);border-radius:16px;padding:28px;box-shadow:var(--shadow-xl);border:1px solid var(--border-subtle);">' +
+      '<div class="tutorial-card" style="width:' + (page.width || 420) + 'px;background:var(--bg-surface);border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow-xl);border:1px solid var(--border-subtle);">' +
         // Progress bar
         '<div style="display:flex;gap:5px;margin-bottom:24px;">' +
           this.pages.map(function(p, i) {
