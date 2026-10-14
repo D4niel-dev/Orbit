@@ -1809,7 +1809,7 @@ window.SidebarMiddle = {
     var limit = P ? P.limitFor(true) : 5;
     var first = pinned[0];
     var rowStyle = 'display:block;width:100%;text-align:left;background:transparent;border:none;' +
-      'padding:6px 0;cursor:pointer;font-size:12.5px;color:var(--text-secondary);' +
+      'padding:6px 0;cursor:pointer;font-size:12px;color:var(--text-secondary);' +
       'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
     return '<div id="group-pinned" style="margin:0 0 12px;background:var(--bg-base);border-radius:8px;padding:12px;">' +
       '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
@@ -1823,7 +1823,7 @@ window.SidebarMiddle = {
         esc(first.text || '(attachment)') +
       '</button>' +
       '<button id="group-pinned-show-all" style="margin-top:6px;background:transparent;border:none;' +
-        'padding:0;cursor:pointer;font-size:11.5px;font-weight:600;color:var(--accent-primary);">' +
+        'padding:0;cursor:pointer;font-size:11px;font-weight:600;color:var(--accent-primary);">' +
         (pinned.length > 1 ? 'Show all ' + pinned.length + ' pinned' : 'Manage pinned') +
       '</button>' +
     '</div>';

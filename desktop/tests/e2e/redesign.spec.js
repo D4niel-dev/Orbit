@@ -1770,6 +1770,51 @@ test.describe('desktop redesign', () => {
     await page.waitForTimeout(900);
   });
 
+  test('the nav icons are a redesign addition — classic has none', async () => {
+    // ⚠ Dan's call: "in classic mode the settings navbar options shouldn't have icons
+    // (only in the redesign*)". The original classic nav was plain text, so the icons are
+    // a redesign feature and the HIDING has to live in the sheet both UIs load — the
+    // layer only reveals them. Written the other way round, classic grows an icon column
+    // nobody asked for.
+    //
+    // ⚠ `display: none` and not `opacity: 0`: a hidden flex item leaves layout entirely,
+    // so the row's `gap` does not leave a 10px hole in front of every label.
+    const read = () => page.evaluate(() => {
+      const tab = document.querySelector('.settings-tab');
+      if (!tab) return null;
+      const svg = tab.querySelector('svg');
+      const span = tab.querySelector('span');
+      return {
+        iconDisplay: svg ? getComputedStyle(svg).display : 'no-svg',
+        iconWidth: svg ? Math.round(svg.getBoundingClientRect().width) : 0,
+        // Where the label starts relative to the row's own left edge.
+        labelInset: span ? Math.round(span.getBoundingClientRect().left - tab.getBoundingClientRect().left) : null
+      };
+    });
+
+    await page.evaluate(() => window.SettingsModal.open());
+    await page.waitForTimeout(1200);
+    const re = await read();
+    expect(re.iconDisplay).toBe('block');
+    expect(re.iconWidth).toBe(16);
+    // padding 12 + icon 16 + gap 10.
+    expect(re.labelInset).toBe(38);
+
+    await page.evaluate(() => { window.SettingsModal.close(); window.OrbitRedesign.apply(false); });
+    await page.waitForTimeout(500);
+    await page.evaluate(() => window.SettingsModal.open());
+    await page.waitForTimeout(1200);
+    const classic = await read();
+    expect(classic.iconDisplay).toBe('none');
+    expect(classic.iconWidth).toBe(0);
+    // ⚠ The label sits at the row's own 16px padding — no leftover gap from the icon it
+    // no longer has. That is what makes classic identical to what it was.
+    expect(classic.labelInset).toBe(16);
+
+    await page.evaluate(() => { window.SettingsModal.close(); window.OrbitRedesign.apply(true); });
+    await page.waitForTimeout(400);
+  });
+
   test('the layer is the ONLY difference — disabling it restores the old accent', async () => {
     const accent = () =>
       page.evaluate(() => {

@@ -1113,7 +1113,7 @@ window.ChatPanel = {
       if (msg.system) {
         messagesHtml += '<div class="message-row message-system" data-msg-id="' + msg.id + '"' +
           ' style="display:flex;justify-content:center;margin-bottom:var(--spacing-md);">' +
-          '<span style="font-size:11.5px;color:var(--text-muted);background:var(--bg-hover);' +
+          '<span style="font-size:11px;color:var(--text-muted);background:var(--bg-hover);' +
             'padding:4px 12px;border-radius:999px;text-align:center;">' +
             window.Sanitize.escapeHtml(msg.text || '') +
           '</span>' +
@@ -1315,7 +1315,7 @@ window.ChatPanel = {
         '<i data-lucide="pin" style="width:14px;height:14px;flex-shrink:0;color:var(--accent-primary);"></i>' +
         '<span id="pinned-messages-text" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>' +
         '<span id="pinned-messages-count" style="flex-shrink:0;font-size:11px;color:var(--text-muted);"></span>' +
-        '<button id="btn-show-all-pinned" style="background:none;border:none;cursor:pointer;color:var(--accent-primary);padding:2px 4px;font-size:11.5px;font-weight:600;">Show all</button>' +
+        '<button id="btn-show-all-pinned" style="background:none;border:none;cursor:pointer;color:var(--accent-primary);padding:2px 4px;font-size:11px;font-weight:600;">Show all</button>' +
         '<button id="btn-unpin-all" style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:2px;font-size:16px;line-height:1;" title="Unpin all">×</button>' +
       '</div>' +
 

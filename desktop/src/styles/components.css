@@ -1865,7 +1865,7 @@ button:active,
 }
 .call-log-body { min-width: 0; }
 .call-log-title {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
   white-space: nowrap;
@@ -1893,7 +1893,7 @@ button:active,
   background: var(--accent-primary);
   color: #fff;
   font-family: inherit;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.15s, transform 0.12s;
@@ -2184,7 +2184,7 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: 0.3; }
   border: none;
   background: var(--accent-primary);
   color: #fff;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 650;
   cursor: pointer;
   transition: background 0.18s, transform 0.18s;
@@ -2198,7 +2198,7 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: 0.3; }
 .oe-root.is-compact { padding: 26px 18px; gap: 8px; }
 .oe-root.is-compact .oe-icon { width: 44px; height: 44px; border-radius: 14px; }
 .oe-root.is-compact .oe-icon svg { width: 20px; height: 20px; }
-.oe-root.is-compact .oe-title { font-size: 13.5px; }
+.oe-root.is-compact .oe-title { font-size: 13px; }
 .oe-root.is-compact .oe-hint { font-size: 12px; }
 
 /* Passive states — "waiting for peers" is not something to act on, so it does not
@@ -3008,7 +3008,7 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: 0.3; }
   border-bottom: 1px solid var(--border-subtle);
 }
 .pf-header-title {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -3289,7 +3289,7 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: 0.3; }
   border: none;
   background: transparent;
   text-align: left;
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--text-secondary);
   cursor: pointer;
   overflow: hidden;
@@ -3304,7 +3304,7 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: 0.3; }
   padding: 0;
   border: none;
   background: transparent;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--accent-primary);
   cursor: pointer;
@@ -3342,9 +3342,16 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: 0.3; }
   cursor: pointer;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-/* The icon column. Sized here so it is right in both UIs — the icons are part of the
-   nav, not of the redesign. */
+/* The icon column. ⚠⚠ HIDDEN HERE AND REVEALED BY THE LAYER, and the direction matters:
+   the icons are a REDESIGN addition, so the hiding has to live in the sheet BOTH UIs
+   load and only the reveal belongs in the layer. Written the other way round — size here,
+   shown by default — the classic look grew an icon column nobody asked for, and the
+   original classic nav was plain text.
+
+   ⚠ `display: none` rather than `opacity: 0`: a hidden flex item is removed from layout,
+   so the row's `gap` does not leave a 10px hole in front of every label. */
 .settings-tab svg {
+  display: none;
   width: 16px;
   height: 16px;
   flex-shrink: 0;

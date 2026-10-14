@@ -658,7 +658,7 @@ window.SettingsModal = {
                 '<span class="orbit-switch-track"><span class="orbit-switch-knob"></span></span>' +
               '</span>' +
             '</label>' +
-            '<div style="font-size:11.5px;color:var(--text-muted);margin-top:10px;padding-top:10px;border-top:1px solid var(--border-subtle);line-height:1.5;">Orbit restarts to apply this, so it asks first. Your theme, and everything else in this panel, keeps working either way.</div>' +
+            '<div style="font-size:11px;color:var(--text-muted);margin-top:10px;padding-top:10px;border-top:1px solid var(--border-subtle);line-height:1.5;">Orbit restarts to apply this, so it asks first. Your theme, and everything else in this panel, keeps working either way.</div>' +
           '</div>' +
         '</div>' +
 

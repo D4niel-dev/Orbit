@@ -556,7 +556,7 @@ window.GlobalGallery = {
         var pct = total > 0 ? Math.max(1, Math.round((r.bytes / total) * 100)) : 0;
         var size = window.Format && window.Format.fileSize ? window.Format.fileSize(r.bytes) : (r.bytes + ' B');
         html += '<div style="margin-bottom:10px;">' +
-          '<div style="display:flex; justify-content:space-between; gap:10px; font-size:11.5px; margin-bottom:4px;">' +
+          '<div style="display:flex; justify-content:space-between; gap:10px; font-size:11px; margin-bottom:4px;">' +
             '<span style="color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + esc(r.name) + '</span>' +
             '<span style="color:var(--text-muted); flex-shrink:0;">' + size + ' &middot; ' + r.count + '</span>' +
           '</div>' +

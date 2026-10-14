@@ -36,7 +36,7 @@ window.PinnedModal = {
       '<div style="padding:14px 16px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:8px;">' +
         '<i data-lucide="pin" style="width:16px;height:16px;color:var(--accent-primary);"></i>' +
         '<span style="font-weight:600;font-size:14px;color:var(--text-primary);">Pinned messages</span>' +
-        '<span id="pinned-modal-count" style="margin-left:auto;font-size:11.5px;color:var(--text-muted);"></span>' +
+        '<span id="pinned-modal-count" style="margin-left:auto;font-size:11px;color:var(--text-muted);"></span>' +
       '</div>' +
       '<div id="pinned-modal-list" style="padding:8px;overflow-y:auto;flex:1;"></div>' +
       '<div style="padding:12px 16px;border-top:1px solid var(--border-subtle);display:flex;align-items:center;gap:8px;">' +
@@ -66,7 +66,7 @@ window.PinnedModal = {
       working.forEach(function (row, i) {
         html += '<div class="pinned-modal-row" data-index="' + i + '" style="display:flex;align-items:center;gap:8px;' +
             'padding:8px 10px;border-radius:10px;background:var(--bg-base);margin-bottom:6px;">' +
-          '<span style="flex:1;min-width:0;font-size:12.5px;color:var(--text-secondary);' +
+          '<span style="flex:1;min-width:0;font-size:12px;color:var(--text-secondary);' +
             'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(row.text) + '</span>' +
           '<button class="pinned-modal-up" data-index="' + i + '"' + (i === 0 ? ' disabled' : '') +
             ' style="width:26px;height:26px;border-radius:7px;border:1px solid var(--border-subtle);background:transparent;' +

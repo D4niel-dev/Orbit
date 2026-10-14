@@ -75,7 +75,7 @@ window.GallerySidebar = {
       wrap.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap;';
       var l = document.createElement('div');
       l.textContent = label;
-      l.style.cssText = 'font-size:10.5px; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); width:38px; flex-shrink:0;';
+      l.style.cssText = 'font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); width:38px; flex-shrink:0;';
       wrap.appendChild(l);
       children.forEach(function (c) { wrap.appendChild(c); });
       return wrap;
@@ -482,7 +482,7 @@ window.GallerySidebar = {
               '<img src="' + lthumb + '" data-fallback-src="' + lu + '" style="width:100%;height:100%;object-fit:cover;">' +
             '</div>' +
             '<div style="flex:1;min-width:0;">' +
-              '<div style="font-size:12.5px;font-weight:600;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + ln + '</div>' +
+              '<div style="font-size:12px;font-weight:600;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + ln + '</div>' +
               '<div style="font-size:11px;color:var(--text-muted);">' + ls + ' &middot; ' + window.Format.fileSize(img.size || 0) + '</div>' +
             '</div>' +
             '<button class="gallery-jump" data-msg-id="' + img.msgId + '" title="Go to message" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;padding:4px;"><i data-lucide="corner-up-left" style="width:14px;height:14px;"></i></button>' +
@@ -553,7 +553,7 @@ window.GallerySidebar = {
             '<div style="width:36px;height:36px;border-radius:9px;background:var(--bg-hover);display:flex;align-items:center;justify-content:center;">' +
               '<i data-lucide="' + gicon + '" style="width:17px;height:17px;color:var(--text-secondary);"></i>' +
             '</div>' +
-            '<div style="font-size:11.5px;color:var(--text-primary);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;max-width:100%;" title="' + gn + '">' + gn + '</div>' +
+            '<div style="font-size:11px;color:var(--text-primary);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;max-width:100%;" title="' + gn + '">' + gn + '</div>' +
           '</div>';
         });
         html += '</div>';
@@ -610,7 +610,7 @@ window.GallerySidebar = {
         'background:var(--bg-base); color:var(--text-secondary); cursor:pointer; font-size:12px; font-weight:600;">' +
         'Show more <span style="color:var(--text-muted); font-weight:500;">(' + (totalItems - this.visibleCount) + ' more)</span>' +
         '</button>' +
-        '<div style="margin-top:6px; font-size:10.5px; color:var(--text-muted);">Showing ' + items.length + ' of ' + totalItems + '</div>' +
+        '<div style="margin-top:6px; font-size:10px; color:var(--text-muted);">Showing ' + items.length + ' of ' + totalItems + '</div>' +
       '</div>';
     }
 

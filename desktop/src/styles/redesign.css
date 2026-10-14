@@ -543,7 +543,7 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
   background: transparent !important;
   color: var(--text-secondary) !important;
   font-family: var(--font-body);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 500 !important;
   cursor: pointer;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease) !important;
@@ -570,7 +570,7 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
 .list-container > div > span:first-child {
   display: block;
   padding: 14px 8px 6px;
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: .07em;
   text-transform: uppercase;
@@ -611,7 +611,7 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
   gap: 1px;
 }
 .list-row-title {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
   white-space: nowrap;
@@ -687,7 +687,7 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
    The name has no class — it is the first `div` inside the strip — so this is
    structural. My first pass invented `.chat-header-name`, which matched nothing. */
 #chat-header-strip > div > div:first-child {
-  font-size: 14.5px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: -.01em;
   color: var(--text-primary);
@@ -701,7 +701,7 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
 /* Day separators and system notes are the same idea — "this is not a message" —
    so they get the same treatment: a centred muted pill on the base surface. */
 .message-row.message-system span {
-  font-size: 11.5px !important;
+  font-size: 11px !important;
   color: var(--text-secondary) !important;
   background: var(--bg-raised) !important;
   border: 1px solid var(--border-subtle);
@@ -757,7 +757,7 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
    ⚠ `.msg-time` is the real class (chat-panel.js). My first pass also wrote
    `.msg-meta` and `.message-time`, which do not exist. */
 .msg-time {
-  font-size: 10.5px !important;
+  font-size: 10px !important;
   line-height: 1.3;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
@@ -1006,7 +1006,7 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
    ideas. Underline here because the panel is narrow and a segmented control
    would eat the row. */
 .gallery-tab {
-  font-size: 12.5px !important;
+  font-size: 12px !important;
   font-weight: 500 !important;
   color: var(--text-secondary) !important;
   border-bottom-color: transparent !important;
@@ -1254,6 +1254,11 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
   font-weight: 500;
 }
 .settings-tab svg {
+  /* ⚠⚠ THIS IS THE REVEAL. components.css hides the icon column, because the icons are
+     a redesign addition and the classic look's nav is plain text — Dan's call, and it
+     is the right default: a rule that shows something new belongs to the mode that
+     wants it, not to the base that both modes share. */
+  display: block;
   /* The icon is one step quieter than its label until the row is the active one — at
      the same weight they compete and the column reads as noise. */
   opacity: .75;
@@ -1418,7 +1423,7 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
   background: var(--bg-raised-2) !important;
   color: var(--text-secondary) !important;
   border-radius: var(--radius-sm) !important;
-  font-size: 11.5px !important;
+  font-size: 11px !important;
   font-weight: 500 !important;
   padding: 4px 10px !important;
   transition: var(--transition);
@@ -1469,7 +1474,7 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
   padding: 7px 4px !important;
   background: transparent !important;
   color: var(--text-secondary) !important;
-  font-size: 12.5px !important;
+  font-size: 12px !important;
   font-weight: 500 !important;
   text-align: center;
   cursor: pointer;
@@ -1969,7 +1974,7 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--text-muted);
-  font-size: 11.5px;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
@@ -2022,7 +2027,7 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--text-primary);
-  font-size: 12.5px;
+  font-size: 12px;
   outline: none;
 }
 .gal-search-input::placeholder {
@@ -2116,7 +2121,7 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--text-secondary);
-  font-size: 11.5px;
+  font-size: 11px;
   white-space: nowrap;
   cursor: pointer;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);

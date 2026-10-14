@@ -73,13 +73,13 @@ window.OrbitLinkPhone = {
         '<i data-lucide="smartphone" style="width:19px;height:19px;color:var(--accent-primary);"></i>' +
         '<h3 style="margin:0;font-family:var(--font-display);font-size:17px;font-weight:600;color:var(--text-primary);">Link a phone</h3>' +
       '</div>' +
-      '<p style="margin:0 0 16px;font-size:12.5px;line-height:1.55;color:var(--text-muted);">' +
+      '<p style="margin:0 0 16px;font-size:12px;line-height:1.55;color:var(--text-muted);">' +
         'On the phone: <b style="color:var(--text-secondary);">Orbit → Settings → Pair a desktop</b>, then point it at this code.' +
       '</p>' +
       '<div id="link-phone-qr" style="background:#fff;padding:12px;border-radius:10px;display:inline-block;line-height:0;"></div>' +
-      '<div id="link-phone-code" style="margin-top:12px;font-family:var(--font-mono);font-size:11.5px;' +
+      '<div id="link-phone-code" style="margin-top:12px;font-family:var(--font-mono);font-size:11px;' +
         'color:var(--text-muted);word-break:break-all;">' + esc(this._token || '') + '</div>' +
-      '<div id="link-phone-status" style="margin-top:16px;font-size:12.5px;color:var(--text-secondary);">' +
+      '<div id="link-phone-status" style="margin-top:16px;font-size:12px;color:var(--text-secondary);">' +
         'Waiting for a phone… <span id="link-phone-timer" style="color:var(--text-muted);"></span></div>' +
       '<div id="link-phone-progress" style="display:none;margin-top:12px;">' +
         '<div style="height:4px;border-radius:2px;background:var(--bg-hover);overflow:hidden;">' +
