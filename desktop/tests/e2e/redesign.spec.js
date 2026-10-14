@@ -1712,6 +1712,64 @@ test.describe('desktop redesign', () => {
     await page.waitForTimeout(400);
   });
 
+  test('the settings nav keeps its icons across a re-render', async () => {
+    // ⚠⚠ THE ICONS ONLY APPEARED ON FIRST LOAD, BY ACCIDENT. `SettingsModal.render()`
+    // writes `<i data-lucide="…">` into the rail and then called only `attachEvents()`;
+    // all EIGHT `createIcons` calls in that file are scoped to `#settings-content`, so
+    // nothing in the file ever converted the RAIL. They showed up on boot only because
+    // app.js runs a global `lucide.createIcons()` that happens to sweep the DOM at that
+    // moment.
+    //
+    // ⚠ So ANY re-render lost them, and the experimental-features toggle is a
+    // re-render: turning it on made the Security item appear and every OTHER icon
+    // vanish. Reported as "the security doesn't have an icon" — measured, ALL EIGHT
+    // lose theirs. The item that just appeared is the one that looks guilty.
+    const icons = () => page.evaluate(() => {
+      const tabs = Array.from(document.querySelectorAll('.settings-tab'));
+      return {
+        count: tabs.length,
+        // ⚠ An <i> lucide never converted stays an <i>, so this is the honest test.
+        missing: tabs.filter((t) => !t.querySelector('svg')).map((t) => t.dataset.tab),
+        unconverted: tabs.filter((t) => t.querySelector('i[data-lucide]')).map((t) => t.dataset.tab),
+        sizes: [...new Set(tabs.map((t) => {
+          const s = t.querySelector('svg');
+          return s ? Math.round(s.getBoundingClientRect().width) + 'x' + Math.round(s.getBoundingClientRect().height) : 'none';
+        }))]
+      };
+    });
+
+    await page.evaluate(() => window.SettingsModal.open());
+    await page.waitForTimeout(1200);
+    const before = await icons();
+    expect(before.count).toBe(7);
+    expect(before.missing).toEqual([]);
+
+    // The exact thing the Advanced tab's toggle does.
+    await page.evaluate(() => {
+      const s = window.store.getState().settings;
+      window.store.setState({ settings: { ...s, enableExperimental: true } });
+    });
+    await page.waitForTimeout(900);
+    await page.evaluate(() => window.SettingsModal.render());
+    await page.waitForTimeout(1200);
+
+    const after = await icons();
+    // The Security item is new, and it must bring an icon with it…
+    expect(after.count).toBe(8);
+    expect(after.missing).toEqual([]);
+    expect(after.unconverted).toEqual([]);
+    // …and the seven that were already there must still have theirs.
+    expect(after.sizes).toEqual(['16x16']);
+
+    await page.evaluate(() => {
+      const s = window.store.getState().settings;
+      window.store.setState({ settings: { ...s, enableExperimental: false } });
+      window.SettingsModal.render();
+      window.SettingsModal.close();
+    });
+    await page.waitForTimeout(900);
+  });
+
   test('the layer is the ONLY difference — disabling it restores the old accent', async () => {
     const accent = () =>
       page.evaluate(() => {

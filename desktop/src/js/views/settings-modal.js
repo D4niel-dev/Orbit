@@ -114,6 +114,19 @@ window.SettingsModal = {
         '</div>' +
         '<div id="settings-content" style="flex:1;padding:32px;overflow-y:auto;background:var(--bg-surface);"></div>' +
       '</div>';
+    // ⚠⚠ THE NAV'S ICONS HAVE TO BE CONVERTED HERE, AND THEY NEVER WERE. `render()`
+    // writes `<i data-lucide="…">` into the rail and then called only `attachEvents()`;
+    // every one of the eight `createIcons` calls in this file is scoped to
+    // `#settings-content`, so the RAIL was never converted by anything in this file.
+    // The icons appeared on first load only because app.js runs a global
+    // `lucide.createIcons()` at boot — which happens to sweep whatever is in the DOM at
+    // that moment.
+    //
+    // ⚠⚠ So any RE-RENDER lost them, and the experimental-features toggle is a
+    // re-render: turning it on made the Security item appear and every other icon
+    // vanish. Dan reported it as "the security doesn't have an icon" — measured, ALL
+    // EIGHT lose theirs. The item that just appeared is the one that looks guilty.
+    if (window.lucide) window.lucide.createIcons({ root: this.container });
     this.attachEvents();
   },
 
