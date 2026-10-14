@@ -346,12 +346,19 @@ window.ProfileSidebar = {
     this.currentUserId = user.userId;
     this.render(user);
     this.container.style.display = 'flex';
+    // ⚠ Same fix as the gallery, and it had the same bug: this panel is
+    // `position: absolute; right: 0`, so it sat on the chat header's ⋮, the gallery
+    // toggle and the composer's Send button. See OrbitReserveSidePanel in app.js.
+    if (window.OrbitReserveSidePanel) window.OrbitReserveSidePanel();
     this.isOpen = true;
   },
 
   close() {
     if (!this.container) return;
     this.container.style.display = 'none';
+    // ⚠ After the display flip, so the panel is out of the measurement. The gallery can
+    // still be open underneath, and the helper reads the DOM rather than being told.
+    if (window.OrbitReserveSidePanel) window.OrbitReserveSidePanel();
     this.isOpen = false;
     this.currentUserId = null;
   }

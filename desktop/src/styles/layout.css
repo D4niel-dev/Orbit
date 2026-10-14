@@ -140,6 +140,25 @@
   position: relative;
 }
 
+/* ⚠⚠ THE CHAT MAKES ROOM FOR A SIDE PANEL.
+
+   `#panel-gallery` (340px) and `#panel-profile` (320px) are `position: absolute; right: 0`
+   inside `#panel-right`, so they were sitting ON the conversation. Measured with the
+   gallery open, that covered THREE controls: `#btn-chat-more` (the chat header's ⋮),
+   `#btn-gallery` (the button that had just opened it) and **`#btn-send` in the composer**.
+   Clicking where the ⋮ is landed on the panel's close button instead, so the menu never
+   appeared — Dan's report, and the reason it looked like a dead button.
+
+   ⚠ In layout.css and NOT in the redesign layer: this is a bug in both UIs, so the rule
+   has to live where both of them can see it.
+
+   ⚠ The width comes from JS (`--side-panel-w`, set by OrbitReserveSidePanel) because the
+   two panels are different widths. The panel itself does not move — its own border and
+   shadow still read as the boundary between panel and conversation. */
+#panel-right.side-panel-open #chat-container {
+  margin-right: var(--side-panel-w, 0px);
+}
+
 /* Mobile Responsive Layout */
 @media (max-width: 768px) {
   #app-layout {

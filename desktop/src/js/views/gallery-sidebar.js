@@ -786,6 +786,10 @@ window.GallerySidebar = {
     if (this._closeTimer) { clearTimeout(this._closeTimer); this._closeTimer = null; }
     this.container.classList.remove('panel-out');
     this.container.style.display = 'flex';
+    // ⚠ After the display flip, so the panel has a measurable width. See the note on
+    // OrbitReserveSidePanel: this panel is absolutely positioned and was covering the
+    // chat header's ⋮, its own toggle, and the composer's Send button.
+    if (window.OrbitReserveSidePanel) window.OrbitReserveSidePanel();
     // The class has to land a frame after display flips: an element going from display:none
     // has no from-state to animate out of, so the animation would be skipped entirely.
     var el = this.container;
@@ -805,6 +809,10 @@ window.GallerySidebar = {
       el.style.display = 'none';
       el.classList.remove('panel-out');
       el.classList.remove('panel-in');
+      // ⚠ In the timer, not before it — the panel is still on screen for the 170ms of
+      // the exit animation, so handing the space back early would snap the chat wider
+      // while the panel is still sliding out.
+      if (window.OrbitReserveSidePanel) window.OrbitReserveSidePanel();
       this._closeTimer = null;
     }.bind(this), 170);
   }

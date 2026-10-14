@@ -252,6 +252,44 @@ document.addEventListener('DOMContentLoaded', () => {
     link.disabled = !enabled;
     return true;
   };
+  /**
+   * Make the chat give up the space a side panel is taking.
+   *
+   * ⚠⚠ `#panel-gallery` and `#panel-profile` are `position: absolute; right: 0` inside
+   * `#panel-right`, so they sit ON the conversation rather than beside it. Measured with
+   * the gallery open, that covered THREE controls: `#btn-chat-more` (the header's ⋮),
+   * `#btn-gallery` (the button that opened it) and **`#btn-send` in the composer**. Dan
+   * reported it as "the three dots button isn't showing anything" — clicking where it is
+   * hit the gallery's close button instead, so the menu never appeared.
+   *
+   * ⚠ The chat ends where the panel begins now. The panel does not move and its own
+   * shadow still reads as the boundary, so this is a fix and not a redesign.
+   *
+   * ⚠⚠ IT READS THE DOM RATHER THAN BEING TOLD. Both panels can be open at once, and
+   * the gallery closes on a 170ms timer — so "which panel is showing" is a question for
+   * the document, not for whichever caller happens to be running. Call it after any
+   * display change and it is right either way. The width is read too: the gallery is
+   * 340px and the profile 320px.
+   */
+  window.OrbitReserveSidePanel = function () {
+    var right = document.getElementById('panel-right');
+    if (!right) return;
+    var w = 0;
+    ['panel-gallery', 'panel-profile'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el && getComputedStyle(el).display !== 'none') {
+        w = Math.max(w, Math.round(el.getBoundingClientRect().width) || 0);
+      }
+    });
+    if (w > 0) {
+      right.style.setProperty('--side-panel-w', w + 'px');
+      right.classList.add('side-panel-open');
+    } else {
+      right.classList.remove('side-panel-open');
+      right.style.removeProperty('--side-panel-w');
+    }
+  };
+
   window.OrbitRedesign = {
     apply: applyRedesignLayer,
     isOn: () => {

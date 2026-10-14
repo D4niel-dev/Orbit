@@ -1815,6 +1815,67 @@ test.describe('desktop redesign', () => {
     await page.waitForTimeout(400);
   });
 
+  test('a side panel does not cover the chat controls', async () => {
+    // ⚠⚠ THIS IS WHY THE CHAT HEADER'S ⋮ LOOKED DEAD. `#panel-gallery` (340px) and
+    // `#panel-profile` (320px) are `position: absolute; right: 0` inside `#panel-right`,
+    // so they sat ON the conversation. Measured with the gallery open, that covered
+    // THREE controls: the header's `#btn-chat-more`, `#btn-gallery` — the button that had
+    // just opened it — and **`#btn-send` in the composer**. Clicking where the ⋮ is
+    // landed on the panel's close button instead, so the menu never appeared.
+    //
+    // ⚠ `elementFromPoint` at each control's centre is the test, not a rect comparison:
+    // a control can be in the layout and still be underneath something.
+    const cover = () => page.evaluate(() => {
+      const out = {};
+      for (const id of ['#btn-chat-more', '#btn-send', '#btn-gallery']) {
+        const el = document.querySelector(id);
+        if (!el) { out[id] = 'absent'; continue; }
+        const r = el.getBoundingClientRect();
+        const top = document.elementFromPoint(Math.round(r.x + r.width / 2), Math.round(r.y + r.height / 2));
+        out[id] = (top && top !== el && !el.contains(top)) ? 'covered' : 'clear';
+      }
+      const chat = document.getElementById('chat-container');
+      const gal = document.getElementById('panel-gallery');
+      out._chatRight = Math.round(chat.getBoundingClientRect().right);
+      out._galLeft = gal && getComputedStyle(gal).display !== 'none' ? Math.round(gal.getBoundingClientRect().left) : null;
+      return out;
+    });
+
+    await page.evaluate(() => window.GallerySidebar.toggle());
+    await page.waitForTimeout(1400);
+    const open = await cover();
+    expect(open['#btn-chat-more']).toBe('clear');
+    expect(open['#btn-send']).toBe('clear');
+    expect(open['#btn-gallery']).toBe('clear');
+    // ⚠ And the chat really did give up the space — its right edge is the panel's left
+    // edge, not the window's.
+    expect(open._galLeft).not.toBeNull();
+    expect(open._chatRight).toBeLessThanOrEqual(open._galLeft + 1);
+
+    // The button works, which is the whole point of the fix.
+    await page.click('#btn-chat-more');
+    await page.waitForTimeout(800);
+    expect(await page.evaluate(() => {
+      const c = document.getElementById('context-menu-container');
+      return c ? getComputedStyle(c).display : null;
+    })).toBe('flex');
+    await page.evaluate(() => window.ContextMenu.close());
+
+    // ⚠ And the space comes back. The panel closes on a 170ms timer, so the reservation
+    // is released in that timer — assert after it, not before.
+    await page.evaluate(() => window.GallerySidebar.toggle());
+    await page.waitForTimeout(900);
+    const shut = await cover();
+    expect(shut._galLeft).toBeNull();
+    expect(shut['#btn-chat-more']).toBe('clear');
+    // Back to the full width of the panel-right.
+    expect(await page.evaluate(() => {
+      const chat = document.getElementById('chat-container');
+      const right = document.getElementById('panel-right');
+      return Math.abs(chat.getBoundingClientRect().right - right.getBoundingClientRect().right) < 2;
+    })).toBe(true);
+  });
+
   test('the layer is the ONLY difference — disabling it restores the old accent', async () => {
     const accent = () =>
       page.evaluate(() => {
