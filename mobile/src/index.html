@@ -37,8 +37,12 @@
        changes rather than editing that file in place. -->
   <link rel="stylesheet" href="styles/redesign.css?v=20261011c">
 
-  <!-- Syntax Highlighting (Prism) -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+  <!-- ⚠ Prism is NOT loaded here any more. Three cdnjs requests — a stylesheet
+       and two scripts, none deferred — used to sit in the boot path on every
+       launch, blocking first paint (~230ms on a good connection, ~860ms on a
+       slow one) to highlight code blocks that most launches never show.
+       shared/ui/code-highlight.js loads it the first time a message actually
+       contains code. See the note at the top of that file. -->
 
   <!-- Lucide Icons -->
   <script src="lib/lucide.min.js"></script>
@@ -450,12 +454,9 @@
   <script src="shared/ui/empty-state.js?v=20260926c"></script>
   <script src="shared/ui/link-preview.js?v=20261007a"></script>
   <script src="shared/ui/app-lock.js?v=20261007a"></script>
+  <script src="shared/ui/code-highlight.js?v=20261015a"></script>
   <script src="shared/database/index.js?v=20260912"></script>
   <script src="shared/database/sqlite-mobile.js?v=20260912"></script>
-
-  <!-- Syntax Highlighting (Prism) — loads before app.js so available on first render -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
 
   <!-- Data Store -->
   <script src="js/version.js?v=20261011g"></script>
@@ -490,7 +491,7 @@
   setTimeout(function() { window._loadImageCropper(); }, 1500);
   </script>
 
-  <script src="js/app.js?v=20261012a"></script>
+  <script src="js/app.js?v=20261015b"></script>
 
   <!-- v0.2.8 Components -->
   <script src="js/components/navigation.js?v=20261004e"></script>

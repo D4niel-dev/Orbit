@@ -1330,8 +1330,11 @@ window.ChatPanel = {
         '</div>' +
       '</div>';
 
-    // Syntax-highlight code blocks
-    if (window.Prism) setTimeout(function() { Prism.highlightAll(); }, 0);
+    // Syntax-highlight code blocks — Prism is fetched on demand, and only when
+    // the feed actually contains code. See shared/ui/code-highlight.js.
+    if (window.OrbitCodeHighlight) {
+      window.OrbitCodeHighlight.refresh(document.getElementById('chat-message-feed') || document);
+    }
     // Wire up copy-code buttons
     setTimeout(function() {
       var feed = document.getElementById('chat-message-feed');

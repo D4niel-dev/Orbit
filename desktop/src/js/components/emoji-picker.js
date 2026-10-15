@@ -12,13 +12,29 @@ window.EmojiPicker = {
     // border-radius quietly beat the themed one, and the panel kept the library-era
     // 8px corners. Anything that is a look belongs where the theme can reach it.
     this.container.style.display = 'none';
-    
-    // Create the emoji picker web component
-    const picker = document.createElement('emoji-picker');
-    this.container.appendChild(picker);
 
+    // ⚠ THE <emoji-picker> ELEMENT IS NOT BUILT HERE ANY MORE. Creating it makes
+    // the library fetch its whole emoji dataset over the network — measured at
+    // boot as `https://cdn.jsdelivr.net/npm/emoji-picker-element-data@^1/en/
+    // emojibase/data.json`. That is a start-up cost and a hard dependency on the
+    // internet for an app whose whole premise is that it works without one, and
+    // it is paid on every launch for a picker most launches never open.
+    //
+    // The element is created on first open instead. `_fitToScrollbar` already
+    // returns early when the picker is missing, so nothing before the first open
+    // has to care.
     document.body.appendChild(this.container);
-    this.attachEvents(picker);
+    this._wireDocument();
+  },
+
+  /** Build the picker once, the first time it is actually shown. */
+  _ensurePicker() {
+    if (this._picker) return this._picker;
+    var picker = document.createElement('emoji-picker');
+    this.container.appendChild(picker);
+    this._picker = picker;
+    this._wirePicker(picker);
+    return picker;
   },
 
   /**
@@ -70,7 +86,17 @@ window.EmojiPicker = {
     this.container.style.width = total + 'px';
   },
 
-  attachEvents(picker) {
+  _wireDocument() {
+    // Close on outside click. On the document, not the picker, so it is wired
+    // once at init rather than waiting for the element to exist.
+    document.addEventListener('click', (e) => {
+      if (this.isOpen && !this.container.contains(e.target) && !e.target.closest('#btn-emoji')) {
+        this.close();
+      }
+    });
+  },
+
+  _wirePicker(picker) {
     // Remember the chosen skin tone, the way mobile does. The value MUST be validated
     // on both sides: the picker renders whatever it is handed in its tone button, and
     // a `skin-tone-change` event with no detail stored the literal string "undefined"
@@ -97,13 +123,6 @@ window.EmojiPicker = {
         this.targetInput.focus();
       }
     });
-
-    // Close on outside click
-    document.addEventListener('click', (e) => {
-      if (this.isOpen && !this.container.contains(e.target) && !e.target.closest('#btn-emoji')) {
-        this.close();
-      }
-    });
   },
 
   toggle(targetInput) {
@@ -111,15 +130,17 @@ window.EmojiPicker = {
     if (this.isOpen) {
       this.close();
     } else {
+      var picker = this._ensurePicker();
       this.open();
       // Sync theme
       const theme = document.documentElement.getAttribute('data-theme') || 'dark';
-      this.container.querySelector('emoji-picker').classList.remove('light', 'dark');
-      this.container.querySelector('emoji-picker').classList.add(theme);
+      picker.classList.remove('light', 'dark');
+      picker.classList.add(theme);
     }
   },
 
   open() {
+    this._ensurePicker();
     this.container.style.display = 'block';
     this.isOpen = true;
     var self = this;

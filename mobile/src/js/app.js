@@ -2527,7 +2527,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // The live chat path is window.openChat → this renderMessages; the old
     // OrbitChat.renderMessages path that used to own this is no longer the entry point.
     if (window.OrbitChat && typeof OrbitChat._initContextMenu === 'function') OrbitChat._initContextMenu();
-    if (window.Prism) setTimeout(function() { Prism.highlightAll(); }, 0);
+    if (window.OrbitCodeHighlight) window.OrbitCodeHighlight.refresh(feed);
     // Wire up copy-code buttons
     setTimeout(function() {
       feed.querySelectorAll('.copy-code-btn').forEach(function(btn) {
@@ -5738,6 +5738,35 @@ document.addEventListener('DOMContentLoaded', function() {
     header.innerHTML = '<div class="bottom-sheet-handle"></div>';
     container.appendChild(header);
 
+    // ⚠ THE <emoji-picker> ELEMENT IS NOT BUILT HERE ANY MORE. Creating it makes
+    // the library fetch its whole emoji dataset over the network — measured at
+    // boot as `https://cdn.jsdelivr.net/npm/emoji-picker-element-data@^1/en/
+    // emojibase/data.json`. On a phone that is a start-up cost AND a hard
+    // dependency on the internet, in an app whose whole premise is that it works
+    // without one. It is built on first open instead; `openEmojiPicker` already
+    // looks the element up with a null guard.
+
+    // Swipe down on the handle to dismiss — the same gesture as the sheets, via
+    // the same helper, so the two panels behave alike.
+    if (window.OrbitSheet && typeof OrbitSheet.enableDragClose === 'function') {
+      OrbitSheet.enableDragClose({ sheet: container, onClose: closeEmojiPicker });
+    }
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', function() {
+        if (emojiPickerOpen) _syncEmojiHeight();
+      });
+    }
+  }
+
+  var _emojiPickerEl = null;
+
+  /** Build the picker once, the first time it is actually shown. */
+  function _ensureEmojiPicker() {
+    if (_emojiPickerEl) return _emojiPickerEl;
+    var container = document.getElementById('emoji-picker-container');
+    if (!container) return null;
+
     var picker = document.createElement('emoji-picker');
 
     // emoji-picker-element only remembers the chosen skin tone for the session,
@@ -5802,23 +5831,14 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
     container.appendChild(picker);
-
-    // Swipe down on the handle to dismiss — the same gesture as the sheets, via
-    // the same helper, so the two panels behave alike.
-    if (window.OrbitSheet && typeof OrbitSheet.enableDragClose === 'function') {
-      OrbitSheet.enableDragClose({ sheet: container, onClose: closeEmojiPicker });
-    }
-
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', function() {
-        if (emojiPickerOpen) _syncEmojiHeight();
-      });
-    }
+    _emojiPickerEl = picker;
+    return picker;
   }
 
   function openEmojiPicker() {
     var container = document.getElementById('emoji-picker-container');
     if (!container) return;
+    _ensureEmojiPicker();
     var theme = document.documentElement.getAttribute('data-theme') || 'dark';
     var picker = container.querySelector('emoji-picker');
     if (picker) {
