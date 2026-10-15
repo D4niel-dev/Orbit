@@ -3368,10 +3368,23 @@ textarea#chat-input {
   padding: 24px 16px 16px;
   gap: 8px;
 }
+/* ⚠ THE RADIUS IS NAMED, AND THE EDIT BAR REPEATS ITS BOTTOM HALF.
+   `overflow: hidden` is supposed to clip the absolutely-positioned Edit bar to
+   this box, and in a desktop browser it does. On the phone it does not: the bar
+   carries a `backdrop-filter`, which puts it in its own composited layer, and
+   the rounded clip is not carried onto that layer — so the avatar came out with
+   round TOP corners and SQUARE bottom ones, the bar's own rectangle becoming the
+   silhouette. Measured off Dan's screenshot: the top curve spans ~40 device px,
+   the bottom one ~0.
+   Giving the bar the same bottom radius is correct in BOTH worlds — where the
+   clip lands the bar is already cut to that shape, so the radius changes
+   nothing; where it does not, the radius is what draws it. Both read the one
+   custom property, so the two can never drift apart. */
 .group-info-avatar {
+  --gi-avatar-radius: 20px;
   width: 80px;
   height: 80px;
-  border-radius: 20px;
+  border-radius: var(--gi-avatar-radius);
   overflow: hidden;
   background: var(--accent-soft);
   display: flex;
@@ -3404,6 +3417,8 @@ textarea#chat-input {
   cursor: pointer;
   letter-spacing: 0.5px;
   backdrop-filter: blur(4px);
+  /* The bottom half of the avatar's radius — see the note above. */
+  border-radius: 0 0 var(--gi-avatar-radius) var(--gi-avatar-radius);
 }
 .group-info-avatar-edit:active {
   background: rgba(0,0,0,0.75);
