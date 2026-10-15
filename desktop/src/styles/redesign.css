@@ -1021,6 +1021,94 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
   border-bottom-color: var(--accent-primary) !important;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   9d-alt. THE GLOBAL GALLERY — redesign deltas
+
+   The base in components.css carries the classic look (64px header, 20px title,
+   filled-accent active chip, etc.). These rules override to the redesign treatment.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.gal-header {
+  height: 48px;
+  padding: 0 16px;
+}
+.gal-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+}
+.gal-stat {
+  height: 24px;
+  padding: 0 9px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.gal-header-right {
+  gap: 8px;
+}
+.gal-search {
+  width: 220px;
+  height: 30px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-base);
+}
+.gal-search:focus-within {
+  border-color: var(--accent-ring);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.gal-search-icon {
+  left: 10px;
+  width: 14px;
+  height: 14px;
+}
+.gal-search-input {
+  padding: 0 12px 0 30px;
+  border-radius: var(--radius-pill);
+}
+.gal-icon-btn {
+  border-radius: var(--radius-sm);
+  background: transparent;
+}
+.gal-seg {
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-md);
+  background: var(--bg-base);
+}
+.view-mode-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+}
+.view-mode-btn.active {
+  background: var(--bg-raised-2);
+}
+.gal-filters {
+  gap: 6px;
+  padding: 8px 16px;
+}
+.gal-filters-sep {
+  margin: 0 2px;
+}
+.gallery-type-filter,
+.gallery-filter-btn {
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  font-size: 11px;
+}
+/* A TINT, not a filled block. Selected is a state you are in, and the accent
+   spent at full strength on it is the accent not available to say "this is the
+   button to press". */
+.gallery-type-filter.active,
+.gallery-filter-btn.active {
+  background: var(--accent-soft);
+  color: var(--accent-primary);
+  border-color: color-mix(in srgb, var(--accent-primary) 32%, transparent);
+}
+
 /* Fields inside the settings content are handled in §9b, where they need
    `!important` — every one of them carries its own inline background and border,
    so a rule without it here would be a second writer for the same declarations

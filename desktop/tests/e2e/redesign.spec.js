@@ -1931,18 +1931,19 @@ test.describe('desktop redesign', () => {
     expect(re).not.toBeNull();
     // ⚠ More than one, or the run-on bug this guards against is not reachable.
     expect(re.count).toBeGreaterThan(1);
+    // Redesign: pill-shaped chips with tighter padding and gap.
     expect(re.padding).toBe('4px 10px');
     expect(re.radius).toBe('999px');
     expect(re.rowGap).toBe('6px');
     expect(re.gapBetween).toBeGreaterThan(0);
 
-    // ⚠ And the CLASSIC look is the same, which is the whole point — this was the mode
-    // that was broken.
+    // Classic keeps its own look — base values from components.css.
     await page.evaluate(() => window.OrbitRedesign.apply(false));
     await page.waitForTimeout(700);
     const classic = await chips();
-    expect(classic.padding).toBe('4px 10px');
-    expect(classic.radius).toBe('999px');
+    expect(classic.padding).toBe('4px 12px');
+    expect(classic.radius).toBe('12px');
+    expect(classic.rowGap).toBe('8px');
     expect(classic.gapBetween).toBeGreaterThan(0);
 
     await page.evaluate(() => { const b = document.getElementById('btn-nav-dms'); if (b) b.click(); });
