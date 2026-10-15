@@ -1963,6 +1963,24 @@ button:active,
 /* A light background needs less of it: the same alpha that reads as a glow on
    near-black reads as a stain on near-white. */
 html[data-theme="light"] #chat-welcome-host::before { opacity: 0.3; }
+
+/* ⚠ AND IT STANDS STILL WHILE THE LAYOUT IS MOVING. `#app-layout` transitions
+   `grid-template-columns`, so the chat panel is a new size on every frame of a
+   sidebar toggle — and a blurred layer that changes size every frame is
+   re-rasterised every frame. Measured on the welcome screen, one toggle, frames
+   rendered in 400ms (~24 is 60fps):
+       aurora painting   22 frames, 20.8ms apart
+       aurora hidden     53 frames,  8.0ms apart
+   With a chat open there is no aurora and the toggle is smooth — which is exactly
+   what Dan reported: "it's only the WELCOME_SLIDE_SHOW".
+   ⚠ `opacity: 0` with a transition measured 28 frames — a fading layer is still a
+   layer being rasterised, so it has to go rather than dim. `visibility` rather
+   than `display` keeps the pseudo-element in the tree, so nothing is re-created
+   when it comes back. The class is added by beginLayoutMove() in app.js and
+   removed on the grid transition's own `transitionend`. */
+#app-layout.is-resizing #chat-welcome-host::before {
+  visibility: hidden;
+}
 #chat-welcome-host::after {
   background-image:
     linear-gradient(var(--border-subtle) 1px, transparent 1px),

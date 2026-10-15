@@ -684,8 +684,48 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!changedState || 'settings' in changedState) applySettings(state.settings);
     });
 
+    // ⚠ THE WELCOME DECORATION STANDS STILL WHILE THE LAYOUT MOVES.
+    //
+    // `#app-layout` transitions `grid-template-columns` over 300ms, so the chat
+    // panel — and everything painted inside it — is a different size on every
+    // frame of that slide. The welcome screen's aurora is a `filter: blur(34px)`
+    // pseudo-element with an infinite transform animation, and a blurred layer
+    // that changes size every frame has to be re-rasterised every frame.
+    //
+    // Measured on the welcome screen, one sidebar toggle, frames rendered in a
+    // 400ms window (~24 is 60fps):
+    //     aurora painting   22 frames, 20.8ms apart
+    //     aurora hidden     53 frames,  8.0ms apart
+    // and with a chat open — no aurora, nothing to hide — the toggle was smooth,
+    // which is exactly the shape Dan described: "it's only the WELCOME_SLIDE_SHOW".
+    //
+    // ⚠ A FADE DOES NOT WORK. `opacity: 0` with a 150ms transition measured 28
+    // frames: a fading layer is still a layer being rasterised. It has to go, not
+    // dim. `visibility: hidden` beat `display: none` by a hair and keeps the
+    // pseudo-element in the tree, so there is nothing to re-create on the way back.
+    function beginLayoutMove() {
+      var layout = document.getElementById('app-layout');
+      if (!layout) return;
+      layout.classList.add('is-resizing');
+      var timer = null;
+      var done = function () {
+        layout.removeEventListener('transitionend', onEnd);
+        if (timer) clearTimeout(timer);
+        timer = null;
+        layout.classList.remove('is-resizing');
+      };
+      var onEnd = function (e) {
+        if (e.target === layout && e.propertyName === 'grid-template-columns') done();
+      };
+      layout.addEventListener('transitionend', onEnd);
+      // If the transition never runs — reduced motion, or the columns already at
+      // their target — nothing fires `transitionend`, and the class would stick.
+      timer = setTimeout(done, 400);
+    }
+
     window.store.subscribe((state, changedState) => {
       if (!changedState || !('activeTab' in changedState || 'sidebarMiddleVisible' in changedState)) return;
+      beginLayoutMove();
       const panelMiddle = document.getElementById('panel-middle');
       if (state.activeTab === 'gallery') {
         if (panelMiddle) panelMiddle.style.display = 'none';
