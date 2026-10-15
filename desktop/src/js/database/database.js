@@ -62,7 +62,14 @@ class OrbitDatabase {
       // Groups
       getGroups: this.db.prepare('SELECT g.*, COUNT(gm.userId) as memberCount FROM groups g LEFT JOIN group_members gm ON g.groupId = gm.groupId GROUP BY g.groupId ORDER BY g.pinned DESC, g.createdAt DESC'),
       getGroup: this.db.prepare('SELECT * FROM groups WHERE groupId = ?'),
-      saveGroup: this.db.prepare('INSERT OR REPLACE INTO groups (groupId, groupName, ownerId, createdAt, avatarPath, description, pinned, notificationMuted, inviteCode, avatarUpdatedAt, accountOwnerId) VALUES (@groupId, @groupName, @ownerId, @createdAt, @avatarPath, @description, @pinned, @notificationMuted, @inviteCode, @avatarUpdatedAt, @accountOwnerId)'),
+      // ⚠ `avatarDataUrl` BELONGS IN THIS LIST. It was missing, and this is
+      // `INSERT OR REPLACE` — so the column was never written when a group was
+      // created from the "new group" modal (which sets the avatar as a data URL
+      // and nothing else), and any value already there was reset to NULL on the
+      // next save. The avatar showed for the rest of the session, because the
+      // in-memory group object still had it, and was gone after a restart.
+      // Reproduced: create a group with an image, restart, `avatarDataUrl` MISSING.
+      saveGroup: this.db.prepare('INSERT OR REPLACE INTO groups (groupId, groupName, ownerId, createdAt, avatarPath, avatarDataUrl, description, pinned, notificationMuted, inviteCode, avatarUpdatedAt, accountOwnerId) VALUES (@groupId, @groupName, @ownerId, @createdAt, @avatarPath, @avatarDataUrl, @description, @pinned, @notificationMuted, @inviteCode, @avatarUpdatedAt, @accountOwnerId)'),
       deleteGroup: this.db.prepare('DELETE FROM groups WHERE groupId = ?'),
       // no updateGroupField prepared statement — uses dynamic sql via method
       getGroupByInviteCode: this.db.prepare('SELECT * FROM groups WHERE inviteCode = ?'),
@@ -182,6 +189,7 @@ class OrbitDatabase {
       ownerId: group.ownerId,
       createdAt: group.createdAt || new Date().toISOString(),
       avatarPath: group.avatarPath || null,
+      avatarDataUrl: group.avatarDataUrl || null,
       description: group.description || '',
       pinned: group.pinned ? 1 : 0,
       notificationMuted: group.notificationMuted ? 1 : 0,
@@ -1097,8 +1105,12 @@ class OrbitDatabase {
         }
 
         // Restore groups
+        // ⚠ This list has to match `saveGroup`'s. It was two columns short —
+        // `avatarDataUrl` and `accountOwnerId` — so restoring a backup silently
+        // dropped every group avatar and un-tagged every group from its account.
+        // A backup is `SELECT * FROM groups`, so the data is right there to write.
         if (data.groups) {
-          const stmt = this.db.prepare('INSERT OR REPLACE INTO groups (groupId, groupName, ownerId, createdAt, avatarPath, description, pinned, notificationMuted, inviteCode, avatarUpdatedAt) VALUES (@groupId, @groupName, @ownerId, @createdAt, @avatarPath, @description, @pinned, @notificationMuted, @inviteCode, @avatarUpdatedAt)');
+          const stmt = this.db.prepare('INSERT OR REPLACE INTO groups (groupId, groupName, ownerId, createdAt, avatarPath, avatarDataUrl, description, pinned, notificationMuted, inviteCode, avatarUpdatedAt, accountOwnerId) VALUES (@groupId, @groupName, @ownerId, @createdAt, @avatarPath, @avatarDataUrl, @description, @pinned, @notificationMuted, @inviteCode, @avatarUpdatedAt, @accountOwnerId)');
           data.groups.forEach(g => stmt.run(g));
         }
 
