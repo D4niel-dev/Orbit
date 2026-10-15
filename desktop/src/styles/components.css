@@ -17,22 +17,21 @@
 .avatar-xl { width: 80px; height: 80px; }
 
 /* Status Dots */
+/* ⚠ THIS NO LONGER PAINTS ANYTHING — the glyph does. It used to be a filled disc
+   tinted per state, which could not say four things: `dnd` and `busy` share a
+   hue, and so do `invisible` and `offline`. Presence is now a shape as well as a
+   colour, from shared/ui/presence.js — a filled circle, a filled moon, a filled
+   circle with a bar through it, and a ring.
+   What is left here is the positioning, plus the pulse below and the
+   reduced-motion opt-out in redesign.css, which are all keyed off this class. */
 .status-indicator {
   position: absolute;
   bottom: 0;
   right: 0;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2px solid var(--bg-surface);
-  background-color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.status-indicator.online { background-color: var(--accent-success); }
-.status-indicator.dnd { background-color: var(--accent-danger); }
-.status-indicator.away { background-color: var(--accent-warning); }
-.status-indicator.busy { background-color: var(--accent-danger); }
-.status-indicator.invisible { background-color: var(--text-muted); }
-.status-indicator.offline { background-color: var(--text-muted); }
 
 /* Badges */
 .badge {
@@ -3171,11 +3170,11 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: 0.3; }
   justify-content: center;
   gap: 6px;
 }
+/* A wrapper, not a dot: the glyph inside sets its own size and colour, so this
+   must not impose either — an 8px box around a 10px glyph clips it. */
 .pf-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   flex-shrink: 0;
 }
 .pf-status {

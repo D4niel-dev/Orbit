@@ -60,7 +60,7 @@ window.ProfileCard = {
     var statusBtnsHtml = isMe ? '<div style="margin-top:16px;position:relative;">' +
         '<label style="display:block;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Status</label>' +
         '<button id="status-dropdown-btn" style="width:100%;display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;background:var(--bg-base);border:1px solid var(--border-subtle);color:var(--text-primary);font-size:14px;cursor:pointer;text-align:left;">' +
-          '<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:' + curStatus.color + ';flex-shrink:0;"></span>' +
+          window.OrbitPresence.glyph(curStatus.value, 12) +
           '<span style="flex:1;">' + curStatus.label + '</span>' +
           '<i data-lucide="chevron-up" style="width:14px;height:14px;color:var(--text-muted);flex-shrink:0;"></i>' +
         '</button>' +
@@ -110,7 +110,7 @@ window.ProfileCard = {
           item.className = 'status-dropdown-item';
           item.setAttribute('data-status', s.value);
           item.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;font-size:13px;color:var(--text-primary);transition:background 0.1s;';
-          item.innerHTML = '<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:' + s.color + ';flex-shrink:0;"></span><span>' + s.label + '</span>';
+          item.innerHTML = window.OrbitPresence.glyph(s.value, 12) + '<span>' + s.label + '</span>';
           if (s.value === user.status) item.style.background = 'var(--bg-hover)';
           item.addEventListener('mouseenter', function() { item.style.background = 'var(--bg-hover)'; });
           item.addEventListener('mouseleave', function() { item.style.background = s.value === user.status ? 'var(--bg-hover)' : 'transparent'; });

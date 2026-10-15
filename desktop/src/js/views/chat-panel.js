@@ -759,12 +759,12 @@ window.ChatPanel = {
 
     return '<div class="avatar avatar-md chat-header-avatar" style="margin-right: var(--spacing-md); position:relative; cursor:pointer;">' +
         headerAvatarContainer +
-        '<div class="status-indicator ' + window.Sanitize.escapeHtml(friendStatus) + '"></div>' +
+        window.OrbitPresence.badge(friendStatus, 10) +
       '</div>' +
       '<div style="flex:1;">' +
         '<div style="font-weight: 600; font-family: var(--font-display); font-size: 16px;">' + window.Sanitize.escapeHtml(activeFriend.username) + '</div>' +
         '<div style="font-size: 12px; color: ' + statusColor + '; display:flex; align-items:center; gap:4px;">' +
-          '<div style="width:6px;height:6px;background:' + statusColor + ';border-radius:50%;"></div> ' + window.Sanitize.escapeHtml(statusLabel) + window.Sanitize.escapeHtml(lastSeenText) +
+          window.OrbitPresence.glyph(friendStatus, 11) + ' ' + window.Sanitize.escapeHtml(statusLabel) + window.Sanitize.escapeHtml(lastSeenText) +
         '</div>' +
       '</div>';
   },

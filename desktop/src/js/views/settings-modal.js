@@ -1356,7 +1356,9 @@ window.SettingsModal = {
                   // ⚠ `var(--presence-online)`, not a hardcoded #22c55e — that hex was
                   // the third copy of the presence palette and the one that ignored the
                   // theme outright. See the note on --presence-* in variables.css.
-                  '<span style="width:8px;height:8px;border-radius:50%;background:var(--presence-online);display:inline-block;"></span>' +
+                  // The glyph rather than a bare dot, so this row and the chat header
+                  // say "online" the same way.
+                  window.OrbitPresence.glyph('online', 10) +
                   '<span style="font-size:13px;color:var(--text-primary);flex:1;">' + window.Sanitize.escapeHtml(f.username) + '</span>' +
                   '<span style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">' + (f.ip || '') + '</span>' +
                 '</div>';

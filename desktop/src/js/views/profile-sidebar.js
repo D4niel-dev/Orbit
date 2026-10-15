@@ -155,7 +155,7 @@ window.ProfileSidebar = {
             '<h2 class="pf-name">' + window.Sanitize.escapeHtml(user.username) + '</h2>' +
             '<div class="pf-tag">#' + window.Sanitize.escapeHtml(user.usertag || '') + '</div>' +
             '<div class="pf-presence">' +
-              '<span class="pf-dot" style="background:' + statusColor + '"></span>' +
+              '<span class="pf-dot">' + window.OrbitPresence.glyph(user.status, 10) + '</span>' +
               '<span class="pf-status">' + window.Sanitize.escapeHtml(statusLabel) + '</span>' +
             '</div>' +
             lastSeenHtml +

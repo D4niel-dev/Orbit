@@ -65,7 +65,7 @@ window.AccountSwitcher = {
       '<div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Current Account</div>' +
       '<div style="display:flex;align-items:center;gap:12px;">' +
         '<div style="position:relative;width:36px;height:36px;flex-shrink:0;">' + curAvatar + frameHtml(curFrame) +
-          '<div class="status-indicator online" style="position:absolute;bottom:0;right:0;width:10px;height:10px;border:2px solid var(--bg-surface);border-radius:50%;background:var(--accent-success);"></div>' +
+          window.OrbitPresence.badge(currentUser.status || 'online', 10) +
         '</div>' +
         '<div style="flex:1;min-width:0;">' +
           '<div style="font-size:14px;font-weight:600;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + window.Sanitize.escapeHtml(currentUser.username) + '</div>' +

@@ -674,7 +674,7 @@ window.SidebarMiddle = {
           rows.map(function(f) {
             return '<div class="afm-tile" data-id="' + window.Sanitize.escapeHtml(f.userId) + '" title="' + window.Sanitize.escapeHtml(f.username) + '" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px;border-radius:12px;cursor:pointer;background:var(--bg-base);border:1px solid var(--border-subtle);">' +
               '<div style="position:relative;width:44px;height:44px;border-radius:50%;">' + avatarInner(f) +
-                '<div class="status-indicator ' + window.Sanitize.escapeHtml(f.status || 'offline') + '" style="position:absolute;bottom:-1px;right:-1px;"></div>' +
+                window.OrbitPresence.badge(f.status || 'offline', 10) +
               '</div>' +
               '<div style="font-size:11px;color:var(--text-primary);text-align:center;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + window.Sanitize.escapeHtml(f.username) + '</div>' +
               (closedDMs[f.userId] ? '<div style="font-size:9px;color:var(--text-muted);">Closed</div>' : '') +
@@ -849,7 +849,7 @@ window.SidebarMiddle = {
     return '<div class="list-row ' + (isActive ? 'active' : '') + '"' + (opts.reopen ? ' data-reopen="1"' : '') + ' data-id="' + window.Sanitize.escapeHtml(friend.userId) + '" data-debug="User: ' + window.Sanitize.escapeHtml(friend.username) + ' ID: ' + window.Sanitize.escapeHtml(friend.userId) + ' Status: ' + window.Sanitize.escapeHtml(friend.status || 'offline') + '">' +
       '<div class="avatar avatar-md list-row-avatar" style="position:relative;">' +
         avatarContainer +
-        '<div class="status-indicator ' + window.Sanitize.escapeHtml(friend.status || 'offline') + '"></div>' +
+        window.OrbitPresence.badge(friend.status || 'offline', 10) +
       '</div>' +
       '<div class="list-row-info">' +
         '<div class="list-row-title">' + window.Sanitize.escapeHtml(friend.username) + '</div>' +
@@ -1857,9 +1857,9 @@ window.SidebarMiddle = {
         // was the fifth site and the fourth different answer: the member list used
         // --accent-success, the chat header used --accent-success, the profile
         // sidebar hardcoded #22c55e and the settings peers row hardcoded #22c55e too.
-        var onlineDot = isOnline
-          ? '<span style="width:8px;height:8px;border-radius:50%;background:var(--presence-online);display:inline-block;margin-right:8px;"></span>'
-          : '<span style="width:8px;height:8px;border-radius:50%;background:var(--presence-offline);display:inline-block;margin-right:8px;"></span>';
+        // The dot is now the shared glyph, so the shape says it as well as the hue.
+        var onlineDot = '<span style="display:inline-flex;align-items:center;vertical-align:middle;margin-right:8px;">' +
+          window.OrbitPresence.glyph(isOnline ? 'online' : 'offline', 10) + '</span>';
         var mFrame = window.Frames.getFrameForUser(m.userId);
         // Cross-reference friends list for correct avatar (member.avatar may be stale/wrong)
         var mFriend = window.store ? window.store.getState().friends.find(function(f) { return f.userId === m.userId; }) : null;
