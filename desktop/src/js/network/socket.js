@@ -1,6 +1,7 @@
 const net = require('net');
 const Protocol = require('./protocol');
 const EventEmitter = require('events');
+const dlog = require('../log');
 
 const MAX_PAYLOAD_SIZE = 4194304; // 4 MB — prevent oversized frames
 
@@ -84,7 +85,7 @@ class SocketManager extends EventEmitter {
             quality.missedPongs = Math.min(10, (quality.missedPongs || 0) + 1);
             quality.consecutiveSuccess = 0;
           }
-          console.log('[P2P] No PONG from', peerId, '— missed total:', (quality ? quality.missedPongs : 0));
+          dlog('[P2P] No PONG from', peerId, '— missed total:', (quality ? quality.missedPongs : 0));
           // Don't close immediately — send another PING and be more tolerant
           this._pongPending.set(peerId, false);
           var pingPacket = Protocol.createPacket(Protocol.Types.PING, 'system', peerId, { ts: Date.now() });
@@ -118,14 +119,14 @@ class SocketManager extends EventEmitter {
     if (!this._reconnectEnabled) return;
     var attempts = this._reconnectAttempts.get(peerId) || 0;
     if (attempts >= 5) {
-      console.log('[P2P] Max reconnect attempts reached for', peerId);
+      dlog('[P2P] Max reconnect attempts reached for', peerId);
       this._reconnectAttempts.delete(peerId);
       return;
     }
     // Check peer didn't reconnect via another path while we waited
     var reconnected = this.connections.get(peerId);
     if (reconnected && !reconnected.destroyed) {
-      console.log('[P2P] Peer already reconnected, cancel scheduled reconnect');
+      dlog('[P2P] Peer already reconnected, cancel scheduled reconnect');
       this._reconnectAttempts.delete(peerId);
       this._reconnectTimers.delete(peerId);
       return;
@@ -136,19 +137,19 @@ class SocketManager extends EventEmitter {
     // Exponential backoff: baseDelay * 2^attempts, capped at 60s
     // attempt 0: 10s, attempt 1: 20s, attempt 2: 40s, attempt 3+: 60s
     var delay = Math.min(60000, this._reconnectInterval * Math.pow(2, attempts));
-    console.log('[P2P] Reconnect to', peerId, 'in', delay, 'ms (attempt', attempts + 1, ') - exponential backoff');
+    dlog('[P2P] Reconnect to', peerId, 'in', delay, 'ms (attempt', attempts + 1, ') - exponential backoff');
     var timer = setTimeout(() => {
       this._reconnectTimers.delete(peerId);
       // Double-check connection didn't establish while we waited
       var reconnected2 = this.connections.get(peerId);
       if (reconnected2 && !reconnected2.destroyed) {
-        console.log('[P2P] Peer reconnected before scheduled retry, cancel');
+        dlog('[P2P] Peer reconnected before scheduled retry, cancel');
         this._reconnectAttempts.delete(peerId);
         return;
       }
       // Use the IP/port passed in (mobile bridge updates)
       if (ip) {
-        console.log('[P2P] Using updated IP from mobile bridge:', ip + ':' + (port || 46000));
+        dlog('[P2P] Using updated IP from mobile bridge:', ip + ':' + (port || 46000));
         this._peerIps.set(peerId, ip);
         this._peerPorts.set(peerId, port || 46000);
       }
@@ -204,7 +205,7 @@ class SocketManager extends EventEmitter {
 
   startServer() {
     this.server = net.createServer((socket) => {
-      console.log('New incoming TCP connection from', socket.remoteAddress);
+      dlog('New incoming TCP connection from', socket.remoteAddress);
       this.setupSocket(socket, null);
 
       // Send identity beacon over TCP so peer can discover us
@@ -216,7 +217,7 @@ class SocketManager extends EventEmitter {
     });
 
     this.server.listen(this.TCP_PORT, () => {
-      console.log(`TCP Server listening on port ${this.TCP_PORT}`);
+      dlog(`TCP Server listening on port ${this.TCP_PORT}`);
     });
   }
 
@@ -260,7 +261,7 @@ class SocketManager extends EventEmitter {
       // Destroy it and proceed with a fresh connection.
       var oldIp = existing.remoteAddress;
       if (oldIp && ip && oldIp !== ip) {
-        console.log('[P2P] IP changed for', peerId, '(' + oldIp, '->', ip + '), reconnecting');
+        dlog('[P2P] IP changed for', peerId, '(' + oldIp, '->', ip + '), reconnecting');
         existing.destroy();
         this.connections.delete(peerId);
       } else {
@@ -291,7 +292,7 @@ class SocketManager extends EventEmitter {
       });
 
       socket.connect(port, ip, () => {
-        console.log(`Connected to peer ${peerId} at ${ip}:${port}`);
+        dlog(`Connected to peer ${peerId} at ${ip}:${port}`);
         this.connections.set(peerId, socket);
         this.setupSocket(socket, peerId);
         this._pendingConnects.delete(peerId);
@@ -342,7 +343,7 @@ class SocketManager extends EventEmitter {
         const payloadLength = buffer.readUInt32BE(0);
 
         if (payloadLength > 100 * 1024) {
-          console.log('[RECV] frame size=' + (payloadLength / 1024).toFixed(1) + 'KB from=' + (currentPeerId || socket.remoteAddress));
+          dlog('[RECV] frame size=' + (payloadLength / 1024).toFixed(1) + 'KB from=' + (currentPeerId || socket.remoteAddress));
         }
 
         // Guard against oversized frames (BUG-DT-2)
@@ -438,7 +439,7 @@ class SocketManager extends EventEmitter {
     });
 
     socket.on('close', () => {
-      console.log(`Connection closed with peer ${currentPeerId || 'unknown'}`);
+      dlog(`Connection closed with peer ${currentPeerId || 'unknown'}`);
       var savedIp = currentPeerId ? this._peerIps.get(currentPeerId) : null;
       if (currentPeerId) {
         this.connections.delete(currentPeerId);

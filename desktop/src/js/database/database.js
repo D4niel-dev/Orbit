@@ -4,6 +4,7 @@ const fs = require('fs');
 const zlib = require('zlib');
 const migrations = require('./migrations');
 const Store = require('electron-store'); 
+const dlog = require('../log');
 
 class OrbitDatabase {
   constructor(userDataPath) {
@@ -695,7 +696,7 @@ class OrbitDatabase {
     const migrated = this.getSetting('migrated_from_electron_store', false);
     if (migrated && !forceAvatarsOnly) return;
     
-    console.log('Migrating data from electron-store to SQLite...');
+    dlog('Migrating data from electron-store to SQLite...');
     const oldStore = new Store();
     
     this.db.transaction(() => {
@@ -780,7 +781,7 @@ class OrbitDatabase {
       
       this.setSetting('migrated_from_electron_store', true);
     })();
-    console.log('Migration from electron-store complete.');
+    dlog('Migration from electron-store complete.');
   }
 
   // --- Attachment Integrity Check ---
@@ -811,7 +812,7 @@ class OrbitDatabase {
         DELETE FROM attachments WHERE length(data) = 0 AND (localPath IS NULL OR localPath = '')
       `).run();
       if (result.changes > 0) {
-        console.log('Cleaned up ' + result.changes + ' broken attachment(s) with empty data');
+        dlog('Cleaned up ' + result.changes + ' broken attachment(s) with empty data');
       }
       return { ok: true, removed: result.changes };
     } catch(e) {

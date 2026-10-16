@@ -4,6 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const tcpNet = require('net');
 const crypto = require('crypto');
+const dlog = require('./src/js/log');
 const { exec } = require('child_process');
 const uuidv4 = () => crypto.randomUUID();
 
@@ -14,10 +15,10 @@ function tryAddFirewallRule() {
     if (err || !stdout.includes(ruleName)) {
       exec('netsh advfirewall firewall add rule name="' + ruleName + '" dir=in protocol=udp localport=45678 action=allow program="' + process.execPath.replace(/\\/g, '\\\\') + '"', function(addErr) {
         if (addErr) {
-          console.log('[Firewall] Could not add rule (not running as admin). Run this to enable LAN discovery:');
-          console.log('[Firewall]   netsh advfirewall firewall add rule name="Orbit P2P Discovery" dir=in protocol=udp localport=45678 action=allow program="' + process.execPath + '"');
+          dlog('[Firewall] Could not add rule (not running as admin). Run this to enable LAN discovery:');
+          dlog('[Firewall]   netsh advfirewall firewall add rule name="Orbit P2P Discovery" dir=in protocol=udp localport=45678 action=allow program="' + process.execPath + '"');
         } else {
-          console.log('[Firewall] Added inbound rule for UDP 45678');
+          dlog('[Firewall] Added inbound rule for UDP 45678');
         }
       });
     }
@@ -102,7 +103,7 @@ function scanBatch(socketMgr, subnet, localIp, start, end, onDone) {
           return;
         }
       }
-      console.log('[LAN-Scan] Found peer at ' + ip);
+      dlog('[LAN-Scan] Found peer at ' + ip);
       socketMgr.setupSocket(s, null);
       socketMgr.sendBeacon(s);
       finish();
@@ -129,11 +130,11 @@ function startLanScan(socketMgr) {
 
   function scanAll() {
     scanBatch(socketMgr, subnet, localIp, 1, 254, function() {
-      console.log('[LAN-Scan] Full scan complete');
+      dlog('[LAN-Scan] Full scan complete');
     });
   }
 
-  console.log('[LAN-Scan] Scanning ' + subnet + '1-254 for Orbit peers...');
+  dlog('[LAN-Scan] Scanning ' + subnet + '1-254 for Orbit peers...');
   scanAll();
   if (_lanScanTimer) clearInterval(_lanScanTimer);
   _lanScanTimer = setInterval(scanAll, 60000);
@@ -149,7 +150,7 @@ function startNetworkMonitor() {
   _networkMonitorTimer = setInterval(() => {
     var currentIP = getLocalIPv4();
     if (currentIP && currentIP !== _lastLocalIP) {
-      console.log('[Network] IP changed from', _lastLocalIP, 'to', currentIP, '— restarting network');
+      dlog('[Network] IP changed from', _lastLocalIP, 'to', currentIP, '— restarting network');
       _lastLocalIP = currentIP;
       // Restart LAN scan with new subnet
       if (_lanScanTimer) {
@@ -163,13 +164,13 @@ function startNetworkMonitor() {
         discoveryInstance.stop();
         discoveryInstance = new Discovery(() => currentIdentity, (peer) => {
           // Re-register the same callback
-          console.log('[AutoConnect] Peer discovered:', peer.username, peer.userId, 'at IP', peer.ip);
+          dlog('[AutoConnect] Peer discovered:', peer.username, peer.userId, 'at IP', peer.ip);
           if (mainWindow) mainWindow.webContents.send('peer-found', peer);
           if (socketInstance && peer.userId && peer.ip) {
             var alreadyConnected = socketInstance.connections.has(peer.userId) ||
               socketInstance._pendingConnects.has(peer.userId);
             if (alreadyConnected) return;
-            console.log('[AutoConnect] Initiating TCP connect to', peer.userId, peer.ip + ':' + (peer.tcpPort || 46000));
+            dlog('[AutoConnect] Initiating TCP connect to', peer.userId, peer.ip + ':' + (peer.tcpPort || 46000));
             socketInstance.connectToPeer(peer.userId, peer.ip, peer.tcpPort || 46000).catch(function(err) {
               console.error('[AutoConnect] Connection to', peer.userId, 'failed:', err && err.message);
             });
@@ -179,7 +180,7 @@ function startNetworkMonitor() {
           discoveryInstance.TCP_PORT = socketInstance.TCP_PORT;
         }
         discoveryInstance.onPeerGone = function(peerId) {
-          console.log('[AutoConnect] Peer gone:', peerId);
+          dlog('[AutoConnect] Peer gone:', peerId);
           if (mainWindow) mainWindow.webContents.send('peer-gone', peerId);
         };
         discoveryInstance.onAnyBeacon = _tryAutoConnect;
@@ -197,6 +198,10 @@ const Protocol = require('./src/js/network/protocol');
 const OrbitDatabase = require('./src/js/database/database');
 
 const persistentStore = new Store();
+// ⚠ Hand the settings store to the logging gate, HERE — everything above this
+// line is silent by design, and everything below it can be switched on from
+// Settings → Advanced → Debug Logs. See src/js/log.js.
+dlog.init(persistentStore);
 let globalDb = null;
 let discoveryInstance = null;
 let socketInstance = null;
@@ -212,15 +217,15 @@ const AUTO_CONNECT_THROTTLE = 30000; // Don't retry same peer more than once per
 // Throttled auto-connect: retries TCP on every beacon if not already connected
 function _tryAutoConnect(peer) {
   if (!socketInstance) {
-    console.log('[AutoConnect] SKIP: socketInstance not ready');
+    dlog('[AutoConnect] SKIP: socketInstance not ready');
     return;
   }
   if (!peer.userId) {
-    console.log('[AutoConnect] SKIP: peer.userId missing', JSON.stringify(peer));
+    dlog('[AutoConnect] SKIP: peer.userId missing', JSON.stringify(peer));
     return;
   }
   if (!peer.ip) {
-    console.log('[AutoConnect] SKIP: peer.ip missing for', peer.userId);
+    dlog('[AutoConnect] SKIP: peer.ip missing for', peer.userId);
     return;
   }
   var alreadyConnected = socketInstance.connections.has(peer.userId) ||
@@ -231,13 +236,13 @@ function _tryAutoConnect(peer) {
   }
   var last = _autoConnectLastAttempt.get(peer.userId) || 0;
   if (Date.now() - last < AUTO_CONNECT_THROTTLE) {
-    console.log('[AutoConnect] THROTTLED: skipping', peer.userId, 'last attempt was', (Date.now() - last) + 'ms ago');
+    dlog('[AutoConnect] THROTTLED: skipping', peer.userId, 'last attempt was', (Date.now() - last) + 'ms ago');
     return;
   }
   _autoConnectLastAttempt.set(peer.userId, Date.now());
-  console.log('[AutoConnect] Retry TCP to', peer.userId, peer.ip + ':' + (peer.tcpPort || 46000));
+  dlog('[AutoConnect] Retry TCP to', peer.userId, peer.ip + ':' + (peer.tcpPort || 46000));
   socketInstance.connectToPeer(peer.userId, peer.ip, peer.tcpPort || 46000).then(function() {
-    console.log('[AutoConnect] Connected to', peer.userId);
+    dlog('[AutoConnect] Connected to', peer.userId);
     _autoConnectLastAttempt.delete(peer.userId);
     // Immediately update peer status in UI (don't wait for remote's response beacon)
     if (mainWindow) {
@@ -494,7 +499,7 @@ app.whenReady().then(() => {
       // Auto-clean broken attachments with empty data
       const cleanup = globalDb.cleanupBrokenAttachments();
       if (cleanup.ok && cleanup.removed > 0) {
-        console.log('[Startup] Removed ' + cleanup.removed + ' broken attachment(s)');
+        dlog('[Startup] Removed ' + cleanup.removed + ' broken attachment(s)');
       }
     }
   } catch(e) { /* ignore */ }
@@ -632,7 +637,10 @@ app.whenReady().then(() => {
             if (pending && typeof pending.catch === 'function') pending.catch(() => {});
             opened = true;
           } catch (e) {
-            console.log('[Update] openExternal failed:', e && e.message);
+            // ⚠ console.error, not dlog: the user asked to open a page and it did
+            // not open. That is a failure, not debug chatter, and it is exactly
+            // the line a bug report needs.
+            console.error('[Update] openExternal failed:', e && e.message);
           }
         }
       }
@@ -1335,7 +1343,7 @@ app.whenReady().then(() => {
 
   // Renderer → main process logging (appears in terminal)
   ipcMain.on('log', (event, ...args) => {
-    console.log('[OVP-IPC]', ...args);
+    dlog('[OVP-IPC]', ...args);
   });
 
   // Networking IPC
@@ -1435,24 +1443,24 @@ app.whenReady().then(() => {
 
     if (!discoveryInstance) {
       discoveryInstance = new Discovery(() => currentIdentity, (peer) => {
-        console.log('[AutoConnect] Peer discovered:', peer.username, peer.userId, 'at IP', peer.ip);
+        dlog('[AutoConnect] Peer discovered:', peer.username, peer.userId, 'at IP', peer.ip);
         mainWindow.webContents.send('peer-found', peer);
         if (socketInstance && peer.userId && peer.ip) {
           // Check if already connected before auto-connecting
           var alreadyConnected = socketInstance.connections.has(peer.userId) ||
             socketInstance._pendingConnects.has(peer.userId);
           if (alreadyConnected) {
-            console.log('[AutoConnect] Already connected or connecting to', peer.userId);
+            dlog('[AutoConnect] Already connected or connecting to', peer.userId);
             return;
           }
-          console.log('[AutoConnect] Initiating TCP connect to', peer.userId, peer.ip + ':' + (peer.tcpPort || 46000));
+          dlog('[AutoConnect] Initiating TCP connect to', peer.userId, peer.ip + ':' + (peer.tcpPort || 46000));
           socketInstance.connectToPeer(peer.userId, peer.ip, peer.tcpPort || 46000).then(function() {
-            console.log('[AutoConnect] Connected to', peer.userId);
+            dlog('[AutoConnect] Connected to', peer.userId);
           }).catch(function(err) {
             console.error('[AutoConnect] Connection to', peer.userId, 'failed:', err && err.message);
           });
         } else {
-          console.log('[AutoConnect] Skipped — socket:', !!socketInstance, 'userId:', !!peer.userId, 'ip:', !!peer.ip);
+          dlog('[AutoConnect] Skipped — socket:', !!socketInstance, 'userId:', !!peer.userId, 'ip:', !!peer.ip);
         }
       });
       // Sync TCP port from socket instance so beacon broadcasts the right port
@@ -1460,7 +1468,7 @@ app.whenReady().then(() => {
         discoveryInstance.TCP_PORT = socketInstance.TCP_PORT;
       }
       discoveryInstance.onPeerGone = function(peerId) {
-        console.log('[AutoConnect] Peer gone:', peerId);
+        dlog('[AutoConnect] Peer gone:', peerId);
         mainWindow.webContents.send('peer-gone', peerId);
       };
       discoveryInstance.onAnyBeacon = _tryAutoConnect;
@@ -1605,20 +1613,20 @@ app.whenReady().then(() => {
 
   ipcMain.handle('get-attachment-duration', (event, url) => {
     try {
-      console.log('[IPC-get-attachment-duration] url=' + url);
+      dlog('[IPC-get-attachment-duration] url=' + url);
       const u = new URL(url);
-      console.log('[IPC-get-attachment-duration] protocol=' + u.protocol + ' hostname=' + u.hostname + ' pathname=' + u.pathname);
-      if (u.protocol !== 'orbit-db:') { console.log('[IPC-get-attachment-duration] wrong protocol'); return null; }
-      if (u.hostname !== 'attachment' && !u.pathname.startsWith('/attachment/')) { console.log('[IPC-get-attachment-duration] wrong hostname/path'); return null; }
+      dlog('[IPC-get-attachment-duration] protocol=' + u.protocol + ' hostname=' + u.hostname + ' pathname=' + u.pathname);
+      if (u.protocol !== 'orbit-db:') { dlog('[IPC-get-attachment-duration] wrong protocol'); return null; }
+      if (u.hostname !== 'attachment' && !u.pathname.startsWith('/attachment/')) { dlog('[IPC-get-attachment-duration] wrong hostname/path'); return null; }
       const id = u.hostname === 'attachment' ? u.pathname.slice(1) : u.pathname.replace('/attachment/', '');
-      console.log('[IPC-get-attachment-duration] id=' + id + ' globalDb=' + (globalDb ? 'yes' : 'no'));
-      if (!globalDb) { console.log('[IPC-get-attachment-duration] no globalDb'); return null; }
+      dlog('[IPC-get-attachment-duration] id=' + id + ' globalDb=' + (globalDb ? 'yes' : 'no'));
+      if (!globalDb) { dlog('[IPC-get-attachment-duration] no globalDb'); return null; }
       const att = globalDb.getAttachment(id);
-      console.log('[IPC-get-attachment-duration] att=' + (att ? 'found' : 'null') + ' data=' + (att && att.data ? att.data.length + ' bytes' : 'null') + ' localPath=' + (att && att.localPath ? att.localPath : 'null'));
-      if (!att || !att.data || att.data.length < 16) { console.log('[IPC-get-attachment-duration] no data'); return null; }
+      dlog('[IPC-get-attachment-duration] att=' + (att ? 'found' : 'null') + ' data=' + (att && att.data ? att.data.length + ' bytes' : 'null') + ' localPath=' + (att && att.localPath ? att.localPath : 'null'));
+      if (!att || !att.data || att.data.length < 16) { dlog('[IPC-get-attachment-duration] no data'); return null; }
       const buf = Buffer.isBuffer(att.data) ? att.data : Buffer.from(att.data);
       const len = buf.length;
-      console.log('[IPC-get-attachment-duration] buf len=' + len);
+      dlog('[IPC-get-attachment-duration] buf len=' + len);
 
       // Unsigned 32-bit big-endian read (safe for MP4 atom sizes & durations)
       function u32(o) {
@@ -1645,8 +1653,8 @@ app.whenReady().then(() => {
         if (type === 'moov') { moovStart = i; moovEnd = i + size; break; }
         i += size;
       }
-      if (moovStart < 0) { console.log('[IPC-get-attachment-duration] no moov found'); return null; }
-      console.log('[IPC-get-attachment-duration] found moov at ' + moovStart + ' size=' + (moovEnd - moovStart));
+      if (moovStart < 0) { dlog('[IPC-get-attachment-duration] no moov found'); return null; }
+      dlog('[IPC-get-attachment-duration] found moov at ' + moovStart + ' size=' + (moovEnd - moovStart));
 
       // Scan children of moov for mvhd, trak→tkhd, trak→mdia→mdhd
       var mvhdDur = null, mvhdTs = 0;
@@ -1667,7 +1675,7 @@ app.whenReady().then(() => {
           if (bSize < 8) break;
           var bEnd = p + bSize;
           if (bEnd > end) bEnd = end;
-          console.log('[IPC-get-attachment-duration] moov child: ' + bType + ' size=' + bSize + ' offset=' + p);
+          dlog('[IPC-get-attachment-duration] moov child: ' + bType + ' size=' + bSize + ' offset=' + p);
 
           if (bType === 'mvhd') {
             var ver = buf[p + 8];
@@ -1679,11 +1687,11 @@ app.whenReady().then(() => {
               ts = u32(p + 28);
               dur = u32(p + 32) * 4294967296 + u32(p + 36);
             }
-            console.log('[IPC-get-attachment-duration] mvhd ver=' + ver + ' ts=' + ts + ' dur=' + dur);
+            dlog('[IPC-get-attachment-duration] mvhd ver=' + ver + ' ts=' + ts + ' dur=' + dur);
             mvhdTs = ts;
             if (ts > 0 && dur > 0) {
               mvhdDur = dur / ts;
-              console.log('[IPC-get-attachment-duration] mvhd duration=' + mvhdDur + 's');
+              dlog('[IPC-get-attachment-duration] mvhd duration=' + mvhdDur + 's');
             }
           } else if (bType === 'tkhd') {
             var ver = buf[p + 8];
@@ -1697,7 +1705,7 @@ app.whenReady().then(() => {
               tkTs = mvhdTs || 1000;
               tkDur = u32(p + 36) * 4294967296 + u32(p + 40);
             }
-            console.log('[IPC-get-attachment-duration] tkhd ver=' + ver + ' id=' + tkId + ' dur=' + tkDur + ' ts=' + tkTs + ' => ' + (tkTs > 0 && tkDur > 0 ? tkDur/tkTs + 's' : '0'));
+            dlog('[IPC-get-attachment-duration] tkhd ver=' + ver + ' id=' + tkId + ' dur=' + tkDur + ' ts=' + tkTs + ' => ' + (tkTs > 0 && tkDur > 0 ? tkDur/tkTs + 's' : '0'));
             if (tkTs > 0 && tkDur > 0) {
               var d = tkDur / tkTs;
               if (bestTrackDur === null || d > bestTrackDur) bestTrackDur = d;
@@ -1713,7 +1721,7 @@ app.whenReady().then(() => {
                 mdTs = u32(p + 28);
                 mdDur = u32(p + 32) * 4294967296 + u32(p + 36);
               }
-              console.log('[IPC-get-attachment-duration] mdhd ver=' + ver + ' id=' + currentTrackId + ' ts=' + mdTs + ' dur=' + mdDur + ' => ' + (mdTs > 0 && mdDur > 0 ? mdDur/mdTs + 's' : '0'));
+              dlog('[IPC-get-attachment-duration] mdhd ver=' + ver + ' id=' + currentTrackId + ' ts=' + mdTs + ' dur=' + mdDur + ' => ' + (mdTs > 0 && mdDur > 0 ? mdDur/mdTs + 's' : '0'));
               trackTimescaleMap[currentTrackId] = mdTs;
               if (mdTs > 0 && mdDur > 0) {
                 var d = mdDur / mdTs;
@@ -1730,7 +1738,7 @@ app.whenReady().then(() => {
             }
             if (meDur > 0) {
               var d = meDur / (mvhdTs || 1000);
-              console.log('[IPC-get-attachment-duration] mehd ver=' + ver + ' dur=' + meDur + ' ts=' + (mvhdTs || 1000) + ' => ' + d + 's');
+              dlog('[IPC-get-attachment-duration] mehd ver=' + ver + ' dur=' + meDur + ' ts=' + (mvhdTs || 1000) + ' => ' + d + 's');
               if (bestTrackDur === null || d > bestTrackDur) bestTrackDur = d;
             }
           } else if (bType === 'trak') {
@@ -1752,7 +1760,7 @@ app.whenReady().then(() => {
                 sp += sbSize;
               }
             })();
-            console.log('[IPC-get-attachment-duration] trak id=' + trappedTrackId);
+            dlog('[IPC-get-attachment-duration] trak id=' + trappedTrackId);
             scanBox(p + 8, bEnd, depth + 1, trappedTrackId);
           } else if (bType === 'mdia' || bType === 'minf' || bType === 'stbl') {
             // Container boxes — recurse into children
@@ -1786,7 +1794,7 @@ app.whenReady().then(() => {
       // If moov had no duration, scan the ENTIRE file for moof→traf→trun boxes
       // (fragmented MP4 stores sample durations in movie fragments)
       if (bestTrackDur === null || bestTrackDur <= 0) {
-        console.log('[IPC-get-attachment-duration] scanning entire file for moof fragments');
+        dlog('[IPC-get-attachment-duration] scanning entire file for moof fragments');
         var trackFragDurs = {};
         var i2 = 0;
         while (i2 < len - 8) {
@@ -1860,30 +1868,30 @@ app.whenReady().then(() => {
           for (var tid in trackFragDurs) {
             var ts = trackTimescaleMap[tid] || mvhdTs || 1000;
             var d = trackFragDurs[tid] / ts;
-            console.log('[IPC-get-attachment-duration] track ' + tid + ' fragment sum: ' + trackFragDurs[tid] + ' / ' + ts + ' = ' + d + 's');
+            dlog('[IPC-get-attachment-duration] track ' + tid + ' fragment sum: ' + trackFragDurs[tid] + ' / ' + ts + ' = ' + d + 's');
             if (d > maxFragDur) maxFragDur = d;
           }
-          console.log('[IPC-get-attachment-duration] max per-track fragment duration: ' + maxFragDur + 's');
+          dlog('[IPC-get-attachment-duration] max per-track fragment duration: ' + maxFragDur + 's');
           if (bestTrackDur === null || maxFragDur > bestTrackDur) bestTrackDur = maxFragDur;
         } else {
-          console.log('[IPC-get-attachment-duration] no moof fragments found or all trun had no sample_duration flag');
+          dlog('[IPC-get-attachment-duration] no moof fragments found or all trun had no sample_duration flag');
         }
       }
 
       // Priority: mvhd duration > tkhd/mdhd/mehd/fragment duration
       if (mvhdDur !== null && mvhdDur > 0) {
-        console.log('[IPC-get-attachment-duration] RESULT (mvhd): ' + mvhdDur + 's');
+        dlog('[IPC-get-attachment-duration] RESULT (mvhd): ' + mvhdDur + 's');
         return mvhdDur;
       }
       if (bestTrackDur !== null && bestTrackDur > 0) {
-        console.log('[IPC-get-attachment-duration] RESULT (tkhd/mdhd/fragment): ' + bestTrackDur + 's');
+        dlog('[IPC-get-attachment-duration] RESULT (tkhd/mdhd/fragment): ' + bestTrackDur + 's');
         return bestTrackDur;
       }
 
-      console.log('[IPC-get-attachment-duration] no valid duration found, returning null');
+      dlog('[IPC-get-attachment-duration] no valid duration found, returning null');
       return null;
     } catch (e) {
-      console.log('[IPC-get-attachment-duration] EXCEPTION: ' + e.message);
+      dlog('[IPC-get-attachment-duration] EXCEPTION: ' + e.message);
       return null;
     }
   });

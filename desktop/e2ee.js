@@ -18,6 +18,7 @@
 // See plans/docs/Orbit E2EE Unification Design.md
 
 const crypto = require('crypto');
+const dlog = require('./src/js/log');
 
 // Loaded from shared/ so the constants have exactly one definition. If it is
 // unavailable (e.g. a packaged build predating the extraResources entry) we
@@ -90,7 +91,7 @@ function createE2EE(store) {
         };
         if (saved.publicKey !== keyPair.publicKey) {
           store.set(STORE_KEY, keyPair);
-          console.log('[E2EE] Migrated stored keypair to SPKI public key format');
+          dlog('[E2EE] Migrated stored keypair to SPKI public key format');
         }
         return keyPair;
       } catch (e) {

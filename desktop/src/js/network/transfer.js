@@ -2,6 +2,7 @@ const Protocol = require('./protocol');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
+const dlog = require('../log');
 
 const STALE_TIMEOUT = 60000; // 60s without activity = stale (state persisted for resume)
 const MAX_CHUNK_RETRIES = 3;
@@ -444,7 +445,7 @@ class TransferManager {
         // M3: purge resume-expected entries whose row just died (TTL sweep).
         this._resumeExpected.delete(row.fileId);
       }
-      if (rows.length > 0) console.log('[Transfer] Swept ' + rows.length + ' stale transfer(s)');
+      if (rows.length > 0) dlog('[Transfer] Swept ' + rows.length + ' stale transfer(s)');
     } catch (e) {
       console.warn('[Transfer] Sweep failed:', e.message);
     }

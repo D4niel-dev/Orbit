@@ -1,6 +1,7 @@
 const dgram = require('dgram');
 const os = require('os');
 const Protocol = require('./protocol');
+const dlog = require('../log');
 
 class Discovery {
   constructor(identityProvider, onPeerFound) {
@@ -41,19 +42,19 @@ class Discovery {
     if (this._started) return;
     this._started = true;
     this._getLocalIPs();
-    console.log('[Discovery] start() called, binding to port', this.PORT);
+    dlog('[Discovery] start() called, binding to port', this.PORT);
 
     this.socket.on('listening', () => {
-      console.log('[Discovery] Socket listening event fired');
+      dlog('[Discovery] Socket listening event fired');
       this.socket.setBroadcast(true);
       this.socket.setMulticastTTL(128);
       try {
         this.socket.addMembership(this.MULTICAST_ADDR);
-        console.log('[Discovery] Multicast membership added for', this.MULTICAST_ADDR);
+        dlog('[Discovery] Multicast membership added for', this.MULTICAST_ADDR);
       } catch (err) {
         console.error('[Discovery] Could not add multicast membership:', err);
       }
-      console.log('[Discovery] Listening on ' + this.MULTICAST_ADDR + ':' + this.PORT);
+      dlog('[Discovery] Listening on ' + this.MULTICAST_ADDR + ':' + this.PORT);
 
       this.beaconInterval = setInterval(() => this.broadcastBeacon(), 5000);
       this.broadcastBeacon();
@@ -63,11 +64,11 @@ class Discovery {
     });
 
     this.socket.on('message', (msg, rinfo) => {
-      console.log('[Discovery] RAW UDP message from ' + rinfo.address + ':' + rinfo.port + ' len=' + msg.length);
+      dlog('[Discovery] RAW UDP message from ' + rinfo.address + ':' + rinfo.port + ' len=' + msg.length);
       try {
         // Skip self-beacon from local IPs (BUG-DT-5)
         if (this._localIps.has(rinfo.address)) {
-          console.log('[Discovery] Skipped self-beacon from', rinfo.address);
+          dlog('[Discovery] Skipped self-beacon from', rinfo.address);
           return;
         }
 
@@ -78,7 +79,7 @@ class Discovery {
            payloadStr = msg.subarray(4).toString('utf8');
         }
 
-        console.log('[Discovery] Parsed beacon from ' + rinfo.address + ': ' + payloadStr.substring(0, 500));
+        dlog('[Discovery] Parsed beacon from ' + rinfo.address + ': ' + payloadStr.substring(0, 500));
         const packet = JSON.parse(payloadStr);
         if (packet.type === Protocol.Types.BEACON) {
           const myId = this.identityProvider().userId;
@@ -86,13 +87,16 @@ class Discovery {
           if (packetFrom && packetFrom !== myId) {
             this.handleBeacon(packet, rinfo.address);
           } else {
-            console.log('[Discovery] Skipped own/missing-from beacon, myId=' + myId + ' from=' + packetFrom);
+            dlog('[Discovery] Skipped own/missing-from beacon, myId=' + myId + ' from=' + packetFrom);
           }
         } else {
-          console.log('[Discovery] Non-beacon packet type:', packet.type);
+          dlog('[Discovery] Non-beacon packet type:', packet.type);
         }
       } catch (err) {
-        console.log('[Discovery] Error parsing packet from ' + rinfo.address + ':', err.message);
+        // ⚠ console.error, not dlog. A beacon we cannot parse is either a peer
+        // running a different protocol version or something else on the LAN
+        // talking to our port — both are real, and neither is debug chatter.
+        console.error('[Discovery] Error parsing packet from ' + rinfo.address + ':', err.message);
       }
     });
 
@@ -100,7 +104,7 @@ class Discovery {
       console.error('[Discovery] Socket error:', err.message);
     });
 
-    console.log('[Discovery] Calling socket.bind(' + this.PORT + ')');
+    dlog('[Discovery] Calling socket.bind(' + this.PORT + ')');
     this.socket.bind(this.PORT);
   }
 
@@ -108,11 +112,11 @@ class Discovery {
     if (!this._started) return;
     const identity = this.identityProvider();
     if (!identity || !identity.userId) {
-      console.log('[Discovery] broadcastBeacon skipped — no identity');
+      dlog('[Discovery] broadcastBeacon skipped — no identity');
       return;
     }
 
-    console.log('[Discovery] Broadcasting beacon for', identity.username);
+    dlog('[Discovery] Broadcasting beacon for', identity.username);
 
     var broadcastStatus = identity.status === 'invisible' ? 'offline' : (identity.status || 'online');
 
@@ -181,7 +185,7 @@ class Discovery {
       }
     }
     if (pruned.length > 0) {
-      console.log('[Discovery] Pruned', pruned.length, 'stale peers:', pruned);
+      dlog('[Discovery] Pruned', pruned.length, 'stale peers:', pruned);
       pruned.forEach(function(id) {
         if (typeof this.onPeerGone === 'function') {
           this.onPeerGone(id);

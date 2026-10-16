@@ -110,6 +110,11 @@ class Store {
         notifyDnd: false,
         devMode: false,
         debugDisplay: false,
+        // ⚠ Whether the MAIN PROCESS may print to the terminal. Read by
+        // src/js/log.js, which gates every main-process log line — without it,
+        // `npm start` printed a wall of discovery beacons and duration probes on
+        // every launch. Needs `devMode` too; this is the narrower switch.
+        debugLogs: false,
         showMessageIds: false,
         logNetworkPackets: false,
         showConnectionStats: false,
