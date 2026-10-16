@@ -196,6 +196,12 @@ window.SettingsModal = {
     var state = window.store.getState();
     var user = state.currentUser;
     var experimentalBadge = '<span style="display:inline-block;font-size:8px;font-weight:700;color:#fff;background:var(--accent-warning);border-radius:3px;padding:1px 5px;text-transform:uppercase;line-height:1.4;vertical-align:middle;margin-left:6px;">EXPERIMENTAL</span>';
+    // ⚠ Same pill, different word and colour, because it means something
+    // different. "Experimental" says it might be unstable; "Beta" says it is
+    // still changing but you can rely on it. The redesign is the second kind: it
+    // ships alongside the old UI and keeps being improved, so it is not going to
+    // be pulled out from under anyone.
+    var betaBadge = '<span style="display:inline-block;font-size:8px;font-weight:700;color:#fff;background:var(--accent-primary);border-radius:3px;padding:1px 5px;text-transform:uppercase;line-height:1.4;vertical-align:middle;margin-left:6px;">BETA</span>';
 
     if (tabName === 'account') {
       var s = state.settings || {};
@@ -635,32 +641,12 @@ window.SettingsModal = {
       content.innerHTML =
         '<h3 style="font-family:var(--font-display);font-size:24px;margin-bottom:24px;">Appearance</h3>' +
 
-        // Section: Look
-        // ⚠ FIRST IN THE TAB, above Theme, because it is the biggest single choice in
-        // it — and because the person who needs it is someone who is unhappy with the
-        // new UI and should not have to hunt. The whole row is a <label>, so clicking
-        // the text works as well as the switch.
-        '<div class="settings-collapsible" style="margin-bottom:12px;border-radius:10px;border:1px solid var(--border-subtle);overflow:hidden;">' +
-          '<div class="collapsible-header" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg-base);cursor:pointer;user-select:none;" onclick="var b=this.nextElementSibling;var i=this.querySelector(\'.collapse-icon\');if(b.style.display===\'none\'){b.style.display=\'block\';i.style.transform=\'rotate(0deg)\'}else{b.style.display=\'none\';i.style.transform=\'rotate(-90deg)\'}">' +
-            '<div style="display:flex;align-items:center;gap:8px;"><i data-lucide="layout-panel-left" style="width:16px;height:16px;color:var(--text-muted);"></i><span style="font-size:13px;font-weight:600;color:var(--text-primary);">Look</span></div>' +
-            '<i data-lucide="chevron-down" class="collapse-icon" style="width:16px;height:16px;color:var(--text-muted);transition:transform 0.2s;"></i>' +
-          '</div>' +
-          '<div class="collapsible-body" style="padding:16px;display:block;">' +
-            '<label style="display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;">' +
-              '<div>' +
-                '<div style="font-size:14px;color:var(--text-primary);">Classic look</div>' +
-                '<div style="font-size:12px;color:var(--text-muted);font-weight:400;margin-top:2px;">Use the previous design instead of the new one</div>' +
-              '</div>' +
-              // ⚠ A <span>, not a <label>: the row IS the label, and a label inside a
-              // label is invalid. See §9c in components.css.
-              '<span class="orbit-switch">' +
-                '<input type="checkbox" id="set-classic-ui"' + (s.classicUI === true ? ' checked' : '') + '>' +
-                '<span class="orbit-switch-track"><span class="orbit-switch-knob"></span></span>' +
-              '</span>' +
-            '</label>' +
-            '<div style="font-size:11px;color:var(--text-muted);margin-top:10px;padding-top:10px;border-top:1px solid var(--border-subtle);line-height:1.5;">Orbit restarts to apply this, so it asks first. Your theme, and everything else in this panel, keeps working either way.</div>' +
-          '</div>' +
-        '</div>' +
+        // ⚠ The "Look" card that used to sit here — and FIRST in this tab — has
+        // moved to Advanced → Experimental Features, with a BETA badge. The
+        // redesign is not a one-off: it ships alongside the old UI and keeps being
+        // improved, so switching between them is a beta feature rather than a
+        // first-class appearance choice. Its markup and its change handler moved
+        // together; the handler now lives in the advanced branch below.
 
         // Section: Theme
         '<div class="settings-collapsible" style="margin-bottom:12px;border-radius:10px;border:1px solid var(--border-subtle);overflow:visible;">' +
@@ -1127,44 +1113,9 @@ window.SettingsModal = {
       content.querySelector('#set-msg-anim').addEventListener('change', function(e) { updateSettings('messageAnim', e.target.value); });
       content.querySelector('#set-24h').addEventListener('change', function(e) { updateSettings('timeFormat24', e.target.checked); });
 
-      // The Classic look toggle.
-      //
-      // ⚠⚠ IT CONFIRMS FIRST, AND THE SWITCH GOES BACK IMMEDIATELY. Changing the
-      // look restarts the app, so this is not a control that may act on the click:
-      // a switch that moves and then asks permission is showing a state that is not
-      // saved. It is put back at once, and only a confirmed choice — followed by the
-      // restart that applies it — may move it.
-      //
-      // ⚠ It does NOT go through updateSettings. That funnels into the store, whose
-      // subscription repaints the window through applySettings — so the UI would
-      // change under the user and *then* the app would close. See commitClassicUI.
-      var classicToggle = content.querySelector('#set-classic-ui');
-      if (classicToggle) {
-        classicToggle.addEventListener('change', function(e) {
-          var wantClassic = e.target.checked;
-          e.target.checked = !wantClassic;
-
-          // ⚠ A restart ends a call, and the dialog is the only place that can say
-          // so. `CallManager.activeCall` is set on every call start — outgoing,
-          // incoming, 1:1 and group, and a call that is still RINGING — and cleared
-          // in the single cleanup(), so it is the one honest signal for this. The
-          // confirm turns red when it applies, because the consequence is no longer
-          // just a restart.
-          var inCall = !!(window.CallManager && window.CallManager.activeCall);
-
-          window.ConfirmModal.show({
-            title: wantClassic ? 'Switch to the classic look?' : 'Switch back to the new look?',
-            message: 'Orbit will close and reopen to apply it. Nothing else changes — your messages, accounts and settings are untouched.'
-              + (inCall ? ' You are in a call right now, and restarting will end it.' : ''),
-            confirmText: inCall ? 'End call and restart' : 'Restart now',
-            cancelText: 'Not now',
-            danger: inCall,
-            onConfirm: function() {
-              if (window.OrbitRedesign) window.OrbitRedesign.commitClassicUI(wantClassic);
-            }
-          });
-        });
-      }
+      // ⚠ The Classic look toggle's handler moved with its markup — it is in the
+      // advanced branch now, under Experimental Features. Look for
+      // `#set-classic-ui` there; it is not an Appearance control any more.
       content.querySelector('#set-translate').addEventListener('change', function(e) {
         updateSettings('messageTranslate', e.target.checked);
         updateSettings('experimentalMessageTranslate', e.target.checked);
@@ -1818,8 +1769,31 @@ window.SettingsModal = {
             '<div style="display:flex;align-items:center;gap:8px;"><i data-lucide="flask-round" style="width:16px;height:16px;color:var(--text-muted);"></i><span style="font-size:13px;font-weight:600;color:var(--text-primary);">Experimental Features</span></div>' +
             '<i data-lucide="chevron-down" class="collapse-icon" style="width:16px;height:16px;color:var(--text-muted);transition:transform 0.2s;"></i>' +
           '</div>' +
-          '<div class="collapsible-body" style="display:' + (s.devMode ? 'block' : 'none') + ';">' +
+          // ⚠ EXPANDED BY DEFAULT, like Developer Tools above it. It used to be
+          // collapsed unless Developer Mode was on, which was fine while every row
+          // inside was dev-only — but the Classic look switch is not, and a section
+          // that starts collapsed is a section nobody opens. The rows themselves
+          // are still gated; only the default has changed.
+          '<div class="collapsible-body" style="display:block;">' +
             '<div style="padding:4px 16px 16px;">' +
+              // ⚠ FIRST, AND DELIBERATELY NOT GATED. Every other row in here is
+              // disabled until Developer Mode is on. This one has to work for the
+              // person who simply does not like the new UI, because it is their way
+              // back — gating it behind Developer Mode would hide it from exactly
+              // the person it exists for.
+              '<label style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;cursor:pointer;">' +
+                '<div>' +
+                  '<div style="font-size:14px;color:var(--text-primary);">Classic look' + betaBadge + '</div>' +
+                  '<div style="font-size:12px;color:var(--text-muted);font-weight:400;">Use the previous design instead of the new one.</div>' +
+                '</div>' +
+                // ⚠ A <span>, not a <label>: the row IS the label, and a label inside
+                // a label is invalid. See §9c in components.css.
+                '<span class="orbit-switch">' +
+                  '<input type="checkbox" id="set-classic-ui"' + (s.classicUI === true ? ' checked' : '') + '>' +
+                  '<span class="orbit-switch-track"><span class="orbit-switch-knob"></span></span>' +
+                '</span>' +
+              '</label>' +
+              '<div style="border-top:1px solid var(--border-subtle);"></div>' +
               gatedToggleRow('adv-experimental', 'Experimental Features' + experimentalBadge, 'Enable experimental features that may be unstable.', s.enableExperimental, s.devMode) +
               (s.enableExperimental && s.devMode
                 ? '<div style="border-top:1px solid var(--border-subtle);margin-top:4px;"></div>' +
@@ -1851,6 +1825,12 @@ window.SettingsModal = {
           '</div>' +
           '<div class="collapsible-body" style="display:none;">' +
             '<div style="padding:4px 16px 16px;">' +
+              // ⚠ FIRST HERE, and it is the one that decides whether the terminal
+              // is usable at all. Every main-process log line — discovery beacons,
+              // socket events, duration probes, the database migration — goes
+              // through the gate this drives (src/js/log.js). Off by default.
+              gatedToggleRow('adv-debug-logs', 'Debug Logs', 'Print main-process logs to the terminal. Needs Developer Mode.', s.debugLogs, s.devMode) +
+              '<div style="border-top:1px solid var(--border-subtle);"></div>' +
               gatedToggleRow('adv-debug-display', 'Debug Display', 'Show debug overlays on messages, search results, and UI components.', s.debugDisplay, s.devMode) +
               '<div style="border-top:1px solid var(--border-subtle);"></div>' +
               gatedToggleRow('adv-show-msg-ids', 'Show Message IDs', 'Display internal message IDs below each message.', s.showMessageIds, s.devMode) +
@@ -1892,6 +1872,46 @@ window.SettingsModal = {
         window.Storage.set('settings', newSettings);
       };
 
+      // The Classic look toggle. Moved here with its markup — it is the first row
+      // under Experimental Features, not an Appearance control.
+      //
+      // ⚠⚠ IT CONFIRMS FIRST, AND THE SWITCH GOES BACK IMMEDIATELY. Changing the
+      // look restarts the app, so this is not a control that may act on the click:
+      // a switch that moves and then asks permission is showing a state that is not
+      // saved. It is put back at once, and only a confirmed choice — followed by the
+      // restart that applies it — may move it.
+      //
+      // ⚠ It does NOT go through updateSettings. That funnels into the store, whose
+      // subscription repaints the window through applySettings — so the UI would
+      // change under the user and *then* the app would close. See commitClassicUI.
+      var classicToggle = content.querySelector('#set-classic-ui');
+      if (classicToggle) {
+        classicToggle.addEventListener('change', function(e) {
+          var wantClassic = e.target.checked;
+          e.target.checked = !wantClassic;
+
+          // ⚠ A restart ends a call, and the dialog is the only place that can say
+          // so. `CallManager.activeCall` is set on every call start — outgoing,
+          // incoming, 1:1 and group, and a call that is still RINGING — and cleared
+          // in the single cleanup(), so it is the one honest signal for this. The
+          // confirm turns red when it applies, because the consequence is no longer
+          // just a restart.
+          var inCall = !!(window.CallManager && window.CallManager.activeCall);
+
+          window.ConfirmModal.show({
+            title: wantClassic ? 'Switch to the classic look?' : 'Switch back to the new look?',
+            message: 'Orbit will close and reopen to apply it. Nothing else changes — your messages, accounts and settings are untouched.'
+              + (inCall ? ' You are in a call right now, and restarting will end it.' : ''),
+            confirmText: inCall ? 'End call and restart' : 'Restart now',
+            cancelText: 'Not now',
+            danger: inCall,
+            onConfirm: function() {
+              if (window.OrbitRedesign) window.OrbitRedesign.commitClassicUI(wantClassic);
+            }
+          });
+        });
+      }
+
       content.querySelector('#adv-dev-mode').addEventListener('change', function(e) {
         if (!e.target.checked) {
           var s = { ...window.store.getState().settings };
@@ -1906,6 +1926,7 @@ window.SettingsModal = {
           s.experimentalPerformanceMode = false;
           s.experimentalFolders = false;
           s.debugDisplay = false;
+          s.debugLogs = false;
           s.showMessageIds = false;
           s.logNetworkPackets = false;
           s.showConnectionStats = false;
@@ -1915,6 +1936,10 @@ window.SettingsModal = {
           updateSettings('devMode', true);
         }
         if (window.SettingsModal) window.SettingsModal.renderTab('advanced');
+      });
+      content.querySelector('#adv-debug-logs').addEventListener('change', function(e) {
+        if (!window.store.getState().settings.devMode) { e.target.checked = false; return; }
+        updateSettings('debugLogs', e.target.checked);
       });
       content.querySelector('#adv-debug-display').addEventListener('change', function(e) {
         if (!window.store.getState().settings.devMode) { e.target.checked = false; return; }

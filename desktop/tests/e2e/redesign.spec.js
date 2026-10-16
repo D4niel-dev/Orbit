@@ -853,7 +853,13 @@ test.describe('desktop redesign', () => {
     expect(back.searchRadius).toBe('34px');
   });
 
-  // Open Settings → Appearance and return the state a test cares about.
+  // Open Settings and the tab the Classic look switch now lives on, returning
+  // the state a test cares about.
+  //
+  // ⚠ IT IS UNDER ADVANCED → EXPERIMENTAL FEATURES, NOT APPEARANCE. The redesign
+  // ships alongside the old UI and keeps being improved, so switching between
+  // them is a beta feature rather than a first-class appearance choice. These
+  // specs used to render the appearance tab; that is where it was.
   const lookState = () => page.evaluate(() => ({
     layerOn: !document.getElementById('redesign-css').disabled,
     checked: document.getElementById('set-classic-ui').checked,
@@ -879,7 +885,7 @@ test.describe('desktop redesign', () => {
   const openAppearance = async () => {
     await page.click('#btn-nav-settings');
     await page.waitForTimeout(900);
-    await page.evaluate(() => window.SettingsModal.renderTab('appearance'));
+    await page.evaluate(() => window.SettingsModal.renderTab('advanced'));
     await page.waitForTimeout(900);
   };
 
