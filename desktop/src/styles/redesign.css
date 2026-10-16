@@ -1302,23 +1302,17 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
   margin: 0 0 20px !important;
 }
 
-/* ⚠ "Overview" was a filled `--bg-hover` row — which is EXACTLY how the settings nav
-   two inches to the right marks the item you have selected. So a static heading read
-   as a control, and the two facts under it read as its siblings. It is a label and a
-   pair of facts, and it looks like one. */
-.gi-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .02em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  margin-bottom: 6px;
-}
-.gi-fact {
-  font-size: 13px;
-  color: var(--text-muted);
-  line-height: 1.6;
-}
+/* ⚠ `.gi-label` AND `.gi-fact` USED TO BE HERE, AND THAT WAS THE BUG. They have no
+   inline styles and no rule anywhere else, so with the layer switched off — the
+   Classic look — "Overview" and the two facts under it fell back to bare default
+   text. Dan: "the texts seems... too basic."
+   ⚠ The test is not "does the layer have a rule for it", it is "does anything
+   ELSE style it". These had nothing, so the base moved to components.css and the
+   layer keeps only the deltas above — the rail padding and the two headings,
+   which restyle a look that exists without them.
+   "Overview" was a filled `--bg-hover` row, which is exactly how the settings nav
+   two inches to the right marks the item you have selected — so a static heading
+   read as a control and the two facts under it read as its siblings. */
 
 /* ⚠ The nav items carry their own colours INLINE — `background: var(--bg-hover);
    color: var(--text-primary)` on the active one, `transparent` on the rest — and

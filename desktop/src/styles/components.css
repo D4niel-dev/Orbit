@@ -3187,6 +3187,30 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: 0.3; }
   margin-top: 3px;
 }
 
+/* ── The group info modal's rail: a label and the facts under it ─────────────
+   ⚠⚠ THESE TWO RULES WERE ONLY IN redesign.css, WHICH IS THE ONE PLACE THEY
+   COULD NOT WORK. `gi-label` and `gi-fact` have no inline styles and no other
+   rule anywhere, so with the layer switched off — the Classic look — they fell
+   back to bare default text. Dan: "is the old UI group info modal has styles?
+   Cuz i think somethings doesn't look right... like the texts seems... too
+   basic." It did not have them; this is what he was looking at.
+   ⚠ The layer KEEPS its structural deltas for this modal — the rail padding and
+   the two headings, which are genuine restyles of an existing look. What it may
+   not keep is the only styling an element has. */
+.gi-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.gi-fact {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
 /* One surface, one border, one radius for every block in the panel — the bio, the
    pinned list and the rows. They used to each carry their own inline radius. */
 .pf-card {
