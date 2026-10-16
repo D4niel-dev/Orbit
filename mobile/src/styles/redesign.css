@@ -1075,6 +1075,19 @@
   align-self: flex-end;
 }
 
+/* ⚠ THE GAP BETWEEN A MESSAGE'S TEXT AND ITS ATTACHMENTS. Same fix as the
+   desktop, in components.css. The bubble and `.msg-attachments` are siblings in
+   a column with no `gap`, so a message carrying both — a caption plus a photo, a
+   line of text plus a voice note — stacked them FLUSH. Measured on the desktop:
+   the bubble's bottom edge and the attachment's top edge were the same pixel.
+   ⚠ The adjacent-sibling combinator is doing real work: it applies ONLY when a
+   bubble precedes the attachments. An attachment-only message has no bubble, and
+   a plain `margin-top` on the container would push it down off the row's
+   baseline. */
+.message-row .message-bubble + .msg-attachments {
+  margin-top: 6px;
+}
+
 /* The reply chip, and the reactions of a message that has NO bubble — an image
    on its own. Everything else keeps its reactions inside the bubble, because
    that is what positions them (see the .reactions-row rules above). */

@@ -2595,6 +2595,20 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: 0.3; }
   align-self: flex-end;
 }
 
+/* ⚠ THE GAP BETWEEN A MESSAGE'S TEXT AND ITS ATTACHMENTS. The bubble and
+   `.msg-attachments` are siblings in a flex column whose `gap` is `normal` — so
+   a message carrying both stacked them FLUSH. Measured: the bubble's bottom edge
+   and the attachment's top edge were the same pixel, gap 0. Dan's Screenshot
+   (165) is that, with "test" sitting directly on the audio player.
+   ⚠ The adjacent-sibling combinator is doing real work here: it must apply ONLY
+   when a bubble precedes the attachments. An attachment-only message — a photo
+   with no caption — has no bubble, and a plain `margin-top` on the container
+   would push it down off the row's baseline. Verified both ways: 6px with a
+   bubble, 0px without. */
+.message-row .message-bubble + .msg-attachments {
+  margin-top: 6px;
+}
+
 /* The desktop's image and file cells share `.att-thumb`, so they are told apart
    by what is inside them. Images lose the box and keep their aspect ratio;
    files keep a surface, because a file has no shape of its own. */
