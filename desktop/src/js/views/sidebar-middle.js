@@ -674,7 +674,7 @@ window.SidebarMiddle = {
           rows.map(function(f) {
             return '<div class="afm-tile" data-id="' + window.Sanitize.escapeHtml(f.userId) + '" title="' + window.Sanitize.escapeHtml(f.username) + '" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px;border-radius:12px;cursor:pointer;background:var(--bg-base);border:1px solid var(--border-subtle);">' +
               '<div style="position:relative;width:44px;height:44px;border-radius:50%;">' + avatarInner(f) +
-                window.OrbitPresence.badge(f.status || 'offline', 10) +
+                window.OrbitPresence.badge(f.status || 'offline') +
               '</div>' +
               '<div style="font-size:11px;color:var(--text-primary);text-align:center;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + window.Sanitize.escapeHtml(f.username) + '</div>' +
               (closedDMs[f.userId] ? '<div style="font-size:9px;color:var(--text-muted);">Closed</div>' : '') +
@@ -849,7 +849,7 @@ window.SidebarMiddle = {
     return '<div class="list-row ' + (isActive ? 'active' : '') + '"' + (opts.reopen ? ' data-reopen="1"' : '') + ' data-id="' + window.Sanitize.escapeHtml(friend.userId) + '" data-debug="User: ' + window.Sanitize.escapeHtml(friend.username) + ' ID: ' + window.Sanitize.escapeHtml(friend.userId) + ' Status: ' + window.Sanitize.escapeHtml(friend.status || 'offline') + '">' +
       '<div class="avatar avatar-md list-row-avatar" style="position:relative;">' +
         avatarContainer +
-        window.OrbitPresence.badge(friend.status || 'offline', 10) +
+        window.OrbitPresence.badge(friend.status || 'offline') +
       '</div>' +
       '<div class="list-row-info">' +
         '<div class="list-row-title">' + window.Sanitize.escapeHtml(friend.username) + '</div>' +

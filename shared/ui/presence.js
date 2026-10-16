@@ -55,12 +55,26 @@
     return COLORS[s] ? s : 'offline';
   }
 
-  // The four shapes. `fill-rule="evenodd"` on the dnd path is what makes the bar
-  // a real hole rather than a second colour — so the glyph works over an avatar,
-  // a panel or a photo without anyone having to know what is behind it.
+  // The four shapes.
+  //
+  // ⚠ THE MOON WAS WRONG FIRST TIME, AND IT WAS THE THIN CRESCENT THAT DID IT.
+  // The original path was two arcs between two arbitrary points, which came out
+  // as a narrow sliver — at 10px it read as a blob with a nick in it, not a moon.
+  // Dan: "it doesn't look like a moon right now". Redrawn the way Discord draws
+  // theirs: a full disc with a circular BITE taken out of the upper-left, so the
+  // crescent is thick enough to survive the badge size.
+  //
+  // The crescent is outer-minus-bite. The two horns are where those circles
+  // cross; solved once here rather than computed at runtime:
+  //     outer  centre (8, 8)     r 7     — the 16-unit viewBox
+  //     bite   centre (5.2, 4.8) r 5.6
+  //     horns  (9.45, 1.15) and (1.02, 8.53)
+  // A <mask> would say this more directly, but it needs a unique id per instance
+  // and these glyphs render many times on one page — one stray duplicate id and
+  // the masks cross-wire silently.
   var SHAPES = {
     online: '<circle cx="8" cy="8" r="7" fill="currentColor"/>',
-    away: '<path fill="currentColor" d="M11.6 10.1A5.4 5.4 0 0 1 5.9 4.4 5.5 5.5 0 1 0 11.6 10.1Z"/>',
+    away: '<path fill="currentColor" d="M9.45 1.15A7 7 0 1 1 1.02 8.53 5.6 5.6 0 0 0 9.45 1.15Z"/>',
     dnd: '<path fill="currentColor" fill-rule="evenodd" d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1Zm-3.6 6h7.2v2H4.4Z"/>',
     ring: '<circle cx="8" cy="8" r="5.6" fill="none" stroke="currentColor" stroke-width="2.6"/>'
   };
@@ -98,7 +112,15 @@
     /**
      * The glyph as a badge sitting on the corner of an avatar: absolutely
      * positioned, with a ring in `ringColor` so it reads against whatever it
-     * overlaps. `size` is the glyph; the ring adds 2px on each side.
+     * overlaps. `size` is the glyph; the ring adds 1.5px on each side.
+     *
+     * ⚠ THE RING IS THIN AND THE GLYPH IS BIG, ON PURPOSE. The ring exists to
+     * separate the badge from the avatar, but it is the PANEL colour
+     * (`--bg-surface` #1C1C1E) sitting on an avatar that is `--bg-hover`
+     * (#28282B) — so a fat ring is a dark halo, and a crescent's bite merges
+     * into it and the moon reads as a blob. Dan: "the bg color behind it makes
+     * it harder to see it". A thinner ring with a larger glyph puts the shape
+     * back in charge of the silhouette.
      *
      * ⚠ It carries the existing `status-indicator` class on purpose. That is what
      * the positioning, the online pulse (animations.css) and the reduced-motion
@@ -108,11 +130,11 @@
      */
     badge: function (status, size, ringColor) {
       var s = norm(status);
-      var px = size || 10;
+      var px = size || 12;
       var ring = ringColor || 'var(--bg-surface)';
       return '<span class="status-indicator orbit-presence-badge ' + s + '" title="' + esc(LABELS[s]) + '" ' +
         'style="position:absolute;bottom:-1px;right:-1px;display:flex;align-items:center;' +
-        'justify-content:center;border-radius:50%;background:' + ring + ';padding:2px;' +
+        'justify-content:center;border-radius:50%;background:' + ring + ';padding:1.5px;' +
         'box-sizing:content-box;pointer-events:none;">' + this.glyph(s, px) + '</span>';
     }
   };

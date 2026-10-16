@@ -759,7 +759,7 @@ window.ChatPanel = {
 
     return '<div class="avatar avatar-md chat-header-avatar" style="margin-right: var(--spacing-md); position:relative; cursor:pointer;">' +
         headerAvatarContainer +
-        window.OrbitPresence.badge(friendStatus, 10) +
+        window.OrbitPresence.badge(friendStatus) +
       '</div>' +
       '<div style="flex:1;">' +
         '<div style="font-weight: 600; font-family: var(--font-display); font-size: 16px;">' + window.Sanitize.escapeHtml(activeFriend.username) + '</div>' +

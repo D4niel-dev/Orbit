@@ -34,7 +34,7 @@ window.SidebarLeft = {
     var frame = window.Frames.getFrameForUser(user ? user.userId : null);
     const avatarImg = user && user.avatar ? '<img src="' + window.Sanitize.escapeHtml(user.avatar) + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">' : '<i data-lucide="user-round"></i>';
     var frameHtml = frame ? '<img src="icons/frames/pfp_frame_' + frame + '.png" style="position:absolute;top:-14%;left:-14%;width:122%;height:122%;pointer-events:none;object-fit:contain;" draggable="false" alt="">' : '';
-    profileBtn.innerHTML = '<div class="avatar avatar-md" style="position:relative;width:40px;height:40px;">' + avatarImg + frameHtml + window.OrbitPresence.badge(user ? user.status : 'online', 10) + '</div>';
+    profileBtn.innerHTML = '<div class="avatar avatar-md" style="position:relative;width:40px;height:40px;">' + avatarImg + frameHtml + window.OrbitPresence.badge(user ? user.status : 'online') + '</div>';
     lucide.createIcons({ root: profileBtn });
   },
 
@@ -77,7 +77,7 @@ window.SidebarLeft = {
           <div class="avatar avatar-md">
             <i data-lucide="user-round"></i>
           </div>
-          <span class="status-indicator orbit-presence-badge online" style="position:absolute;bottom:0;right:0;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--bg-surface);padding:2px;box-sizing:content-box;pointer-events:none;">${window.OrbitPresence.glyph('online', 10)}</span>
+          ${window.OrbitPresence.badge('online')}
         </button>
       </div>
     `;
