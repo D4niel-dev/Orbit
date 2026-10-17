@@ -15,7 +15,7 @@
 // The numbers are wide on purpose — this is a shape guard, not a pixel-exact
 // one. What it catches is the failure that actually happened.
 const { test, expect } = require('@playwright/test');
-const { tmpUserDataDir, launchApp } = require('./helpers');
+const { tmpUserDataDir, launchApp, seedNewUI } = require('./helpers');
 
 // Rasterise each glyph's markup and return the fraction of pixels that got any
 // ink. Only ALPHA is measured, so it does not matter that the CSS custom
@@ -110,5 +110,61 @@ test.describe('presence glyphs', () => {
     } finally {
       await app.close();
     }
+  });
+
+  // ⚠⚠ THE TEST ABOVE PASSES WHILE THE APP IS WRONG, AND THAT IS THE WHOLE POINT
+  // OF THIS ONE. It renders the badge into a bare <div> on `document.body`, where
+  // no ancestor rule can reach it — and the bug that shipped WAS an ancestor
+  // rule. The profile button at the bottom of the icon rail is itself an
+  // `.icon-btn`, and `.icon-btn svg { width: 19px }`, written for the rail's
+  // lucide icons, also matched the presence glyph inside it. So the redesign's
+  // profile badge rendered 22px against 15px for every other badge, and Dan saw
+  // it: "the status icons in the new UI look way larger than the classic UI".
+  //
+  // A component measured out of context cannot see that. So this measures the
+  // real badge, in the real rail, in BOTH looks — and asserts the invariant that
+  // actually matters: every presence badge in the app is the same size. It is
+  // also the `:not(.orbit-presence-glyph)` guard on that rule.
+  test('every presence badge in the app is the same size, rail profile included', async () => {
+    const sizesIn = async (newUI) => {
+      const dir = seedNewUI(tmpUserDataDir('presence-rail-' + (newUI ? 'new' : 'old')), newUI);
+      // ⚠ NOT `keepBootState` — the chat list and header badges are what this
+      // compares against, and an empty comparison would be a vacuous green.
+      const { app, page } = await launchApp(dir);
+      try {
+        return await page.evaluate(() => {
+          const w = (el) => Math.round(el.getBoundingClientRect().width);
+          const all = [...document.querySelectorAll('.orbit-presence-badge')];
+          const rail = all.find((el) => el.closest('#btn-profile'));
+          const rest = all.filter((el) => !el.closest('#btn-profile'));
+          return {
+            layerOn: !document.getElementById('redesign-css').disabled,
+            rail: rail ? w(rail) : null,
+            railGlyph: rail ? Math.round(rail.querySelector('svg').getBoundingClientRect().width) : null,
+            others: rest.map(w)
+          };
+        });
+      } finally {
+        await app.close();
+      }
+    };
+
+    const original = await sizesIn(false);
+    const redesign = await sizesIn(true);
+
+    // Seed the look each time; if either failed to take, the comparison is moot.
+    expect(original.layerOn, 'the first launch must be the original UI').toBe(false);
+    expect(redesign.layerOn, 'the second launch must be the redesign').toBe(true);
+
+    for (const [name, m] of [['original', original], ['redesign', redesign]]) {
+      expect(m.rail, name + ': the rail profile button must carry a presence badge').not.toBeNull();
+      expect(m.others.length, name + ': need other badges to compare against').toBeGreaterThan(0);
+      // Every badge the same, and the glyph most of the badge.
+      expect([...new Set([m.rail, ...m.others])], name + ': badges differ in size').toHaveLength(1);
+      expect(m.railGlyph, name + ': glyph should fill the badge minus its ring').toBe(m.rail - 3);
+    }
+
+    // And the two looks agree — the "new UI looks bigger" complaint.
+    expect(redesign.rail, 'the redesign badge must match the original UI').toBe(original.rail);
   });
 });

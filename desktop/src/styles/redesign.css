@@ -342,7 +342,14 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
   position: relative;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.icon-btn svg {
+/* ⚠ `:not(.orbit-presence-glyph)` — the profile button at the bottom of this rail
+   is an `.icon-btn` too, and it wears the avatar's presence badge. That badge's
+   <svg> is an inline illustration carrying its own size, not one of the lucide
+   rail icons this rule exists for — so 19px here made the profile badge render
+   22px against 15px for every other badge in the app, and Dan read it as "the
+   status icons in the new UI look way larger than the classic UI". Measured in
+   both looks: rail 22px / glyph 19px, against 15px / 12px everywhere else. */
+.icon-btn svg:not(.orbit-presence-glyph) {
   width: 19px;
   height: 19px;
 }

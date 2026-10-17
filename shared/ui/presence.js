@@ -104,9 +104,18 @@
     glyph: function (status, size) {
       var s = norm(status);
       var px = size || 12;
+      // ⚠ THE SIZE IS IN THE INLINE STYLE AS WELL AS THE ATTRIBUTES, ON PURPOSE.
+      // `width`/`height` on an <svg> are presentation attributes, and ANY
+      // stylesheet rule outranks a presentation attribute — so an ancestor
+      // selector written for icon fonts silently resizes the glyph. There are a
+      // dozen `.x svg { width: … }` rules in the redesign, and one of them
+      // (`.icon-btn svg`) put this badge at 22px against 15px everywhere else.
+      // An inline style wins that fight; the attributes stay so the markup still
+      // reads as an SVG with a declared size.
       return '<svg class="orbit-presence-glyph" width="' + px + '" height="' + px + '" ' +
         'viewBox="0 0 16 16" aria-hidden="true" focusable="false" ' +
-        'style="display:block;color:' + COLORS[s] + ';">' + shapeFor(s) + '</svg>';
+        'style="display:block;width:' + px + 'px;height:' + px + 'px;color:' + COLORS[s] + ';">' +
+        shapeFor(s) + '</svg>';
     },
 
     /**
