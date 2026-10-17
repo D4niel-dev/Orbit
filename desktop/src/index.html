@@ -233,7 +233,14 @@
   <!-- App Scripts -->
   <script src="js/utils/storage.js"></script>
   <script src="js/utils/format.js"></script>
-  <script src="js/utils/sanitize.js"></script>
+  <!-- ⚠ THE SHARED COPY, NOT A DESKTOP FORK. `js/utils/sanitize.js` was a stale
+       duplicate and the drift was the bug: its @mention regex was `/@(\w+)/g`,
+       which matched an @handle inside a URL and inside an escaped attribute, so
+       `https://suno.com/@d4studio#page=songs` came out with a <span> injected
+       INSIDE the href and the whole anchor collapsed into visible markup. The
+       shared copy requires whitespace before the @ and two word characters, which
+       is why the phone never had the bug. -->
+  <script src="../../shared/utils/sanitize.js"></script>
   <script src="js/utils/profanity.js"></script>
   <script src="js/network/protocol.js"></script>
   <script src="js/store.js"></script>
