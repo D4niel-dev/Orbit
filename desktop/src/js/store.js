@@ -77,7 +77,24 @@ class Store {
         // places and all three treat anything other than exactly `true` as the new
         // UI: the inline script in index.html (before first paint), applySettings,
         // and the toggle in Settings → Appearance.
-        classicUI: false,
+        // ⚠⚠ THE REDESIGN IS OPT-IN AND `false` IS THE DEFAULT. The redesigned UI
+        // is the BETA; the original UI is what the app opens on. Dan: "the new
+        // redesign is the beta look! the classic is the original UI! so by default,
+        // that toggle should be on (on to show the classic UI look!)".
+        //
+        // ⚠ It is named for the NEW ui, not the old one, and that is deliberate:
+        // the switch that drives it is labelled "New look", and a `classicUI` key
+        // whose `false` meant "new look" is exactly the double negative that ends
+        // up inverted by someone reading it quickly. `newUI: true` means what it
+        // says.
+        //
+        // ⚠⚠ AND `!== true` IS THE SAFETY DIRECTION NOW, not `!== false`. Anything
+        // missing, malformed or unreadable leaves the redesign OFF — which lands
+        // the user in the complete, stable original UI rather than in a beta they
+        // did not ask for. See the head script in index.html.
+        //
+        // The old `classicUI` key is retired; main.js deletes it once at boot.
+        newUI: false,
         // The settings modal's nav rail, collapsed to icons only. ⚠ A REDESIGN-ONLY
         // preference: the rules that act on it live in redesign.css, so in the classic
         // look the class is applied and does nothing — which is the correct behaviour

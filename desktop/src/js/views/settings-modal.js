@@ -1113,9 +1113,9 @@ window.SettingsModal = {
       content.querySelector('#set-msg-anim').addEventListener('change', function(e) { updateSettings('messageAnim', e.target.value); });
       content.querySelector('#set-24h').addEventListener('change', function(e) { updateSettings('timeFormat24', e.target.checked); });
 
-      // ⚠ The Classic look toggle's handler moved with its markup — it is in the
-      // advanced branch now, under Experimental Features. Look for
-      // `#set-classic-ui` there; it is not an Appearance control any more.
+      // ⚠ The look toggle's handler moved with its markup — it is in the advanced
+      // branch now, under Experimental Features. Look for `#set-new-ui` there; it
+      // is not an Appearance control any more.
       content.querySelector('#set-translate').addEventListener('change', function(e) {
         updateSettings('messageTranslate', e.target.checked);
         updateSettings('experimentalMessageTranslate', e.target.checked);
@@ -1777,19 +1777,27 @@ window.SettingsModal = {
           '<div class="collapsible-body" style="display:block;">' +
             '<div style="padding:4px 16px 16px;">' +
               // ⚠ FIRST, AND DELIBERATELY NOT GATED. Every other row in here is
-              // disabled until Developer Mode is on. This one has to work for the
-              // person who simply does not like the new UI, because it is their way
-              // back — gating it behind Developer Mode would hide it from exactly
-              // the person it exists for.
+              // disabled until Developer Mode is on. This one has to work for
+              // anyone — it is how you try the redesign, and how you get back out
+              // of it. Gating it behind Developer Mode would hide it from exactly
+              // the people it is for.
+              //
+              // ⚠ IT IS LABELLED FROM THE BETA'S SIDE, AND THE DEFAULT IS OFF.
+              // Dan: "the new redesign is the beta look! the classic is the
+              // original UI! so by default, that toggle should be on (on to show
+              // the classic UI look!)". The original UI is what the app opens on,
+              // so the switch that turns the beta ON is the one that has to be
+              // off — and the BETA badge belongs on this row rather than on a row
+              // called "Classic look", where it read as if classic were the beta.
               '<label style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;cursor:pointer;">' +
                 '<div>' +
-                  '<div style="font-size:14px;color:var(--text-primary);">Classic look' + betaBadge + '</div>' +
-                  '<div style="font-size:12px;color:var(--text-muted);font-weight:400;">Use the previous design instead of the new one.</div>' +
+                  '<div style="font-size:14px;color:var(--text-primary);">New look' + betaBadge + '</div>' +
+                  '<div style="font-size:12px;color:var(--text-muted);font-weight:400;">The redesigned UI. Still being improved, so the original look stays the default.</div>' +
                 '</div>' +
                 // ⚠ A <span>, not a <label>: the row IS the label, and a label inside
                 // a label is invalid. See §9c in components.css.
                 '<span class="orbit-switch">' +
-                  '<input type="checkbox" id="set-classic-ui"' + (s.classicUI === true ? ' checked' : '') + '>' +
+                  '<input type="checkbox" id="set-new-ui"' + (s.newUI === true ? ' checked' : '') + '>' +
                   '<span class="orbit-switch-track"><span class="orbit-switch-knob"></span></span>' +
                 '</span>' +
               '</label>' +
@@ -1872,8 +1880,8 @@ window.SettingsModal = {
         window.Storage.set('settings', newSettings);
       };
 
-      // The Classic look toggle. Moved here with its markup — it is the first row
-      // under Experimental Features, not an Appearance control.
+      // The "New look" toggle — the beta redesign. It is the first row under
+      // Experimental Features, and it is off by default.
       //
       // ⚠⚠ IT CONFIRMS FIRST, AND THE SWITCH GOES BACK IMMEDIATELY. Changing the
       // look restarts the app, so this is not a control that may act on the click:
@@ -1883,12 +1891,12 @@ window.SettingsModal = {
       //
       // ⚠ It does NOT go through updateSettings. That funnels into the store, whose
       // subscription repaints the window through applySettings — so the UI would
-      // change under the user and *then* the app would close. See commitClassicUI.
-      var classicToggle = content.querySelector('#set-classic-ui');
-      if (classicToggle) {
-        classicToggle.addEventListener('change', function(e) {
-          var wantClassic = e.target.checked;
-          e.target.checked = !wantClassic;
+      // change under the user and *then* the app would close. See commitLook.
+      var lookToggle = content.querySelector('#set-new-ui');
+      if (lookToggle) {
+        lookToggle.addEventListener('change', function(e) {
+          var wantNewLook = e.target.checked;
+          e.target.checked = !wantNewLook;
 
           // ⚠ A restart ends a call, and the dialog is the only place that can say
           // so. `CallManager.activeCall` is set on every call start — outgoing,
@@ -1899,14 +1907,14 @@ window.SettingsModal = {
           var inCall = !!(window.CallManager && window.CallManager.activeCall);
 
           window.ConfirmModal.show({
-            title: wantClassic ? 'Switch to the classic look?' : 'Switch back to the new look?',
+            title: wantNewLook ? 'Switch to the new look?' : 'Switch back to the original look?',
             message: 'Orbit will close and reopen to apply it. Nothing else changes — your messages, accounts and settings are untouched.'
               + (inCall ? ' You are in a call right now, and restarting will end it.' : ''),
             confirmText: inCall ? 'End call and restart' : 'Restart now',
             cancelText: 'Not now',
             danger: inCall,
             onConfirm: function() {
-              if (window.OrbitRedesign) window.OrbitRedesign.commitClassicUI(wantClassic);
+              if (window.OrbitRedesign) window.OrbitRedesign.commitLook(wantNewLook);
             }
           });
         });

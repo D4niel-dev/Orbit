@@ -491,6 +491,39 @@ app.whenReady().then(() => {
   globalDb = new OrbitDatabase(app.getPath('userData'));
   tempDirPath = path.join(app.getPath('userData'), 'temp');
 
+  // ── One-time: retire the `classicUI` setting ────────────────────────────────
+  //
+  // ⚠⚠ THE KEY IS DELETED, NOT INVERTED, AND THAT IS THE POINT. `classicUI` was
+  // a boolean whose DEFAULT was `false`, so a stored `false` cannot be told apart
+  // from "never touched it" — and since the app persisted the whole settings
+  // object on any change, almost every profile has one. Inverting it would have
+  // kept exactly those people on the redesign, which is the opposite of what the
+  // change is for.
+  //
+  // So it is dropped and the new `newUI` default applies: everyone lands on the
+  // original UI and can opt into the beta. The only profiles with an explicit
+  // `classicUI: true` also land on the original UI, which is what they had.
+  //
+  // ⚠ BOTH STORES. electron-store is the durable source, but `store.js` reads
+  // SQLite at boot through `getAllStartupData`, and the Database constructor has
+  // already copied electron-store over it by this line — so cleaning only one
+  // leaves the other to reintroduce the key.
+  //
+  // ⚠ A migration that throws must not stop the app booting; a stale key costs
+  // one wrong default, a crash costs everything.
+  try {
+    const stored = persistentStore.get('settings');
+    if (stored && Object.prototype.hasOwnProperty.call(stored, 'classicUI')) {
+      const cleaned = Object.assign({}, stored);
+      delete cleaned.classicUI;
+      persistentStore.set('settings', cleaned);
+      globalDb.setSetting('settings', cleaned);
+      dlog('[Startup] Retired the classicUI setting; the original UI is the default now');
+    }
+  } catch (e) {
+    console.error('[Startup] Could not retire the classicUI setting:', e && e.message);
+  }
+
   // Check attachment integrity on startup
   try {
     const attCheck = globalDb.checkAttachmentIntegrity();

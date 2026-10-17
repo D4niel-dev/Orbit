@@ -27,13 +27,16 @@ test.describe('theme', () => {
   test('boots with the default dark theme', async () => {
     const theme = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
     expect(theme).toBe('dark');
-    // ⚠ The value moved in v0.9.0, deliberately: the desktop redesign restates
-    // the accent in styles/redesign.css so that it matches the phone's, and so
-    // that deleting that one stylesheet restores the old accent with the old
-    // design. This assertion is about the EFFECTIVE accent — "switching theme
-    // changes the colour" is the behaviour; the literal hex is just what it
-    // currently is. It was #0A84FF from dark.css before the redesign.
-    expect(await accentColor(page)).toBe('#4d7cfe');
+    // ⚠ These are the ORIGINAL ui's values, and that is now the default: the
+    // redesign is opt-in, so an unseeded launch is the original look. It was
+    // #4D7CFE here for a while, because the redesign used to be what a fresh
+    // profile got.
+    //
+    // ⚠ The assertion is about the EFFECTIVE accent — "switching theme changes the
+    // colour" is the behaviour, the literal hex is just what it currently is. The
+    // redesign's own values (#4D7CFE / #3F6EF0) are asserted in redesign.spec.js,
+    // which seeds `newUI: true` and so tests that layer on purpose.
+    expect(await accentColor(page)).toBe('#0a84ff');
   });
 
   test('switching the theme in Settings updates data-theme and --accent-primary', async () => {
@@ -62,7 +65,8 @@ test.describe('theme', () => {
       .poll(() => page.evaluate(() => document.documentElement.getAttribute('data-theme')))
       .toBe('light');
 
-    // Was #5B7FFF from light.css before the v0.9.0 redesign — see the note above.
-    await expect.poll(() => accentColor(page)).toBe('#3f6ef0');
+    // #5B7FFF from light.css — the original ui, which is the default now. See the
+    // note above.
+    await expect.poll(() => accentColor(page)).toBe('#5b7fff');
   });
 });

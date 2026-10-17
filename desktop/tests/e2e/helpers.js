@@ -11,6 +11,23 @@ function tmpUserDataDir(label) {
   return fs.mkdtempSync(path.join(os.tmpdir(), `orbit-e2e-${label}-`));
 }
 
+// ⚠ THE REDESIGN IS OPT-IN NOW, SO A SPEC ABOUT IT HAS TO ASK FOR IT.
+// `settings.newUI` defaults to false — the original UI is what the app opens on —
+// so a spec that asserts anything about the redesign has to turn it on before the
+// app launches.
+//
+// ⚠ BEFORE LAUNCH, because electron-store reads `<userData>/config.json` in its
+// constructor and the inline head script reads the same file through the preload
+// bridge to decide the look before first paint. Seeding after launch would be
+// testing the flash.
+function seedNewUI(userDataDir, on = true) {
+  fs.writeFileSync(
+    path.join(userDataDir, 'config.json'),
+    JSON.stringify({ settings: { newUI: on === true } })
+  );
+  return userDataDir;
+}
+
 // Electron's renderer crashes during boot on some Windows machines (and in
 // headless CI) unless GPU acceleration and the sandbox are disabled. The
 // symptom is `Target crashed`, or #chat-input never appearing. These switches
@@ -103,4 +120,4 @@ function seedFriends(page, count) {
   }, count);
 }
 
-module.exports = { DESKTOP_DIR, tmpUserDataDir, launchApp, getPersistedSettings, setPersistedSettings, seedFriends };
+module.exports = { DESKTOP_DIR, tmpUserDataDir, launchApp, getPersistedSettings, setPersistedSettings, seedFriends, seedNewUI };

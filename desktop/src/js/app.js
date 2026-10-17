@@ -316,15 +316,15 @@ document.addEventListener('DOMContentLoaded', () => {
      * launch — and the SQLite write is belt and braces for the boot read. Both are
      * synchronous, so the value is on disk before the process exits.
      */
-    commitClassicUI: (classic) => {
-      var next = Object.assign({}, window.store.getState().settings, { classicUI: classic === true });
+    commitLook: (useNewLook) => {
+      var next = Object.assign({}, window.store.getState().settings, { newUI: useNewLook === true });
       if (window.Storage) window.Storage.set('settings', next);
       if (window.orbitAPI && window.orbitAPI.dbSetSetting) window.orbitAPI.dbSetSetting('settings', next);
       window.OrbitRedesign.requestRestart();
     },
 
     /**
-     * ⚠ Split out from commitClassicUI so it is the ONE place the restart is asked
+     * ⚠ Split out from commitLook so it is the ONE place the restart is asked
      * for — and so a spec can replace it. The preload's bridge is frozen and
      * non-extensible (verified: assigning to it silently does nothing), so a test
      * cannot stub `orbitAPI.relaunchApp`; without this seam, asserting the confirm
@@ -339,16 +339,17 @@ document.addEventListener('DOMContentLoaded', () => {
       // the toggle is not a dead control there; read the value that was just
       // written, because the live store was not touched.
       var saved = window.Storage ? window.Storage.get('settings', {}) : {};
-      applyRedesignLayer(saved.classicUI !== true);
+      applyRedesignLayer(saved.newUI === true);
       return false;
     }
   };
 
   // ---- Apply settings from store ----
   const applySettings = (settings) => {
-    // ⚠ First, before anything reads a computed style: `!== true` so a missing or
-    // malformed value means the NEW ui, never a half-styled classic one.
-    applyRedesignLayer(settings.classicUI !== true);
+    // ⚠ First, before anything reads a computed style. `=== true` so a missing or
+    // malformed value means the ORIGINAL ui — the redesign is the beta and has to
+    // be asked for.
+    applyRedesignLayer(settings.newUI === true);
 
     var theme = settings.theme || 'dark';
     if (theme === 'system') {

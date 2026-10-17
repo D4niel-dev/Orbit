@@ -21,7 +21,7 @@
 const fs = require('fs');
 const path = require('path');
 const { test, expect } = require('@playwright/test');
-const { tmpUserDataDir, launchApp } = require('./helpers');
+const { tmpUserDataDir, launchApp, seedNewUI } = require('./helpers');
 
 const tokens = (page) =>
   page.evaluate(() => {
@@ -68,7 +68,10 @@ test.describe('desktop redesign', () => {
   let page;
 
   test.beforeEach(async () => {
-    ({ app, page } = await launchApp(tmpUserDataDir('redesign')));
+    // ⚠ The redesign is opt-in. `settings.newUI` is false by default and the app
+    // opens on the original UI, so every spec in this file has to turn the beta on
+    // before launch — including the ones about turning it off again.
+    ({ app, page } = await launchApp(seedNewUI(tmpUserDataDir('redesign'))));
     await seedConversation(page);
     await page.waitForTimeout(1200);
   });
@@ -792,8 +795,10 @@ test.describe('desktop redesign', () => {
     }
   });
 
-  test('Classic look reverts the chrome and both UIs stay whole', async () => {
-    // The setting exists so a user who does not want the new UI can have the old one.
+  test('turning the layer off reverts the chrome and both UIs stay whole', async () => {
+    // The layer is the beta and the original UI is the default, so this is the
+    // direction that has to keep working: switch the layer off and the app is
+    // whole, not half-styled.
     // ⚠ Applied by disabling ONE <link> — the redesign is a layer — so this asserts
     // the chrome actually changes, not merely that the link flipped.
     //
@@ -853,25 +858,28 @@ test.describe('desktop redesign', () => {
     expect(back.searchRadius).toBe('34px');
   });
 
-  // Open Settings and the tab the Classic look switch now lives on, returning
-  // the state a test cares about.
+  // Open Settings and the tab the look switch lives on, returning the state a
+  // test cares about.
   //
   // ⚠ IT IS UNDER ADVANCED → EXPERIMENTAL FEATURES, NOT APPEARANCE. The redesign
-  // ships alongside the old UI and keeps being improved, so switching between
-  // them is a beta feature rather than a first-class appearance choice. These
-  // specs used to render the appearance tab; that is where it was.
+  // is the beta and the original UI is the default, so switching between them is
+  // an experimental choice rather than a first-class appearance one.
+  //
+  // ⚠ THIS FILE SEEDS `newUI: true`, so the beta is ON when a test starts. That is
+  // what makes it a spec about the redesign at all — see the beforeEach.
   const lookState = () => page.evaluate(() => ({
     layerOn: !document.getElementById('redesign-css').disabled,
-    checked: document.getElementById('set-classic-ui').checked,
+    checked: document.getElementById('set-new-ui').checked,
     // ⚠ BOTH stores, because the restart reads them back.
-    inElectronStore: (window.orbitAPI.storeGet('settings') || {}).classicUI,
-    inSqlite: (window.orbitAPI.dbGetSetting('settings', {}) || {}).classicUI,
-    // The confirm dialog mounts into #modal-container.
+    inElectronStore: (window.orbitAPI.storeGet('settings') || {}).newUI,
+    inSqlite: (window.orbitAPI.dbGetSetting('settings', {}) || {}).newUI,
+    // The confirm dialog mounts into #modal-container. `switch` = turning the beta
+    // on, `back` = turning it off.
     dialogTitle: (() => {
       const c = document.getElementById('modal-container');
       if (!c || !c.textContent) return null;
-      return c.textContent.includes('Switch to the classic look?') ? 'switch'
-        : c.textContent.includes('Switch back to the new look?') ? 'back' : null;
+      return c.textContent.includes('Switch to the new look?') ? 'switch'
+        : c.textContent.includes('Switch back to the original look?') ? 'back' : null;
     })()
   }));
 
@@ -889,7 +897,7 @@ test.describe('desktop redesign', () => {
     await page.waitForTimeout(900);
   };
 
-  test('the Classic look switch asks first, and cancelling changes nothing', async () => {
+  test('the look switch asks first, and cancelling changes nothing', async () => {
     // ⚠⚠ A SWITCH THAT MOVES AND THEN ASKS PERMISSION IS SHOWING A STATE THAT IS NOT
     // SAVED. Changing the look restarts the app, so the control must not act on the
     // click: it goes back at once and only a confirmed choice may move it.
@@ -897,30 +905,31 @@ test.describe('desktop redesign', () => {
 
     const before = await lookState();
     expect(before.layerOn).toBe(true);
-    expect(before.checked).toBe(false);
-    expect(before.inElectronStore).not.toBe(true);
+    expect(before.checked).toBe(true);          // the beta is on — this file seeded it
+    expect(before.inElectronStore).toBe(true);
     expect(before.dialogTitle).toBeNull();
 
-    // Clicking the ROW (the label) opens the confirmation.
-    await page.evaluate(() => document.getElementById('set-classic-ui').closest('label').click());
+    // Clicking the ROW (the label) opens the confirmation — asking to turn the beta
+    // OFF, because that is the direction it is currently in.
+    await page.evaluate(() => document.getElementById('set-new-ui').closest('label').click());
     await page.waitForTimeout(400);
     const asked = await lookState();
-    expect(asked.dialogTitle).toBe('switch');
+    expect(asked.dialogTitle).toBe('back');
     // ⚠ The switch is back where it started.
-    expect(asked.checked).toBe(false);
+    expect(asked.checked).toBe(true);
     // And NOTHING has been written or applied while the question is open.
     expect(asked.layerOn).toBe(true);
-    expect(asked.inElectronStore).not.toBe(true);
+    expect(asked.inElectronStore).toBe(true);
 
     // Cancel.
     expect(await clickDialog('Not now')).toBe(true);
     await page.waitForTimeout(500);
     const cancelled = await lookState();
     expect(cancelled.dialogTitle).toBeNull();
-    expect(cancelled.checked).toBe(false);
+    expect(cancelled.checked).toBe(true);
     expect(cancelled.layerOn).toBe(true);
-    expect(cancelled.inElectronStore).not.toBe(true);
-    expect(cancelled.inSqlite).not.toBe(true);
+    expect(cancelled.inElectronStore).toBe(true);
+    expect(cancelled.inSqlite).toBe(true);
   });
 
   test('confirming saves the choice and asks for a restart, without repainting first', async () => {
@@ -935,24 +944,28 @@ test.describe('desktop redesign', () => {
     });
 
     await openAppearance();
-    await page.evaluate(() => document.getElementById('set-classic-ui').closest('label').click());
+    await page.evaluate(() => document.getElementById('set-new-ui').closest('label').click());
     await page.waitForTimeout(400);
     expect(await clickDialog('Restart now')).toBe(true);
     await page.waitForTimeout(600);
 
     const r = await page.evaluate(() => ({
       restarts: window.__restarts,
-      inElectronStore: (window.orbitAPI.storeGet('settings') || {}).classicUI,
-      inSqlite: (window.orbitAPI.dbGetSetting('settings', {}) || {}).classicUI,
+      inElectronStore: (window.orbitAPI.storeGet('settings') || {}).newUI,
+      inSqlite: (window.orbitAPI.dbGetSetting('settings', {}) || {}).newUI,
       layerOn: !document.getElementById('redesign-css').disabled,
-      dialogGone: !document.getElementById('modal-container').textContent.includes('Switch to the classic look?')
+      dialogGone: !document.getElementById('modal-container').textContent.includes('Switch to the new look?')
     }));
 
     expect(r.restarts).toBe(1);
     // ⚠ Both stores — the restart reads SQLite at boot, and electron-store is what
     // the pre-paint script reads. A write to only one of them is a half-fix.
-    expect(r.inElectronStore).toBe(true);
-    expect(r.inSqlite).toBe(true);
+    //
+    // ⚠ `false` IS THE MEANINGFUL VALUE HERE, not a weak one. This file seeds
+    // `newUI: true`, so the click asks to turn the beta OFF; a missing write would
+    // leave `true` in place and fail. Asserting the value CHANGED is the point.
+    expect(r.inElectronStore).toBe(false);
+    expect(r.inSqlite).toBe(false);
     // ⚠⚠ AND THE WINDOW WAS NOT REPAINTED. Going through the store would have run
     // applySettings and flipped the layer under the user, then closed the window on
     // top of a half-transitioned UI. The change lands on the way back up.
@@ -997,7 +1010,7 @@ test.describe('desktop redesign', () => {
     };
 
     // No call — the ordinary wording, and no alarm.
-    await page.evaluate(() => document.getElementById('set-classic-ui').closest('label').click());
+    await page.evaluate(() => document.getElementById('set-new-ui').closest('label').click());
     await page.waitForTimeout(400);
     const quiet = await dialog();
     expect(quiet.text).not.toMatch(/in a call/i);
@@ -1011,7 +1024,7 @@ test.describe('desktop redesign', () => {
       window.__savedActiveCall = window.CallManager.activeCall;
       window.CallManager.activeCall = { isVideo: false, direction: 'outgoing', isGroup: false };
     });
-    await page.evaluate(() => document.getElementById('set-classic-ui').closest('label').click());
+    await page.evaluate(() => document.getElementById('set-new-ui').closest('label').click());
     await page.waitForTimeout(400);
     const alarmed = await dialog();
     // ⚠ It has to SAY it, not merely change colour.
@@ -1030,14 +1043,15 @@ test.describe('desktop redesign', () => {
     await page.evaluate(() => { window.CallManager.activeCall = window.__savedActiveCall; });
   });
 
-  test('classicUI fails OPEN — only exactly true means the old UI', async () => {
-    // ⚠⚠ THE SAFETY PROPERTY. A user must never end up in an unstyled app because a
-    // preference read went wrong, so anything that is not exactly `true` has to mean
-    // the new UI. This is asserted for the values a corrupt store would realistically
-    // hold, including the string "true", which a naive truthiness check would accept.
+  test('newUI fails toward the ORIGINAL ui — only exactly true turns the beta on', async () => {
+    // ⚠⚠ THE SAFETY PROPERTY. A preference read that goes wrong must leave the user
+    // in the complete, stable original UI rather than in a beta they did not ask
+    // for — so anything that is not exactly `true` has to mean the redesign is OFF.
+    // This is asserted for the values a corrupt store would realistically hold,
+    // including the string "true", which a naive truthiness check would accept.
     const set = (value) => page.evaluate((v) => {
       const s = window.store.getState().settings;
-      window.store.setState({ settings: Object.assign({}, s, { classicUI: v }) });
+      window.store.setState({ settings: Object.assign({}, s, { newUI: v }) });
     }, value);
 
     const layerOn = () => page.evaluate(() => {
@@ -1048,12 +1062,12 @@ test.describe('desktop redesign', () => {
     for (const value of [undefined, null, false, 0, '', 'true', 'yes', 1, {}]) {
       await set(value);
       await page.waitForTimeout(250);
-      expect(await layerOn()).toBe(true);
+      expect(await layerOn(), 'newUI=' + JSON.stringify(value) + ' must NOT turn the beta on').toBe(false);
     }
     // And the one value that does mean it.
     await set(true);
     await page.waitForTimeout(250);
-    expect(await layerOn()).toBe(false);
+    expect(await layerOn()).toBe(true);
   });
 
   test('the call screen is opaque, still, and one geometry', async () => {
@@ -1989,9 +2003,9 @@ test.describe('desktop redesign', () => {
 // because the preload bridge is frozen — assigning to orbitAPI.relaunchApp silently
 // does nothing — so a real click on "Restart now" would relaunch Electron for real
 // and leak a process. The round trip therefore lives here: save the choice exactly
-// as the toggle does, close, come back up, and check the app is classic.
-test('the classic look survives a relaunch, and is applied before the first paint', async () => {
-  const userDataDir = tmpUserDataDir('classic-look');
+// as the toggle does, close, come back up, and check the app is the beta.
+test('the new look survives a relaunch, and is applied before the first paint', async () => {
+  const userDataDir = tmpUserDataDir('new-look');
 
   const read = (p) => p.evaluate(() => ({
     layerOn: !document.getElementById('redesign-css').disabled,
@@ -2002,30 +2016,32 @@ test('the classic look survives a relaunch, and is applied before the first pain
     })()
   }));
 
-  // Launch #1 — the new UI.
+  // ⚠ Launch #1 is the ORIGINAL UI, unseeded. The redesign is opt-in, so this is
+  // what a fresh profile gets — and asserting it here is what makes the second
+  // launch a real round trip rather than a no-op.
   let { app, page } = await launchApp(userDataDir);
   const before = await read(page);
-  expect(before.layerOn).toBe(true);
-  expect(before.iconBtn).toBe('32px');
+  expect(before.layerOn).toBe(false);
+  expect(before.iconBtn).toBe('');
+  expect(before.searchRadius).not.toBe('34px');
 
-  // ⚠ Save it through commitClassicUI with ONLY the restart stubbed, so the writes
+  // ⚠ Save it through commitLook with ONLY the restart stubbed, so the writes
   // under test are the real ones — both stores, exactly as production does them.
   await page.evaluate(() => {
     window.__restarts = 0;
     window.OrbitRedesign.requestRestart = function () { window.__restarts += 1; return true; };
-    window.OrbitRedesign.commitClassicUI(true);
+    window.OrbitRedesign.commitLook(true);
   });
   expect(await page.evaluate(() => window.__restarts)).toBe(1);
   await app.close();
 
-  // Launch #2 — same data dir. Classic, with no correction after boot.
+  // Launch #2 — same data dir. The beta, with no correction after boot.
   ({ app, page } = await launchApp(userDataDir));
   const after = await read(page);
-  expect(after.layerOn).toBe(false);
-  expect(after.iconBtn).toBe('');
-  expect(after.searchRadius).not.toBe('34px');
+  expect(after.layerOn).toBe(true);
+  expect(after.iconBtn).toBe('32px');
   // And it is the value the app BOOTED with, not one it fixed up later.
-  expect(await page.evaluate(() => window.store.getState().settings.classicUI)).toBe(true);
+  expect(await page.evaluate(() => window.store.getState().settings.newUI)).toBe(true);
   await app.close();
 
   // ⚠ And the anti-flash mechanism is pinned STRUCTURALLY, because the difference
@@ -2041,5 +2057,5 @@ test('the classic look survives a relaunch, and is applied before the first pain
   expect(linkAt).toBeGreaterThan(-1);
   expect(scriptAt).toBeGreaterThan(linkAt);
   expect(scriptAt).toBeLessThan(firstSrcAt);
-  expect(html).toContain("settings.classicUI === true");
+  expect(html).toContain("settings.newUI !== true");
 });
