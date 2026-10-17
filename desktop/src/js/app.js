@@ -229,8 +229,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const darkModeMedia = window.matchMedia('(prefers-color-scheme: dark)');
 
   /**
-   * The "Classic look" setting — the previous UI, for anyone who does not want the
-   * new one.
+   * The look — `settings.newUI`, the switch the settings modal labels "New look".
+   * OFF BY DEFAULT, because the redesign is the beta: the original UI is what the
+   * app opens on, and the beta has to be asked for.
    *
    * ⚠ IT IS ONE LINE OF WORK BECAUSE THE REDESIGN IS ONE STYLESHEET. Everything the
    * redesign changes about the chrome lives in styles/redesign.css, loaded last, so

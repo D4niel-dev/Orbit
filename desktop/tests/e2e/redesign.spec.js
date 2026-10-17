@@ -1898,7 +1898,7 @@ test.describe('desktop redesign', () => {
 
   test('the global gallery is styled in classic too, not just the layer', async () => {
     // ⚠⚠ EVERY ONE OF THE GALLERY'S 15 STRUCTURAL CLASSES WAS STYLED ONLY IN THE LAYER,
-    // so with the layer off — the Classic look — the whole gallery rendered as bare HTML.
+    // so with the layer off — the original UI — the whole gallery rendered as bare HTML.
     // The filter row came out as six unstyled <button>s with no padding and no gap, which
     // reads as ONE RUN-ON WORD: "AllImagesFilesAllChatsOrbit EchoD4niel-dev". That is
     // Dan's screenshot.

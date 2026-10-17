@@ -1771,7 +1771,7 @@ window.SettingsModal = {
           '</div>' +
           // ⚠ EXPANDED BY DEFAULT, like Developer Tools above it. It used to be
           // collapsed unless Developer Mode was on, which was fine while every row
-          // inside was dev-only — but the Classic look switch is not, and a section
+          // inside was dev-only — but the look switch is not, and a section
           // that starts collapsed is a section nobody opens. The rows themselves
           // are still gated; only the default has changed.
           '<div class="collapsible-body" style="display:block;">' +

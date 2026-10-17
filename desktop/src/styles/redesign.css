@@ -8,8 +8,9 @@
    components.css is 73 KB and redefines plenty of selectors more than once, so
    editing it in place means guessing which copy wins. This sheet loads LAST and
    restates the parts of the UI the redesign changes. `link.disabled = true` on its
-   one <link> gives the previous design back, which is what Settings → Appearance →
-   "Classic look" does, and what the safety net was always for.
+   one <link> gives the previous design back, which is exactly what the "New look"
+   switch under Settings → Advanced → Experimental Features does, and what the
+   safety net was always for.
 
    ⚠⚠ WHAT THIS LAYER OWNS IS THE CHROME, AND ONLY THE CHROME. The titlebar, the
    rail, the middle panel, the chat header, the conversation, the composer, the
@@ -1222,7 +1223,7 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
 
    ⚠ A REDESIGN-ONLY FEATURE, and the layer is what makes it one. The class is
    applied to #settings-overlay by _syncNavToggle() regardless — but every rule
-   that acts on it is here, so with the layer off (Classic look) the class is
+   that acts on it is here, so with the layer off (the original UI) the class is
    inert and the rail is always the full 240px. No second code path, and nothing
    to keep in sync.
 
@@ -1311,7 +1312,7 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
 
 /* ⚠ `.gi-label` AND `.gi-fact` USED TO BE HERE, AND THAT WAS THE BUG. They have no
    inline styles and no rule anywhere else, so with the layer switched off — the
-   Classic look — "Overview" and the two facts under it fell back to bare default
+   original UI — "Overview" and the two facts under it fell back to bare default
    text. Dan: "the texts seems... too basic."
    ⚠ The test is not "does the layer have a rule for it", it is "does anything
    ELSE style it". These had nothing, so the base moved to components.css and the

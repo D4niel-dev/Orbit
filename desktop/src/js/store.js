@@ -71,16 +71,12 @@ class Store {
       },
       settings: {
         theme: 'dark',
-        // The previous desktop UI, for anyone who does not want the v0.9.0 redesign.
-        // ⚠ `false` — the new UI is the default, and the flag describes the OPT-OUT,
-        // which is the direction the setting actually exists for. Read in three
-        // places and all three treat anything other than exactly `true` as the new
-        // UI: the inline script in index.html (before first paint), applySettings,
-        // and the toggle in Settings → Appearance.
-        // ⚠⚠ THE REDESIGN IS OPT-IN AND `false` IS THE DEFAULT. The redesigned UI
-        // is the BETA; the original UI is what the app opens on. Dan: "the new
-        // redesign is the beta look! the classic is the original UI! so by default,
-        // that toggle should be on (on to show the classic UI look!)".
+        // The redesigned UI (v0.9.0), for anyone who wants the beta look.
+        // ⚠⚠ IT IS OPT-IN AND `false` IS THE DEFAULT, so the flag says what it
+        // means rather than describing an opt-out. The redesigned UI is the BETA;
+        // the original UI is what the app opens on. Dan: "the new redesign is the
+        // beta look! the classic is the original UI! so by default, that toggle
+        // should be on (on to show the classic UI look!)".
         //
         // ⚠ It is named for the NEW ui, not the old one, and that is deliberate:
         // the switch that drives it is labelled "New look", and a `classicUI` key
@@ -88,7 +84,12 @@ class Store {
         // up inverted by someone reading it quickly. `newUI: true` means what it
         // says.
         //
-        // ⚠⚠ AND `!== true` IS THE SAFETY DIRECTION NOW, not `!== false`. Anything
+        // ⚠⚠ READ IN THREE PLACES, and all three require exactly `true` to turn the
+        // beta on: the inline script in index.html (before first paint),
+        // applySettings, and the toggle under Settings → Advanced → Experimental
+        // Features.
+        //
+        // ⚠⚠ AND `!== true` IS THE SAFETY DIRECTION, not `!== false`. Anything
         // missing, malformed or unreadable leaves the redesign OFF — which lands
         // the user in the complete, stable original UI rather than in a beta they
         // did not ask for. See the head script in index.html.
