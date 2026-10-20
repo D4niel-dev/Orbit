@@ -1,5 +1,35 @@
 # Orbit Changelog
 
+## v0.9.0-beta — **Stable Release**
+
+> **Note:** The first **Stable** release since v0.8.0, and the largest change to the desktop since Orbit started: **a new look**, shipped as a beta you switch on rather than one you are given. The composer is rebuilt from the inside — the emoji picker is Orbit's own now, hanging off the message box instead of floating over the window, and its dataset travels with the app so a fresh install has emoji with no network. Plus the phone's **Classic Bubbles** on the desktop, an "Add a Friend" dialog that also tells you how to be found, and a run of silent failures that only appeared when something was measured.
+
+### Features
+
+- **A New Look for the Desktop, as a Beta You Choose** — The whole chrome is rebuilt: a nav rail that collapses to icons, one corner radius and one shadow scale across every panel, a restyled settings modal and Activity Center, a rebuilt gallery, call screen and profile sidebar, and a boot skeleton that matches what actually loads. **The original UI is still what the app opens on.** The new look lives in Settings → Advanced → Experimental Features → **"New look" · BETA**, confirms before applying, and restarts — because it swaps a stylesheet the whole window is painted from. ⚠ It is a beta in the honest sense: it ships beside the old UI, keeps changing, and can be turned off the same way.
+- **The Composer Is Orbit's Own Now** — The emoji picker was a library element inside a **shadow root**, so no stylesheet of ours could reach it and it floated at a fixed offset against the *window*, not against the message box that opened it. The redesign draws its own: a panel that is a **child of the composer**, exactly as wide as it, sitting directly on top of it and riding up as the field grows. Search, nine categories, a "frequently used" tab and skin tones, and an emoji lands **at the caret** instead of being appended.
+- **The Emoji Dataset Ships With the App** — The picker's data came from a CDN, so a fresh install with no network had **no emoji at all**. It is bundled now (1,923 records) and served from the app itself, which also means the picker opens instantly on the first launch instead of waiting on a download. Measured on a clean profile with the CDN blocked: 171 emoji in the first category and **zero network requests**.
+- **Add a Friend Tells You How to Be Found** — The dialog only ever helped you connect *out*. It now shows **your own address**, so the other device can enter it — masked until you ask for it, with the copy button doing the work, because a LAN address sitting in a dialog is readable over a shoulder and permanent in a screenshot. The field also accepts **`host:port`**: the port was always supported underneath and the dialog always threw it away, so a peer listening anywhere but the default could not be reached by typing it.
+- **Classic Bubbles Comes to the Desktop** — The phone's setting, in Appearance → Chat: your own messages fill with the accent instead of being tinted. ⚠ It restores the **shape** as well as the colour — the classic message box was 16px with a square tail and wider padding, and changing only the fill produced a hybrid that matched neither look.
+
+### Improved
+
+- **Presence Is a Shape, Not Just a Colour** — Online, away and busy are four distinct silhouettes drawn as inline SVG, so they read without relying on colour. ⚠ The away glyph first shipped as a sliver that looked like a blob at 15px, which is why the test now rasterises each glyph and compares its filled fraction.
+- **The Settings Nav Collapses to Icons** — And it keeps its icons across re-renders, which it did not before.
+- **One Radius and One Shadow** — Panel corners had drifted to four different values across nine surfaces and the shadow token was missing from half the themes, which silently dropped every shadow drawn from it. Both are single scales now.
+- **The Welcome Tour Shows What It Describes** — The file-sharing step now opens a conversation first, because on a fresh install nothing is open and the composer it talks about was not on screen. The privacy step rings the **whole setting card**, not the one-line row inside it, so the explanation is inside the highlight.
+- **Lighter Boot** — Prism and the emoji picker are off the startup path, and the welcome screen's aurora no longer stutters the sidebar.
+
+### Fixed
+
+- **The Emoji Button Did Nothing** — ⚠ In *both* UIs. The click starts on the icon inside the button, and opening the picker **swapped that icon**, so by the time the click reached the document the target had been detached, every `closest()` lookup said "outside", and the picker closed in the same tick it opened. It worked under a synthetic `.click()` and not under a real one, which is why it survived so long.
+- **The Rail Toggle Repainted the Whole App** — Collapsing the settings rail wrote a settings change, and the settings handler repaints the entire window: a document-wide transition, a wallpaper re-apply, and an offline poller restart. A rail is not a settings change.
+- **The Emoji Picker Was Light-Scheme on Eight of Ten Themes** — The library only understands `light` and `dark`, so the six custom themes got its default light panel dropped into a dark window.
+- **A Side Panel Covered the Chat's Own Controls** — Two overlays are `position: absolute; right: 0` and sat on top of the chat header's menu button, their own toggle, and Send. The controls were fine; something was on top of them.
+- **Two Focus Rings on One Field** — A universal `:focus-visible` rule outranked the picker's search field, so it drew a halo *inside* the ring its own pill already drew.
+- **The Context Menu Closed Itself After 1.5 Seconds** — And the away glyph, the global gallery in the original UI, a group's custom avatar after a restart, the gap between a message's text and its attachments, and messages rendered through a stale copy of the sanitiser — all gone.
+- **Mobile** — The Group Info avatar's bottom corners were square, contact-row actions were dead, and a backup the restore could not find is now found.
+
 ## v0.8.7-beta
 
 > **Note:** A release about the composer, and about asking. The "+" finally has one door instead of five, Orbit asks for the permissions it needs **once** — and only for the ones that are actually missing — and four bugs that each broke something you do every day are gone: a dismissed link preview that stayed dismissed all session, a contact menu that opened empty, a contacts grid wider than the screen, and a staged attachment that vanished on the desktop.

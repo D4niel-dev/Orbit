@@ -37,10 +37,15 @@ function versionFromPkg(p) {
 /** The version of the FIRST block tagged 'Latest' — i.e. what the user sees on top. */
 function newestBlock(file, fnName) {
   const src = fs.readFileSync(file, 'utf8');
-  const re = new RegExp(fnName + "\\(\\s*'([0-9][^']*)'\\s*,\\s*'Latest'");
+  // ⚠ 'Latest' OR 'Stable'. A release can be both the newest one and a stable one,
+  // and the tag is a single string — so v0.9.0, the first stable release since
+  // v0.8.0, wears 'Stable' while it is still the top block. Requiring 'Latest'
+  // exactly would have forced it to say 'Latest' and left the CHANGELOG's own
+  // "Stable Release" marker unrepresented in both lists.
+  const re = new RegExp(fnName + "\\(\\s*'([0-9][^']*)'\\s*,\\s*'(?:Latest|Stable)'");
   const m = src.match(re);
   if (m) return m[1];
-  // No 'Latest' tag at all is its own bug — the tag is what the UI shows.
+  // No tag at all is its own bug — the tag is what the UI shows.
   const any = src.match(new RegExp(fnName + "\\(\\s*'([0-9][^']*)'"));
   return any ? { noLatestTag: any[1] } : null;
 }
@@ -49,8 +54,8 @@ console.log('\n== the mobile What\'s New (app.js) ==');
 const appVer = versionFromPkg(path.join(REPO, 'mobile/package.json'));
 const appBlock = newestBlock(path.join(REPO, 'mobile/src/js/app.js'), 'vBlock');
 console.log('  app version: ' + appVer + '   newest block: ' + JSON.stringify(appBlock));
-check('the newest block carries the Latest tag', appBlock && typeof appBlock === 'string',
-  appBlock && appBlock.noLatestTag ? 'no Latest tag — top entry is ' + appBlock.noLatestTag : appBlock);
+check('the newest block carries a Latest or Stable tag', appBlock && typeof appBlock === 'string',
+  appBlock && appBlock.noLatestTag ? 'no Latest/Stable tag — top entry is ' + appBlock.noLatestTag : appBlock);
 check('the newest block IS the version in mobile/package.json', appBlock === appVer,
   { block: appBlock, package: appVer });
 

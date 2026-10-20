@@ -8772,7 +8772,25 @@ document.addEventListener('DOMContentLoaded', function() {
         // changelog.js is the other hand-maintained copy; they are separate files
         // and both have to be updated. A release is not done until this block is
         // added, which is why `npm run test:mobile` now asserts it.
-        vBlock('0.8.7-beta', 'Latest', [
+        vBlock('0.9.0-beta', 'Stable', [
+          ['New', [
+            'Classic Bubbles now matches the desktop: your own messages fill with the accent instead of being tinted, with the classic box\u2019s shape as well as its colour.',
+            'The desktop got a new look — a nav rail that collapses to icons, one radius and one shadow across every panel, and a rebuilt settings modal, gallery, call screen and profile sidebar. It is opt-in there; the original UI is still what the app opens on.',
+            'The desktop\u2019s emoji picker is Orbit\u2019s own now, and its dataset ships with the app, so a fresh install has emoji with no network.',
+          ]],
+          ['Improved', [
+            'The welcome tour on the desktop shows what it describes: the file-sharing step opens a conversation first, and the privacy step rings the whole setting card.',
+          ]],
+          ['Fixes', [
+            'The Group Info avatar\u2019s bottom corners were square.',
+            'A contact row\u2019s actions were dead, and a backup the restore could not find is now found.',
+            'On the desktop: the emoji button did nothing in both UIs, the settings rail toggle repainted the whole app, and the emoji picker was light-scheme on eight of ten themes.',
+          ]],
+          ['Version', [
+            'Version: Bumped to v0.9.0-beta.'
+          ]]
+        ]) +
+        vBlock('0.8.7-beta', '', [
           ['New', [
             'The "+" opens one sheet now — a media panel with a Photos, Poll, Commands and Files pill row along the bottom. Upload Images and Upload Videos were the same intent split in two; the picker decides between an image and a video.',
             'Orbit asks for permissions once, at startup — only for the ones that are actually missing, once per version. If everything is already granted it does nothing at all, and it no longer opens the camera on every launch just to provoke the dialog.',

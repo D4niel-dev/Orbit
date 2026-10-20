@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <strong>Current version:</strong> <a href="CHANGELOG.md#v087-beta">v0.8.7-beta</a>
+  <strong>Current version:</strong> <a href="CHANGELOG.md#v090-beta">v0.9.0-beta</a>
 </p>
 
 <p align="center">
@@ -28,10 +28,11 @@
 
 | Channel           | Version     | Status                                                                                                                                                                                                                        |
 | ----------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Latest**        | v0.8.7-beta | The "+" finally has one door instead of five, Orbit asks for the permissions it needs **once** — and only for the ones that are missing, no longer opening the camera on every launch to provoke the dialog — and four bugs are gone: a dismissed link preview that stayed dismissed, a contact menu that opened empty, a contacts grid wider than the screen, and a staged attachment that vanished on the desktop |
+| **Latest / Stable** | v0.9.0-beta | **A new look for the desktop** — a nav rail that collapses to icons, one corner radius and one shadow across every panel, and a rebuilt settings modal, Activity Center, gallery, call screen and profile sidebar, shipped as a beta you switch on with the original UI still the default. The composer is Orbit's own now: the emoji picker hangs off the message box instead of floating over the window, and its dataset ships with the app, so a fresh install has emoji with no network |
+| **Previous**      | v0.8.7-beta | The "+" finally has one door instead of five, Orbit asks for the permissions it needs **once** — and only for the ones that are missing, no longer opening the camera on every launch to provoke the dialog — and four bugs are gone: a dismissed link preview that stayed dismissed, a contact menu that opened empty, a contacts grid wider than the screen, and a staged attachment that vanished on the desktop |
 |                   | v0.8.5-beta | The phone catches up with the desktop — Orbit is in the Android share sheet, a notification can be answered without opening the app, and there is a PIN lock, plus link previews, a real image viewer and a network map that shows faces instead of letters |
 |                   | v0.8.4-beta | A group of images of different sizes no longer goes ragged — the attachment grid now follows Discord’s layouts.  One tap on Send was also starting the mic — Android’s synthetic mouse events land on whatever is under your finger by then, which was the mic, so it recorded and sent a voice note on repeat |
-| **Stable**        | v0.8.0-beta | Your theme and custom colours follow you between your own devices, message search runs on SQLite FTS5, and the update progress bar actually moves                                                                             |
+| Previous **Stable** | v0.8.0-beta | Your theme and custom colours follow you between your own devices, message search runs on SQLite FTS5, and the update progress bar actually moves                                                                             |
 | Legacy **Stable** | v0.1.1-beta | Legacy stable release                                                                                                                                                                                                         |
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed release notes.
@@ -85,14 +86,14 @@ Whether you are sharing files at home, coordinating in a small office, or experi
 
 Orbit is a **beta-stage app for desktop and Android** aimed at trusted private networks — not a replacement for hardened internet-scale messengers yet, but a serious step toward practical local messaging.
 
-## Highlights (v0.8.7-beta)
+## Highlights (v0.9.0-beta)
 
-* **The composer's "+" is one door now.** It used to drop a five-item list whose first two entries were **"Upload Images"** and **"Upload Videos"** — one intent split by file type, decided before you had seen anything. It opens a sheet now, with a **Photos · Poll · Commands · Files** pill row along the bottom, and the picker decides between an image and a video. Camera goes straight to the camera; Gallery takes both.
-* **Orbit asks for permissions once, at startup.** ⚠ They were requested from three unrelated places and **none could read the current state**, so a permission you had already granted was asked for again on every launch — and one of them **opened the camera on every single start**, purely to provoke the OS dialog. It reads what is granted first now and asks only for what is missing, once per version. If everything is already granted it does **nothing at all** — no sheet, no dialog, no camera.
-* **A dismissed link preview stayed dismissed all session.** Reported as *"pasted links aren't recognised, and links ending in `/` aren't recognised"* — **neither was happening**. The dismissal was keyed by URL for the whole session, so once the bar for a link had been dismissed, putting that same link back in the composer showed nothing. The one moment a preview is genuinely wanted.
-* **The contacts grid was wider than the screen.** ⚠ Reported as *"it feels kinda too spaced out"*. `1fr 1fr` is `minmax(auto, 1fr)`, and the `auto` minimum is the content's min-content width — so one long unbreakable name pushed its column wider than its share. On a 390px phone the columns measured **188px + 229px = 426px** and the right-hand cards were cut off. A layout complaint is a measurement, not an opinion.
-* **The three-dots menu on a contact opened an empty sheet.** It drew the sheet and nothing but the Cancel pill. A contact's actions are *user* actions, and there is already a sheet for exactly that — so a direct message opens it now: View Profile, Message, Mute, Close DM, Block.
-* **A staged attachment vanished on the desktop whenever the chat re-rendered** — and it was found by a test that had been written off as flaky. The strip was rebuilt empty and hidden and nothing put the files back: they were still staged and would still be sent, but you could no longer see them or take them out.
+* **A new look for the desktop, as a beta you switch on.** The whole chrome is rebuilt: a nav rail that collapses to icons, one corner radius and one shadow scale across every panel, and a restyled settings modal, Activity Center, gallery, call screen and profile sidebar. **The original UI is still what the app opens on** — the new look lives in Settings → Advanced → Experimental Features, confirms before applying, and restarts, because it swaps the stylesheet the whole window is painted from.
+* **The composer is Orbit's own now.** The emoji picker was a library element inside a **shadow root**, so no stylesheet of ours could reach it and it floated at a fixed offset against the *window* rather than against the message box that opened it. It is a panel that is a **child of the composer** now — exactly as wide as it, sitting directly on top of it — with search, nine categories, a frequently-used tab and skin tones, and an emoji lands **at the caret** instead of being appended.
+* **The emoji dataset ships with the app.** It used to come from a CDN, so a fresh install with no network had **no emoji at all**. Measured on a clean profile with the CDN blocked: **171 emoji and zero network requests**.
+* **Add a Friend tells you how to be found.** The dialog only ever helped you connect *out*; it now shows **your own address** — masked until you ask for it, with copy doing the work, because a LAN address in a dialog is readable over a shoulder and permanent in a screenshot. The field also takes **`host:port`**, which the app has always supported underneath and the dialog always threw away.
+* **Classic Bubbles comes to the desktop**, from the phone: your own messages fill with the accent instead of being tinted. ⚠ It restores the **shape** as well as the colour — the classic message box was 16px with a square tail and wider padding, and changing only the fill produced a hybrid that matched neither look.
+* **And a run of silent failures.** The emoji button did nothing in **both** UIs: the click starts on the icon inside the button, and opening the picker swapped that icon, so the target was detached by the time the click arrived and every lookup said "outside". The settings rail toggle repainted the entire app. The picker was light-scheme on eight of ten themes. And two overlays sat on top of the chat's own Send button.
 
 ## Version History
 
@@ -847,6 +848,19 @@ Orbit is a **beta-stage app for desktop and Android** aimed at trusted private n
 * **The vault's "Restore From a Backup File" row moved above the Export and Restore buttons** — it is not an action on this vault, it is the recovery path for one that is already gone
 * **Fixed:** a dismissed link preview stayed dismissed for the whole session, so re-pasting that link showed nothing; the ⋮ on a contact opened a sheet containing nothing but Cancel; the contacts grid was **426px wide on a 390px screen**, so the right-hand cards were cut off; and on the desktop a re-render made staged attachments vanish while they were still staged and would still be sent
 * **Mobile test suite** — 299 checks
+
+</details>
+
+<details>
+<summary>v0.9.0-beta (Stable)</summary>
+
+* **A new look for the desktop, as a beta you switch on** — a nav rail that collapses to icons, one corner radius and one shadow across every panel, and a rebuilt settings modal, Activity Center, gallery, call screen and profile sidebar. The original UI is still the default; the new look is in Settings → Advanced → Experimental Features, confirms, then restarts
+* **The emoji picker is Orbit's own** — a panel that is a child of the composer, exactly as wide as it, with search, nine categories, frequently-used and skin tones, inserting at the caret. The library's element lived in a shadow root and floated against the window, so no stylesheet of ours could reach it
+* **The emoji dataset ships with the app** — 1,923 records served by Orbit itself instead of a CDN, so a fresh install has emoji with no network. Measured on a clean profile with the CDN blocked: 171 emoji, zero requests
+* **Add a Friend shows your own address** (masked until you ask, with copy doing the work) and accepts **`host:port`**, which the app always supported underneath and the dialog always threw away. Bad input is refused in place, and adding yourself is caught where the mistake is
+* **Classic Bubbles** comes to the desktop from the phone, restoring the classic message box's shape as well as its accent fill
+* **Fixed:** the emoji button did nothing in both UIs (opening the picker swapped the icon the click had started on, detaching the target); the settings rail toggle repainted the whole app; the picker was light-scheme on eight of ten themes; two overlays sat on top of the chat's own Send button; the settings nav lost its icons on every re-render; the context menu closed itself after 1.5 seconds; the away glyph was a blob; a group's custom avatar was lost on restart; the global gallery was unstyled in the original UI; and messages rendered through a stale copy of the sanitiser
+* **Desktop test suite** — 105 checks
 
 </details>
 

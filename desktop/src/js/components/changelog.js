@@ -14,7 +14,31 @@ window.Changelog = {
         '<button id="changelog-close" style="background:transparent;border:none;cursor:pointer;color:var(--text-secondary);padding:4px;"><i data-lucide="x" style="width:20px;height:20px;"></i></button>' +
       '</div>' +
       '<div style="display:flex;flex-direction:column;gap:20px;">' +
-        versionBlock('0.8.7-beta', 'Latest', [
+        versionBlock('0.9.0-beta', 'Stable', [
+          ['New', [
+            'A new look for the desktop — a nav rail that collapses to icons, one corner radius and one shadow across every panel, and a rebuilt settings modal, Activity Center, gallery, call screen and profile sidebar. The original UI is still what the app opens on: the new look is in Settings, Advanced, Experimental Features, and it confirms before it restarts.',
+            'The emoji picker is Orbit\u2019s own now. It hangs off the message box — exactly as wide as it — instead of floating over the window, with search, nine categories, a frequently-used tab and skin tones, and an emoji lands where your cursor is rather than at the end.',
+            'The emoji dataset ships with the app. It used to come from a CDN, so a fresh install with no network had no emoji at all.',
+            'Add a Friend shows your own address now — masked until you ask for it, with copy doing the work — and takes host:port. The port was always supported underneath and the dialog always threw it away.',
+            'Classic Bubbles, from the phone: your own messages fill with the accent instead of being tinted, with the classic box\u2019s shape as well as its colour.',
+          ]],
+          ['Improved', [
+            'Presence is a shape, not just a colour — online, away and busy are distinct silhouettes, so they read without relying on colour.',
+            'The welcome tour shows what it describes: the file-sharing step opens a conversation first, and the privacy step rings the whole setting card instead of the one line inside it.',
+            'Prism and the emoji picker are off the startup path, so the app is interactive sooner.',
+          ]],
+          ['Fixes', [
+            'The emoji button did nothing in both UIs. The click starts on the icon inside the button, and opening the picker swapped that icon — so by the time the click arrived its target had been detached and every lookup said "outside".',
+            'The settings rail toggle repainted the whole app, because collapsing a rail was being written as a settings change.',
+            'The emoji picker was light-scheme on eight of ten themes.',
+            'Two side panels sat on top of the chat\u2019s own menu button, its toggle and Send.',
+            'The settings nav lost every icon on any re-render, the context menu closed itself after 1.5 seconds, and a group\u2019s custom avatar was lost on restart.',
+          ]],
+          ['Version', [
+            'Version: Bumped to v0.9.0-beta.'
+          ]]
+        ]) +
+        versionBlock('0.8.7-beta', '', [
           ['New', [
             'The "+" opens one sheet now — a media panel with a Photos, Poll, Commands and Files pill row along the bottom. Upload Images and Upload Videos were the same intent split in two; the picker decides between an image and a video.',
             'Orbit asks for permissions once, at startup — only for the ones that are actually missing, once per version. If everything is already granted it does nothing at all, and it no longer opens the camera on every launch just to provoke the dialog.',
