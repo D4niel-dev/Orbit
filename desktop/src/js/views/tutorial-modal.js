@@ -20,7 +20,38 @@ window.TutorialModal = {
     {
       target: '.chat-input-area',
       title: 'File & Image Sharing',
-      desc: 'Use the input area to send images, documents, ZIP files, and more. Attachments are shared peer-to-peer with no cloud upload, and image previews appear inline in the message feed.'
+      desc: 'Use the input area to send images, documents, ZIP files, and more. Attachments are shared peer-to-peer with no cloud upload, and image previews appear inline in the message feed.',
+      // ⚠⚠ OPEN A CONVERSATION FIRST. This step is about the input area and the
+      // upload buttons, and on a fresh install NOTHING IS OPEN — so `.chat-input-area`
+      // did not exist when render() looked for it, the card fell back to dead centre
+      // with no spotlight, and the thing being described was not even on screen.
+      // Dan: "we should open the bot chat to show the users the input message box and
+      // the upload buttons".
+      //
+      // ⚠ The Echo chat, because it is the one conversation that exists before the
+      // user has added anybody. Guarded on the friend existing rather than on the id
+      // alone, so a profile that has removed it just gets the old behaviour.
+      onEnter: function() {
+        var pageIndex = this.currentPage;
+        var self = this;
+        var state = window.store && window.store.getState && window.store.getState();
+        if (!state) return;
+        // Already looking at a conversation? Leave the user where they are.
+        if (state.activeChatId && document.querySelector('.chat-input-area')) return;
+
+        var hasEcho = (state.friends || []).some(function(f) { return f.userId === 'local-echo'; });
+        if (!hasEcho) return;
+
+        window.store.setState({ activeChatId: 'local-echo' });
+        // The composer is built by the chat panel's own render, so it is not there
+        // on the next line. Re-target once it is, and only if this is still the step
+        // the user is on.
+        setTimeout(function() {
+          if (self.currentPage !== pageIndex) return;
+          var el = document.querySelector('.chat-input-area');
+          if (el) self._updateTarget('.chat-input-area');
+        }, 400);
+      }
     },
     {
       target: '#panel-middle',
@@ -57,10 +88,16 @@ window.TutorialModal = {
         if (window.SettingsModal) window.SettingsModal.open('data');
         setTimeout(function() {
           if (self.currentPage !== pageIndex) return;
-          var privacyEl = document.querySelector('#privacy-mode-label');
+          // ⚠ THE WHOLE CARD, NOT THE LABEL INSIDE IT. `#privacy-mode-label` is the
+          // one-line row holding the checkbox and the title, so the ring hugged that
+          // row and left the description — the part that explains what the setting
+          // DOES — outside the highlight. `#privacy-mode-section` is the card: title,
+          // checkbox and description in one box. Dan: "we should let the blue outline
+          // the full box of the setting... not just the check mark button".
+          var privacyEl = document.querySelector('#privacy-mode-section');
           if (privacyEl) {
             privacyEl.scrollIntoView({ block: 'center' });
-            self._updateTarget('#privacy-mode-label', { preferLeft: true, gap: 30 });
+            self._updateTarget('#privacy-mode-section', { preferLeft: true, gap: 30 });
           }
         }, 500);
       },

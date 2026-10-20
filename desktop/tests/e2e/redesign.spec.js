@@ -740,7 +740,20 @@ test.describe('desktop redesign', () => {
     });
     await page.waitForTimeout(900);
     await page.click('#btn-nav-activity');
-    await page.waitForTimeout(1600);
+
+    // ⚠⚠ WAIT FOR THE ROW — DO NOT SLEEP AND HOPE. This was a flat 1600ms, and under
+    // the full suite (31 Electron launches on one machine) the activity list had not
+    // rendered yet: `rowAvatar` came back null and the failure read as "the avatar
+    // lost its disc", which is not what happened. Polling keeps the assertion honest —
+    // it still fails if the row NEVER renders, and the message says so.
+    await expect.poll(() => page.evaluate(() => {
+      const content = document.getElementById('activity-content');
+      if (!content) return 0;
+      return Array.from(content.querySelectorAll('div')).filter((el) => {
+        const b = el.getBoundingClientRect();
+        return Math.round(b.width) === 24 && Math.round(b.height) === 24;
+      }).length;
+    }), { timeout: 8000, message: 'the activity row never rendered' }).toBeGreaterThan(0);
 
     const rowAvatar = await page.evaluate(() => {
       const content = document.getElementById('activity-content');
