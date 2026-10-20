@@ -842,7 +842,7 @@ Orbit is a **beta-stage app for desktop and Android** aimed at trusted private n
 * **Mobile test suite** — 196 checks
 
 </details>
-<details open>
+<details>
 <summary>v0.8.7-beta</summary>
 
 * **The composer's "+" is one door now** — a media panel with a **Photos · Poll · Commands · Files** pill row, instead of a five-item list whose first two entries were "Upload Images" and "Upload Videos"; the picker decides between an image and a video, so that split is gone
@@ -853,7 +853,7 @@ Orbit is a **beta-stage app for desktop and Android** aimed at trusted private n
 
 </details>
 
-<details>
+<details open>
 <summary>v0.9.0-beta (Stable)</summary>
 
 * **A new look for the desktop, as a beta you switch on** — the settings modal and Activity Center rebuilt, a profile sidebar with a real banner (it rendered as a **319×0 box**), a gallery sharing the app's shell, a call screen with a surface of its own, a boot skeleton that matches what loads, a settings nav that collapses to icons, and presence drawn as four distinct shapes. The original UI is still what the app opens on
