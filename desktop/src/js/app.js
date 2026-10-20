@@ -363,8 +363,14 @@ document.addEventListener('DOMContentLoaded', () => {
       else { theme = 'seasonal-winter'; }
     }
     document.documentElement.setAttribute('data-theme', theme);
-    // Animate the theme transition (skip if reduceMotion is on)
-    if (!settings.reduceMotion) {
+    // ⚠⚠ ONLY A REAL THEME CHANGE EARNS THE TRANSITION. This used to fire on EVERY
+    // applySettings — that is, on every settings write of any kind — and the class
+    // carries a document-wide `transition: … !important` in animations.css, so
+    // toggling an unrelated preference made the entire window animate for 600ms.
+    // On a slow device that reads as the whole UI refreshing. It also meant every
+    // launch began with 600ms of everything transitioning, for no reason.
+    var themeChanged = !!window._prevTheme && window._prevTheme !== theme;
+    if (themeChanged && !settings.reduceMotion) {
       document.documentElement.classList.add('theme-transitioning');
       setTimeout(function() {
         document.documentElement.classList.remove('theme-transitioning');
@@ -372,7 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Theme change easter egg — random theme-matched text
-    if (window._prevTheme && window._prevTheme !== theme) {
+    if (themeChanged) {
       var themeTexts = {
         'dark': ['"In the darkness, we find connection."', '"The night is young and so are we."', '"Dark mode isn\'t just a theme, it\'s a lifestyle."', '"Embracing the void, one pixel at a time."', '"The void stares back, but we stare together."', '"Darkness is just the absence of light. Connection is the presence of soul."', '"The dark side has cookies. And really good contrast ratios."', '"Shadows hold the deepest conversations."', '"Night mode: because burning your retinas is so 2010."'],
         'light': ['"Into the light, I command thee!"', '"Bright ideas start here."', '"Day mode activated. Sunglasses recommended."', '"The path is illuminated before you."', '"Brightness amplifies everything. Even the truth."', '"Step into the light — the water\'s fine."', '"Light mode: for when you want to feel the sun on your digital face."', '"Illuminate your conversations."', '"Seeing clearly never felt so right."'],

@@ -89,10 +89,31 @@ window.EmojiPicker = {
   _wireDocument() {
     // Close on outside click. On the document, not the picker, so it is wired
     // once at init rather than waiting for the element to exist.
+    //
+    // ⚠⚠ THE TARGET CAN BE GONE BY THE TIME THIS RUNS, SO IT MUST NOT BE ASKED
+    // WHERE IT LIVES. The composer's own open() swaps the emoji button's icon
+    // (`_setEmojiIcon` → `replaceWith`), and the click that opened the picker
+    // started on the <svg> that gets replaced. By the bubble phase that node is
+    // DETACHED — `closest('#btn-emoji')` is null — so this handler concluded the
+    // click was outside and closed the picker in the same tick it opened. Dan:
+    // "i click it and nothing shows up", in BOTH UIs. A synthetic `el.click()`
+    // targets the button, which is not replaced, which is why it looked fine.
+    //
+    // `composedPath()` is captured at dispatch, so it still names the trigger
+    // whatever a handler did to the DOM afterwards.
     document.addEventListener('click', (e) => {
-      if (this.isOpen && !this.container.contains(e.target) && !e.target.closest('#btn-emoji')) {
-        this.close();
+      if (!this.isOpen) return;
+      var path = (typeof e.composedPath === 'function') ? e.composedPath() : null;
+      var inside;
+      if (path && path.length) {
+        inside = path.indexOf(this.container) !== -1 ||
+          path.some(function (n) { return !!n && n.id === 'btn-emoji'; });
+      } else {
+        // No composedPath: the old test, with the same caveat.
+        inside = this.container.contains(e.target) ||
+          !!(e.target && e.target.closest && e.target.closest('#btn-emoji'));
       }
+      if (!inside) this.close();
     });
   },
 

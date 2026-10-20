@@ -78,4 +78,50 @@ test.describe('emoji picker theming', () => {
       await app.close();
     }
   });
+
+  // ⚠⚠ A REAL POINTER CLICK, NOT `el.click()`. The bug this exists for is
+  // invisible to a synthetic click: `el.click()` targets the BUTTON, and the button
+  // survives. A real click starts on the <svg> inside it, and the composer's own
+  // open() replaces that <svg> (`_setEmojiIcon` → `replaceWith`) — so by the bubble
+  // phase the event's target was DETACHED, `closest('#btn-emoji')` returned null,
+  // and the picker's own outside-click handler closed it in the same tick it
+  // opened. Dan: "i click it and nothing shows up", in BOTH UIs.
+  //
+  // That is also why every earlier probe was green: they all called `.click()` on
+  // the element. The picker has to be driven the way a person drives it.
+  test('a real click on the button opens the picker, and an outside click closes it', async () => {
+    const dir = seedNewUI(tmpUserDataDir('emoji-click'), true);
+    const { app, page } = await launchApp(dir);
+    try {
+      const box = await page.evaluate(() => {
+        const b = document.getElementById('btn-emoji').getBoundingClientRect();
+        return { x: Math.round(b.x + b.width / 2), y: Math.round(b.y + b.height / 2) };
+      });
+
+      await page.mouse.click(box.x, box.y);
+      await page.waitForTimeout(900);
+      const open = await page.evaluate(() => {
+        const c = document.getElementById('emoji-picker-container');
+        const r = c.getBoundingClientRect();
+        return {
+          isOpen: window.EmojiPicker.isOpen,
+          display: getComputedStyle(c).display,
+          w: Math.round(r.width),
+          h: Math.round(r.height)
+        };
+      });
+      expect(open.isOpen, 'the button must open the picker').toBe(true);
+      expect(open.display).toBe('block');
+      expect(open.w).toBeGreaterThan(100);
+      expect(open.h).toBeGreaterThan(100);
+
+      // ⚠ The fix must not disable the close-on-outside-click it repaired — the
+      // obvious way to "fix" this bug is to delete the handler.
+      await page.mouse.click(700, 300);
+      await page.waitForTimeout(300);
+      expect(await page.evaluate(() => window.EmojiPicker.isOpen), 'an outside click must still close it').toBe(false);
+    } finally {
+      await app.close();
+    }
+  });
 });

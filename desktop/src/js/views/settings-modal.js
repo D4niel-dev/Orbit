@@ -180,11 +180,24 @@ window.SettingsModal = {
     var navToggle = this.container.querySelector('#settings-nav-toggle');
     if (navToggle) {
       navToggle.addEventListener('click', function() {
-        var live = window.store.getState().settings || {};
-        var next = Object.assign({}, live, { settingsNavCollapsed: !live.settingsNavCollapsed });
-        window.store.setState({ settings: next });
-        if (window.Storage) window.Storage.set('settings', next);
-        if (window.orbitAPI && window.orbitAPI.dbSetSetting) window.orbitAPI.dbSetSetting('settings', next);
+        // ⚠⚠ A RAIL COLLAPSE IS NOT AN APP-WIDE SETTINGS CHANGE, SO IT MUST NOT
+        // TRAVEL THE APP-WIDE PATH. `setState({ settings })` notifies every
+        // subscriber, and app.js's subscriber runs applySettings — which restarted
+        // a document-wide `theme-transitioning` transition, rewrote the chat
+        // wallpaper, the font size, a dozen root classes and the offline poller.
+        // Dan: "it seems to refresh the whole app UI ??? (which it shouldn't cuz it
+        // may lag some devices)". It did.
+        //
+        // The store still MOVES: the settings object is mutated in place, so a
+        // later `Object.assign({}, state.settings, …)` from any other control
+        // carries this value forward. That was the lesson from the gallery's view
+        // mode — persisting to disk WITHOUT the store let the next settings change
+        // silently revert it. Here the store holds it and nothing repaints.
+        var live = window.store.getState().settings;
+        if (!live) return;
+        live.settingsNavCollapsed = !live.settingsNavCollapsed;
+        if (window.Storage) window.Storage.set('settings', live);
+        if (window.orbitAPI && window.orbitAPI.dbSetSetting) window.orbitAPI.dbSetSetting('settings', live);
         self._syncNavToggle();
       });
     }

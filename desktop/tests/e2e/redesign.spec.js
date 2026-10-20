@@ -1531,6 +1531,45 @@ test.describe('desktop redesign', () => {
     await page.waitForTimeout(400);
   });
 
+  test('collapsing the settings rail does not repaint the app', async () => {
+    // ⚠⚠ DAN: "when opening/closing the navbar of the settings modal it seems to
+    // refresh the whole app UI ??? (which it shouldn't cuz it may lag some
+    // devices)". It did. The toggle called `store.setState({ settings })`, the
+    // app.js subscriber answered with applySettings, and applySettings added
+    // `theme-transitioning` — a document-wide `transition: … !important` — for
+    // 600ms, rewrote the chat wallpaper, the font size and a dozen root classes,
+    // and restarted the offline poller. A rail collapse is not an app-wide change.
+    //
+    // ⚠ NEITHER ASSERTION IS ABOUT THE RAIL. Both are observable side effects of
+    // applySettings having run, which is the thing that must not happen. The rail
+    // assertions come after, because the control still has to work.
+    await page.click('#btn-nav-settings');
+    await page.waitForTimeout(900);
+    const pollerBefore = await page.evaluate(() => window._offlineCheckInterval);
+    expect(pollerBefore, 'applySettings runs at boot and owns this interval').toBeTruthy();
+
+    await page.evaluate(() => document.getElementById('settings-nav-toggle').click());
+    // IMMEDIATELY — the class lives 600ms, so a later read would miss it.
+    const after = await page.evaluate(() => ({
+      transitioning: document.documentElement.classList.contains('theme-transitioning'),
+      intervalId: window._offlineCheckInterval,
+      collapsed: document.getElementById('settings-overlay').classList.contains('nav-collapsed'),
+      inStore: window.store.getState().settings.settingsNavCollapsed,
+      saved: (window.orbitAPI.storeGet('settings') || {}).settingsNavCollapsed
+    }));
+
+    expect(after.transitioning, 'the whole window must not start transitioning').toBe(false);
+    expect(after.intervalId, 'applySettings must not have run at all').toBe(pollerBefore);
+
+    // ...and the thing the control actually does still happens, in BOTH stores.
+    expect(after.collapsed).toBe(true);
+    expect(after.inStore).toBe(true);
+    expect(after.saved).toBe(true);
+
+    await page.evaluate(() => window.SettingsModal.close());
+    await page.waitForTimeout(300);
+  });
+
   test('the context menu stays open long enough to use it', async () => {
     // ⚠⚠ IT CLOSED ITSELF AFTER 1.5 SECONDS. `show()` set a timer — "so cursor doesn't
     // block buttons" — and the message menu pushes six or more items, so you had a
