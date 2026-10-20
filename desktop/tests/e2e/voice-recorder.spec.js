@@ -5,7 +5,7 @@
 // Selectors: #btn-mic, #voice-rec-bar, #voice-rec-timer, #voice-rec-meter,
 // .voice-rec-meter-bar, #btn-voice-stop, #file-preview-area, .oap-placeholder.
 const { test, expect } = require('@playwright/test');
-const { tmpUserDataDir, launchApp } = require('./helpers');
+const { tmpUserDataDir, launchApp, seedNewUI } = require('./helpers');
 
 const FAKE_MEDIA_ARGS = ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'];
 const DENIED_SETTLE_MS = 1500;
@@ -69,6 +69,53 @@ test.describe('voice-recorder', () => {
         await proceed.click();
       }
       await expect(page.locator('.message-own .oap-placeholder')).toBeVisible();
+    } finally {
+      await app.close().catch(() => {});
+    }
+  });
+
+  // ⚠ THE REDESIGN'S TREATMENT OF THE SAME BAR. The bar already floated above the
+  // composer as a pill — the same anchoring the emoji panel uses — so the LAYOUT was
+  // never the problem. What was wrong was the LITERALS: a `#ef4444` dot carrying a
+  // `rgba(239,68,68,.6)` glow, a `0 4px 20px rgba(0,0,0,.25)` shadow, a 20px radius
+  // and 10px buttons. Those ignore all ten themes — the same fault the call screen
+  // had, where a red halo survived on nord around a dot that was no longer red.
+  //
+  // ⚠ No microphone needed: `_showVoiceBar()` only builds the DOM, it does not open
+  // a stream. That is what makes this cheap enough to keep.
+  test('redesign: the bar is themed, not literal', async () => {
+    const dir = seedNewUI(tmpUserDataDir('voice-theme'), true);
+    const { app, page } = await launchApp(dir);
+    try {
+      const r = await page.evaluate(() => {
+        window.ChatPanel._showVoiceBar();
+        const bar = document.getElementById('voice-rec-bar');
+        if (!bar) return { error: 'the bar was not built' };
+        bar.style.display = 'flex';
+        const cs = (el) => getComputedStyle(el);
+        const dot = bar.querySelector('.voice-rec-dot');
+        return {
+          layerOn: !document.getElementById('redesign-css').disabled,
+          radius: cs(bar).borderRadius,
+          dotBg: cs(dot).backgroundColor,
+          dotShadow: cs(dot).boxShadow,
+          timerColor: cs(document.getElementById('voice-rec-timer')).color,
+          stopRadius: cs(document.getElementById('btn-voice-stop')).borderRadius
+        };
+      });
+
+      expect(r.error).toBeUndefined();
+      expect(r.layerOn).toBe(true);
+      // A pill, from the token — not the 20px literal.
+      expect(r.radius).toBe('999px');
+      // The theme's danger colour, not the `#ef4444` literal.
+      expect(r.dotBg, 'the dot must not use the hardcoded red').not.toBe('rgb(239, 68, 68)');
+      // ⚠⚠ THE ONE THAT ACTUALLY BIT. A glow is themed by nothing: on nord a red
+      // halo sat around a dot that had already turned the theme's own red.
+      expect(r.dotShadow, 'the dot must not carry a glow').toBe('none');
+      expect(r.timerColor, 'the timer should not be the old muted grey').not.toBe('rgb(174, 174, 182)');
+      // 10px → the ladder's `sm`.
+      expect(r.stopRadius).toBe('8px');
     } finally {
       await app.close().catch(() => {});
     }

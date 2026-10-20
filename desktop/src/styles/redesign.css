@@ -1177,6 +1177,61 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
   color: var(--text-muted);
 }
 
+/* ── The voice recorder ──────────────────────────────────────────────────────
+   ⚠ The bar is ALREADY a pill floating above the composer — `position: absolute;
+   bottom: calc(100% + 8px)`, the same anchoring the emoji panel uses — so the
+   layout needs nothing. What is left is the ladder and the literals: a 20px
+   radius, a `0 4px 20px rgba(0,0,0,.25)` shadow, a `#ef4444` dot carrying a red
+   GLOW, and a `brightness(1.12)` hover. */
+.voice-rec-bar {
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-xl);
+}
+
+/* ⚠ `--accent-danger`, not `#ef4444` — the literal ignored all ten themes. And the
+   glow goes rather than being themed, for the same reason the call screen's did:
+   on nord a red halo sat around a dot that was no longer red. The pulse stays; it
+   is a live state, not decoration. */
+.voice-rec-dot {
+  background: var(--accent-danger);
+  box-shadow: none;
+}
+
+#voice-rec-timer {
+  font-family: var(--font-body);
+  color: var(--text-primary);
+}
+
+/* The level meter: `--bg-active` is one step above the bar's own surface, and the
+   active bar keeps the accent. 4px → 3px so thirty-two of them read as a meter
+   rather than as a texture. */
+.voice-rec-meter-bar {
+  width: 3px;
+  border-radius: var(--radius-xs);
+  background: var(--bg-active);
+}
+
+/* ⚠ 10px → the ladder's `sm`. These stay a step smaller than the composer's icon
+   buttons on purpose: they live inside a 40px pill, not in the 40px row. */
+.chat-input-wrapper .voice-rec-btn {
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-weight: 600;
+}
+.chat-input-wrapper .voice-rec-btn-cancel:hover {
+  background: var(--bg-hover);
+  color: var(--accent-danger);
+}
+
+/* ⚠ No `filter: brightness()` on hover — a literal effect with no token, and it
+   lifts the fill rather than tinting it. Dimming does the same job inside the
+   palette, and it is not a move, so the house hover rule still holds. */
+.chat-input-wrapper .voice-rec-btn-stop:hover {
+  background: var(--accent-danger);
+  filter: none;
+  opacity: .88;
+}
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
    9. OVERLAYS
