@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, Tray, Menu, Notification, nativeImage, protocol, net, dialog, clipboard, shell } = require('electron');
 const path = require('path');
+const { pathToFileURL } = require('url');
 const fs = require('fs');
 const os = require('os');
 const tcpNet = require('net');
@@ -284,7 +285,9 @@ var e2ee = createE2EE(persistentStore);
 protocol.registerSchemesAsPrivileged([
   { scheme: 'orbit-file', privileges: { secure: true, standard: true, supportFetchAPI: true } },
   { scheme: 'orbit-db', privileges: { secure: true, standard: true, supportFetchAPI: true } },
-  { scheme: 'orbit-avatar', privileges: { secure: true, standard: true, supportFetchAPI: true } }
+  { scheme: 'orbit-avatar', privileges: { secure: true, standard: true, supportFetchAPI: true } },
+  // ⚠ The bundled emoji dataset. See the handler below.
+  { scheme: 'orbit-emoji', privileges: { secure: true, standard: true, supportFetchAPI: true } }
 ]);
 
 app.whenReady().then(() => {
@@ -298,6 +301,38 @@ app.whenReady().then(() => {
       return new Response(r.body, { headers: cacheHeaders({ 'Content-Type': r.headers.get('Content-Type') || 'application/octet-stream' }) });
     });
   });
+
+  // ⚠ THE EMOJI DATASET, SERVED FROM THE APP ITSELF.
+  //
+  // The picker's data source was a jsDelivr URL, so a fresh install with no network
+  // had no emoji at all — the one thing a local-first app cannot afford. The data is
+  // bundled at src/data/emojis.json (~430 KB, 1923 records) and served from here.
+  //
+  // ⚠ RESOLVED IN THE MAIN PROCESS ON PURPOSE. The renderer would have to rebuild an
+  // absolute path from `location.href`, and that means per-platform path math
+  // (`/C:/…` on Windows, `/Users/…` elsewhere) that I can only test on one of them.
+  // `path.join(__dirname, …)` is correct everywhere by construction.
+  //
+  // ⚠ AND IT ANSWERS `HEAD`. The library probes the source with a HEAD before
+  // reading it; returning a body for a HEAD is a protocol error.
+  protocol.handle('orbit-emoji', (request) => {
+    // ⚠ `Access-Control-Allow-Origin` is not optional here. The page is `file://`,
+    // so a `fetch()` to `orbit-emoji://` is CROSS-ORIGIN and Chromium fails it with
+    // "Failed to fetch" before the handler's body is even read. `<img src>` on the
+    // other schemes never needed this because images are not CORS-checked.
+    const headers = {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    };
+    if (request.method === 'HEAD') {
+      return new Response(null, { status: 200, headers });
+    }
+    const file = path.join(__dirname, 'src', 'data', 'emojis.json');
+    return net.fetch(pathToFileURL(file).toString()).then((r) => {
+      return new Response(r.body, { headers: cacheHeaders(headers) });
+    });
+  });
+
   function detectMimeFromHeader(data, fallbackExt) {
     if (!data || data.length < 16) return null;
     var header = '';

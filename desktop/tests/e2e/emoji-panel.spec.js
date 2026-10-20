@@ -175,4 +175,41 @@ test.describe('redesign emoji panel', () => {
       await app.close();
     }
   });
+
+  // ⚠⚠ THE PICKER USED TO REQUIRE THE INTERNET ON FIRST USE. Its data source was a
+  // jsDelivr URL, so a fresh install with no network had NO EMOJI AT ALL — the one
+  // thing a local-first app cannot afford. The dataset now ships at
+  // src/data/emojis.json (1923 records) and the main process serves it from
+  // `orbit-emoji://`; see the handler in main.js for why the path is resolved there.
+  //
+  // ⚠ A FRESH PROFILE IS WHAT MAKES THIS MEANINGFUL. The library caches into
+  // IndexedDB, so a reused profile would pass with the network blocked and prove
+  // nothing at all.
+  test('the dataset is bundled: it loads with the network blocked', async () => {
+    const dir = seedNewUI(tmpUserDataDir('epanel-offline'), true);
+    const { app, page } = await launchApp(dir);
+    const cdn = [];
+    try {
+      await page.route('**cdn.jsdelivr.net**', (route) => { cdn.push(route.request().url()); route.abort(); });
+      page.on('request', (r) => { if (r.url().includes('jsdelivr')) cdn.push(r.url()); });
+
+      await page.evaluate(() => window.EmojiPanel.open(document.getElementById('chat-input')));
+      await page.waitForTimeout(3000);
+
+      const r = await page.evaluate(() => {
+        const p = document.getElementById('emoji-panel');
+        return {
+          count: p.querySelectorAll('.ep-emoji').length,
+          empty: p.querySelector('.ep-empty') ? p.querySelector('.ep-empty').textContent : null
+        };
+      });
+
+      expect(r.empty, 'the panel must not fall back to its error state').toBeNull();
+      expect(r.count, 'emoji must render from the bundled dataset').toBeGreaterThan(50);
+      // ⚠ And nothing may have reached for the network at all — not even a probe.
+      expect(cdn, 'the picker must not request the CDN').toEqual([]);
+    } finally {
+      await app.close();
+    }
+  });
 });

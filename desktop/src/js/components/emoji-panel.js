@@ -76,14 +76,29 @@
         if (!window.OrbitEmojiDatabase) {
           return Promise.reject(new Error('the emoji database module has not loaded'));
         }
-        this._db = new window.OrbitEmojiDatabase();
-        this._dbPromise = this._db.ready().then(() => {
-          return this._db.getPreferredSkinTone().then(function (t) {
-            // A stored tone is the user's, and the library validates it. Anything
-            // odd leaves the default, exactly as the old picker did.
-            if (typeof t === 'number' && t >= 0 && t <= 5) this._tone = t;
-          }.bind(this)).catch(function () {});
-        }).then(function () { return this._db; }.bind(this));
+        // ⚠⚠ THE BUNDLED DATASET, NOT A CDN. The source used to be a jsDelivr URL,
+        // so a fresh install with no network had no emoji AT ALL — the one thing a
+        // local-first app cannot afford. `orbit-emoji://` is served by the main
+        // process straight out of src/data/emojis.json; see the handler in main.js
+        // for why the path is resolved there and not here.
+        this._db = new window.OrbitEmojiDatabase({ dataSource: 'orbit-emoji://data' });
+        this._dbPromise = this._db.ready()
+          .catch(function () {
+            // ⚠ Falls back rather than failing. A build without the bundle, or a
+            // host that does not serve the scheme, should still get a picker while
+            // there is a network — an empty panel with no clue why is the exact
+            // silent failure this component has already produced twice.
+            this._db = new window.OrbitEmojiDatabase();
+            return this._db.ready();
+          }.bind(this))
+          .then(() => {
+            return this._db.getPreferredSkinTone().then(function (t) {
+              // A stored tone is the user's, and the library validates it. Anything
+              // odd leaves the default, exactly as the old picker did.
+              if (typeof t === 'number' && t >= 0 && t <= 5) this._tone = t;
+            }.bind(this)).catch(function () {});
+          })
+          .then(function () { return this._db; }.bind(this));
       }
       return this._dbPromise;
     },
