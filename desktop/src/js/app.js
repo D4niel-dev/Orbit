@@ -455,6 +455,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.body.setAttribute('data-bubbles', settings.messageBubbles || 'Modern');
 
+    // ⚠ `classicBubbles` is a LOOK, not a preference flag: it fills your own bubble
+    // with the accent. On <html> rather than on the bubble, so one rule in
+    // components.css can reach it in both UIs — the redesign tints your own bubble,
+    // and this has to outrank that.
+    if (settings.classicBubbles === true) {
+      document.documentElement.setAttribute('data-classic-bubbles', 'true');
+    } else {
+      document.documentElement.removeAttribute('data-classic-bubbles');
+    }
+
     if (settings.fontSize === 'Small') document.body.style.fontSize = '14px';
     else if (settings.fontSize === 'Large') document.body.style.fontSize = '18px';
     else document.body.style.fontSize = '16px';

@@ -96,6 +96,12 @@ class Store {
         //
         // The old `classicUI` key is retired; main.js deletes it once at boot.
         newUI: false,
+        // ⚠ FILLS your own message bubble with the accent instead of leaving it the
+        // same surface as theirs. This is the look the app had before the redesign,
+        // and it is the same setting the mobile carries under this name — the desktop
+        // simply never had it. Applied as `data-classic-bubbles` on <html>, and the
+        // rule lives in components.css because it has to work in BOTH UIs.
+        classicBubbles: false,
         // The settings modal's nav rail, collapsed to icons only. ⚠ A REDESIGN-ONLY
         // preference: the rules that act on it live in redesign.css, so in the classic
         // look the class is applied and does nothing — which is the correct behaviour

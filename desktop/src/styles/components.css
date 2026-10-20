@@ -1544,6 +1544,25 @@ button:active,
 .message-own .msg-link:active {
   color: #2d7a2d;
 }
+
+/* ⚠ "Classic Bubbles" — Appearance → Text & Layout. Your own bubble is normally the
+   same surface as theirs (`--bg-surface`, set INLINE on the element), and the
+   redesign tints it with the accent instead. This restores the solid accent fill:
+   the look the app had before the redesign, and the setting the mobile already
+   carries under this name.
+
+   ⚠ IT LIVES HERE, IN THE ALWAYS-LOADED SHEET, because the setting has to work in
+   BOTH UIs. The layer has a tint rule of its own; this outranks it on specificity,
+   so it wins without needing to be repeated in redesign.css.
+   ⚠ `color: #fff !important` — the bubble's colour is an INLINE declaration, and
+   an `!important` in a sheet is the only thing that reaches one.
+   ⚠ The links need nothing: `.message-own .msg-link` above is already
+   `rgba(255,255,255,.9)`, which is the fill this rule restores. */
+:root[data-classic-bubbles="true"] .message-row.message-own .message-bubble {
+  background: var(--accent-primary) !important;
+  border-color: var(--accent-primary) !important;
+  color: #fff !important;
+}
 .message-row:not(.message-own) .msg-link {
   color: var(--accent-primary);
 }

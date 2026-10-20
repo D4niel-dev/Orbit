@@ -249,19 +249,27 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
   border-radius: var(--radius-sm);
 }
 
-/* ⚠⚠ THE HALO IS SUPPRESSED ON THE MODAL SEARCH FIELDS, AND ONLY ON THOSE.
-   Both carry `autofocus`, so the halo is painted the instant the modal opens and
-   NEVER GOES AWAY — a solid blue rounded box drawn around the field, which reads as
-   decoration rather than as "you are here". Measured on the search modal: a 450x20
-   input wearing `box-shadow: 0 0 0 2px var(--accent-ring)` for the whole session.
+/* ⚠⚠ THE HALO IS SUPPRESSED WHERE THE CONTAINER ALREADY DRAWS ONE.
+   Both modal search fields carry `autofocus`, so the halo is painted the instant
+   the modal opens and NEVER GOES AWAY — a solid blue rounded box drawn around the
+   field, which reads as decoration rather than as "you are here". Measured on the
+   search modal: a 450x20 input wearing `box-shadow: 0 0 0 2px var(--accent-ring)`
+   for the whole session.
+
+   ⚠ `#ep-search` is the same shape for a different reason, and it is a bug Dan
+   caught on sight: it sits inside the emoji panel's `.ep-search` pill, which draws
+   the ring for the WHOLE field on `:focus-within`. The universal rule above also
+   matched the <input> itself — (0,2,0), which outranks `.ep-search input`
+   (0,1,1) — so the field wore TWO rings, one inset inside the other.
 
    ⚠ Deliberately NOT a blanket `outline: none`. Every other field keeps the halo,
-   because for those the USER put the focus there and the halo is the only thing that
-   says so. These two are focused by the app.
+   because for those the USER put the focus there and the halo is the only thing
+   that says so. These are focused by the app, or already ringed by their pill.
    ⚠ The search modal is not left without a cue either — `.search-modal-header::after`
    already draws an accent bar while anything in the header has focus. */
 #search-modal-input:focus-visible,
-#forward-search-input:focus-visible {
+#forward-search-input:focus-visible,
+#ep-search:focus-visible {
   box-shadow: none !important;
 }
 

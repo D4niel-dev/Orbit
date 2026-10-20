@@ -67,6 +67,26 @@ test.describe('redesign emoji panel', () => {
       expect(g.tabs, 'recents plus nine categories').toBe(10);
       expect(g.panelOpen).toBe(true);
       expect(g.facadeOpen, 'the facade and the panel must agree').toBe(true);
+
+      // ⚠⚠ ONE RING, NOT TWO. The panel focuses the search field on open, and the
+      // universal `*:focus-visible:not(.chat-input-field)` rule in the layer is
+      // (0,2,0) — it outranks `.ep-search input` (0,1,1) — so it painted its own
+      // halo on the <input> INSIDE the pill's ring. Two concentric focus rings on
+      // one field; Dan spotted it immediately. The input is excluded by id now.
+      const ring = await page.evaluate(() => {
+        const input = document.getElementById('ep-search');
+        const pill = document.querySelector('.ep-search');
+        return {
+          focused: document.activeElement === input,
+          inputShadow: getComputedStyle(input).boxShadow,
+          inputOutline: getComputedStyle(input).outlineStyle,
+          pillShadow: getComputedStyle(pill).boxShadow
+        };
+      });
+      expect(ring.focused, 'the field must actually be focused for this to mean anything').toBe(true);
+      expect(ring.inputShadow, 'the input must not draw a halo of its own').toBe('none');
+      expect(ring.inputOutline).toBe('none');
+      expect(ring.pillShadow, 'the pill draws the only ring').not.toBe('none');
     } finally {
       await app.close();
     }
