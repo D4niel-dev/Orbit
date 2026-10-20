@@ -1312,7 +1312,7 @@ window.SidebarMiddle = {
     var qrHandle = null;       // live inline QR scanner, if the QR tab is open
 
     var SUBTITLES = {
-      ip: 'Enter the IP address of a peer on your local network to connect with them.',
+      ip: 'Enter the IP address of a peer on your local network to connect with them. Add :port after it if they use a custom one.',
       qr: 'Paste, drop, or choose a QR code image from another Orbit device to connect instantly.'
     };
 
@@ -1351,6 +1351,119 @@ window.SidebarMiddle = {
       if (e.key === 'Escape') closeOverlay();
     }
 
+    // ── Parsing, errors, and this device's own addresses ─────────────────────
+    //
+    // ⚠⚠ `orbitAPI.connect(ip, port)` HAS ALWAYS TAKEN A PORT — the preload defaults
+    // it to 46000 and the main process passes it to `connectToPeer('manual', ip,
+    // port)` — and this modal has always thrown that away. A peer listening anywhere
+    // but 46000 could not be reached by typing it, and nothing said why. This is the
+    // only place that decides what gets sent, so the parse lives here.
+    function parseAddress(raw) {
+      var s = String(raw == null ? '' : raw).trim();
+      if (!s) return { error: 'Enter an address to connect to.' };
+      // People paste these out of messages, sometimes as a URL.
+      s = s.replace(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//, '').replace(/\/.*$/, '');
+
+      var host = s, port = null;
+      var v6 = s.match(/^\[([0-9a-fA-F:]+)\](?::(\d{1,5}))?$/);
+      if (v6) {
+        host = v6[1];
+        if (v6[2]) port = parseInt(v6[2], 10);
+      } else {
+        // Only a SINGLE colon is a port; anything else is an unbracketed IPv6.
+        var first = s.indexOf(':');
+        if (first > -1 && first === s.lastIndexOf(':')) {
+          host = s.slice(0, first);
+          port = parseInt(s.slice(first + 1), 10);
+        }
+      }
+      if (!host) return { error: 'Enter an address to connect to.' };
+      if (port !== null && !(port >= 1 && port <= 65535)) {
+        return { error: 'That port is out of range — use 1 to 65535.' };
+      }
+
+      var isV4 = /^\d{1,3}(\.\d{1,3}){3}$/.test(host);
+      if (isV4) {
+        var bad = host.split('.').filter(function(p) { return parseInt(p, 10) > 255; });
+        if (bad.length) return { error: 'That is not a valid IPv4 address — every part must be 0 to 255.' };
+      } else if (!/^[0-9a-fA-F:]+$/.test(host) &&
+                 !/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)+$/.test(host)) {
+        return { error: 'That does not look like an IP address or a hostname.' };
+      }
+      return { ip: host, port: port };
+    }
+
+    function setError(msg) {
+      var err = overlay.querySelector('#af-error');
+      var inp = overlay.querySelector('#connect-ip-input');
+      if (err) {
+        err.textContent = msg || '';
+        err.style.display = msg ? 'block' : 'none';
+      }
+      if (inp) {
+        inp.style.borderColor = msg ? 'var(--accent-danger)' : 'var(--border-subtle)';
+        // ⚠⚠ THE RING IS NOT THE BORDER. Both sheets draw the focus ring as
+        // `box-shadow: 0 0 0 2px … !important` — base.css's universal `*:focus-visible`
+        // in classic, the layer's halo in the redesign — and the field is focused
+        // whenever it has an error in it. So the accent ring sat OVER the red border
+        // and the field read as "focused", not "wrong": the message was the only
+        // signal. An inline `!important` is the only thing that outranks those.
+        if (msg) inp.style.setProperty('box-shadow', '0 0 0 2px var(--accent-danger)', 'important');
+        else inp.style.removeProperty('box-shadow');
+      }
+    }
+
+    // ⚠⚠ THE MODAL ONLY EVER HELPED YOU CONNECT OUT. It never said how someone reaches
+    // YOU, which is the other half of adding a friend over a LAN. `getLocalIPv4s()`
+    // returns every interface on purpose — which one is right depends on which network
+    // the other device is on, and the user is the only one who knows that.
+    var localIPs = null;
+    function loadLocalIPs() {
+      if (localIPs) return Promise.resolve(localIPs);
+      if (!window.orbitAPI || !window.orbitAPI.getLocalIPv4s) return Promise.resolve([]);
+      return window.orbitAPI.getLocalIPv4s().then(function(list) {
+        localIPs = Array.isArray(list) ? list.filter(Boolean) : [];
+        return localIPs;
+      }).catch(function() { localIPs = []; return localIPs; });
+    }
+
+    function paintYourAddress() {
+      loadLocalIPs().then(function(ips) {
+        var box = overlay.querySelector('#af-your-address');
+        // The tab may have been switched, or the modal closed, while that was in flight.
+        if (!box || !ips.length) return;
+        box.innerHTML =
+          '<div style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text-secondary);">Your address</div>' +
+          ips.map(function(ip) {
+            return '<button class="af-addr" data-ip="' + window.Sanitize.escapeHtml(ip) + '" title="Copy this address" ' +
+              'style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:9px 12px;margin-top:6px;border-radius:8px;border:1px solid var(--border-subtle);background:var(--bg-base);color:var(--text-primary);font-size:13px;font-family:inherit;cursor:pointer;text-align:left;">' +
+                '<span>' + window.Sanitize.escapeHtml(ip) + '</span>' +
+                '<i data-lucide="copy" style="width:14px;height:14px;color:var(--text-muted);flex-shrink:0;"></i>' +
+              '</button>';
+          }).join('') +
+          '<div style="font-size:11px;color:var(--text-muted);margin-top:8px;line-height:1.45;">Give one of these to the other device — they enter it on their side.</div>';
+        if (window.lucide) window.lucide.createIcons({ root: box });
+
+        box.querySelectorAll('.af-addr').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var ip = btn.getAttribute('data-ip');
+            function done() {
+              if (window.Toast) window.Toast.show('Copied', ip + ' copied to clipboard', 'info', 2000);
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(ip).then(done, function() {
+                try { window.orbitAPI.sendSync('write-clipboard', ip); } catch (e) {}
+                done();
+              });
+            } else {
+              try { window.orbitAPI.sendSync('write-clipboard', ip); } catch (e) {}
+              done();
+            }
+          });
+        });
+      });
+    }
+
     // Tear down any live scanner before swapping content, otherwise the paste
     // listener would keep firing against a detached node.
     function renderContent() {
@@ -1360,12 +1473,19 @@ window.SidebarMiddle = {
 
       if (activeTab === 'ip') {
         content.innerHTML =
-          '<input id="connect-ip-input" type="text" placeholder="192.168.1.x" style="width:100%;padding:14px 16px;border-radius:10px;border:1px solid var(--border-subtle);background:var(--bg-base);color:var(--text-primary);font-size:14px;outline:none;box-sizing:border-box;">';
+          '<input id="connect-ip-input" type="text" placeholder="192.168.1.42   ·   192.168.1.42:47000" ' +
+            'autocomplete="off" spellcheck="false" ' +
+            'style="width:100%;padding:14px 16px;border-radius:10px;border:1px solid var(--border-subtle);background:var(--bg-base);color:var(--text-primary);font-size:14px;outline:none;box-sizing:border-box;transition:border-color 0.15s;">' +
+          '<div id="af-error" role="alert" style="display:none;font-size:12px;line-height:1.45;color:var(--accent-danger);margin-top:8px;"></div>' +
+          '<div id="af-your-address" style="margin-top:14px;"></div>';
         var inp = content.querySelector('#connect-ip-input');
         if (inp) {
           inp.focus();
           inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') overlay.querySelector('#btn-confirm-connect').click(); });
+          // Clear the complaint the moment they start fixing it.
+          inp.addEventListener('input', function() { setError(''); });
         }
+        paintYourAddress();
         return;
       }
 
@@ -1412,19 +1532,44 @@ window.SidebarMiddle = {
       var btn = this;
       if (btn.disabled) return;
       var input = overlay.querySelector('#connect-ip-input');
-      var ip = input ? input.value.trim() : '';
-      if (!ip) { window.Toast.show('Error', 'Please enter an IP address'); return; }
-      btn.disabled = true;
-      btn.textContent = 'Connecting...';
-      if (window.orbitAPI) {
-        if (window.orbitAPI.connect) window.orbitAPI.connect(ip);
-        window.Toast.show('Connecting', 'Attempting to connect to ' + window.Sanitize.escapeHtml(ip));
+      var parsed = parseAddress(input ? input.value : '');
+
+      if (parsed.error) {
+        setError(parsed.error);
+        if (input) input.focus();
+        return;
       }
-      setTimeout(function() {
-        closeOverlay();
-        btn.disabled = false;
-      }, 500);
+
+      // ⚠ The main process refuses a self-connect too, but only against the PRIMARY
+      // interface and only AFTER this modal has closed — so the user loses what they
+      // typed and gets a toast about a dialog that is already gone. Checking every
+      // local address here keeps the error next to the mistake.
+      loadLocalIPs().then(function(ips) {
+        if (ips.indexOf(parsed.ip) !== -1) {
+          setError('That is this device\u2019s own address — enter the address of the other device.');
+          if (input) input.focus();
+          return;
+        }
+        setError('');
+        btn.disabled = true;
+        btn.textContent = 'Connecting...';
+        var label = parsed.port ? parsed.ip + ':' + parsed.port : parsed.ip;
+        if (window.orbitAPI) {
+          // ⚠ The port, when one was typed. The preload defaults it to 46000.
+          if (window.orbitAPI.connect) window.orbitAPI.connect(parsed.ip, parsed.port || undefined);
+          window.Toast.show('Connecting', 'Attempting to connect to ' + window.Sanitize.escapeHtml(label));
+        }
+        setTimeout(function() {
+          closeOverlay();
+          btn.disabled = false;
+        }, 500);
+      });
     });
+
+    // ⚠ Exposed for the spec, and only for that: `parseAddress` is pure, and
+    // `window.orbitAPI` is FROZEN — the port cannot be observed at the boundary it is
+    // actually sent through, so the decision that produces it is what gets asserted.
+    window.SidebarMiddle._parseAddress = parseAddress;
 
     renderContent();
   },
