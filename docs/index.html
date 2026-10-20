@@ -22,7 +22,7 @@
   "applicationCategory": "CommunicationApplication",
   "operatingSystem": "Windows, macOS, Linux, Android",
   "description": "Local-first, peer-to-peer encrypted chat app for desktop and Android. No cloud, no signup, no central server.",
-  "softwareVersion": "0.8.7-beta",
+  "softwareVersion": "0.9.0-beta",
   "license": "https://opensource.org/licenses/MIT",
   "codeRepository": "https://github.com/D4niel-dev/Orbit-beta",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
@@ -959,7 +959,7 @@ sha256sum --check SHA256SUMS.txt --ignore-missing</code></pre>
         if (dir > 0) nextMobileSlide(); else prevMobileSlide();
       };
 
-      var ORBIT_VERSION = 'v0.8.7-beta';
+      var ORBIT_VERSION = 'v0.9.0-beta';
       document.querySelectorAll('[data-version]').forEach(function (el) {
         el.textContent = ORBIT_VERSION;
       });
@@ -1040,7 +1040,7 @@ sha256sum --check SHA256SUMS.txt --ignore-missing</code></pre>
         var html =
           '<div class="announcement-bar" role="status">' +
             '<div class="announcement-bar-inner">' +
-              '<span class="announcement-text">New: Orbit v0.8.7-beta — the "+" finally has one door instead of five, Orbit asks for the permissions it needs once (and only for the ones that are missing — it no longer opens the camera on every launch just to provoke the dialog), and four bugs are gone: a dismissed link preview that stayed dismissed, a contact menu that opened empty, a contacts grid wider than the screen, and a staged attachment that vanished on the desktop.</span>' +
+              '<span class="announcement-text">New: Orbit v0.9.0-beta — a new look for the desktop: a nav rail that collapses to icons, one corner radius and one shadow across every panel, and a rebuilt settings modal, gallery, call screen and profile sidebar. It is a beta you switch on, with the original UI still the default. The emoji picker is Orbit’s own now — it hangs off the message box instead of floating over the window, and its dataset ships with the app, so a fresh install has emoji with no network.</span>' +
               '<a class="announcement-link" href="https://github.com/D4niel-dev/Orbit-beta/blob/main/CHANGELOG.md" target="_blank" rel="noopener">What\'s new &rarr;</a>' +
               '<button type="button" class="announcement-close" aria-label="Dismiss announcement">✕</button>' +
             '</div>' +
