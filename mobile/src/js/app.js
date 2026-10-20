@@ -8772,25 +8772,28 @@ document.addEventListener('DOMContentLoaded', function() {
         // changelog.js is the other hand-maintained copy; they are separate files
         // and both have to be updated. A release is not done until this block is
         // added, which is why `npm run test:mobile` now asserts it.
-        vBlock('0.9.0-beta', 'Stable', [
+                vBlock('0.9.0-beta', 'Stable', [
           ['New', [
-            'Classic Bubbles now matches the desktop: your own messages fill with the accent instead of being tinted, with the classic box\u2019s shape as well as its colour.',
-            'The desktop got a new look — a nav rail that collapses to icons, one radius and one shadow across every panel, and a rebuilt settings modal, gallery, call screen and profile sidebar. It is opt-in there; the original UI is still what the app opens on.',
-            'The desktop\u2019s emoji picker is Orbit\u2019s own now, and its dataset ships with the app, so a fresh install has emoji with no network.',
+            'Classic Bubbles matches the desktop now: your own messages fill with the accent instead of being tinted, with the classic box\u2019s shape as well as its colour.',
+            'The desktop got a new look — the settings modal and Activity Center rebuilt, a profile sidebar with a real banner, a gallery that shares the app\u2019s shell, a call screen with a surface of its own, a boot skeleton that matches what loads, a settings nav that collapses to icons, and presence drawn as four distinct shapes rather than a coloured dot. It is opt-in there: Settings, Advanced, Experimental Features, then "New look".',
+            'The desktop\u2019s emoji picker is Orbit\u2019s own — it hangs off the message box instead of floating over the window — and its dataset ships with the app, so a fresh install has emoji with no network.',
+            'Add a Friend on the desktop shows your own address, masked until you ask for it, and takes host:port. A restart also warns you now when a call is live.',
           ]],
           ['Improved', [
-            'The welcome tour on the desktop shows what it describes: the file-sharing step opens a conversation first, and the privacy step rings the whole setting card.',
+            'The desktop\u2019s welcome tour shows what it describes: the file-sharing step opens a conversation, and the privacy step rings the whole setting card.',
+            'The desktop\u2019s voice recorder bar and reaction pills follow the theme instead of hardcoded colours — including a red glow that ignored every theme.',
           ]],
           ['Fixes', [
             'The Group Info avatar\u2019s bottom corners were square.',
-            'A contact row\u2019s actions were dead, and a backup the restore could not find is now found.',
-            'On the desktop: the emoji button did nothing in both UIs, the settings rail toggle repainted the whole app, and the emoji picker was light-scheme on eight of ten themes.',
+            'The three-dots button on a direct message did nothing. Groups worked, contacts did not.',
+            'A backup the restore could not find is now found.',
+            'On the desktop: the emoji button did nothing in both UIs, the settings rail toggle repainted the whole app, the emoji picker was light-scheme on eight of ten themes, two side panels sat on top of the chat\u2019s own controls, and a group\u2019s custom avatar was lost on restart.',
           ]],
           ['Version', [
             'Version: Bumped to v0.9.0-beta.'
           ]]
         ]) +
-        vBlock('0.8.7-beta', '', [
+vBlock('0.8.7-beta', '', [
           ['New', [
             'The "+" opens one sheet now — a media panel with a Photos, Poll, Commands and Files pill row along the bottom. Upload Images and Upload Videos were the same intent split in two; the picker decides between an image and a video.',
             'Orbit asks for permissions once, at startup — only for the ones that are actually missing, once per version. If everything is already granted it does nothing at all, and it no longer opens the camera on every launch just to provoke the dialog.',
