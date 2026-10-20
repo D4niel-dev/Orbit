@@ -971,6 +971,205 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
 }
 
 
+/* ── The emoji panel ─────────────────────────────────────────────────────────
+   ⚠ THIS REPLACES THE LIBRARY'S PICKER IN THE REDESIGN. `emoji-picker-element`
+   renders inside a SHADOW ROOT, so every rule we could write about it stopped at
+   that boundary and all we could reach was the handful of custom properties it
+   exposes — which is why it read as a third-party widget dropped into the window,
+   floating at `bottom: 80px; right: 40px` against the VIEWPORT instead of attached
+   to the composer that opened it. The markup is js/components/emoji-panel.js.
+
+   ⚠ IT IS A CHILD OF `.chat-input-wrapper` — `position: relative`, no `overflow` —
+   so `left: 0; right: 0` makes it exactly as wide as the composer and
+   `bottom: 100%` sits it directly on top of it. That is the whole of "a pill under
+   the message input box": no measuring, no fixed offsets, and it rides up with the
+   composer when the textarea grows. */
+.emoji-panel {
+  position: absolute;
+  /* ⚠ -1px: an absolutely positioned child is laid out against the wrapper's
+     PADDING box, so `0` would inset the panel by the composer's 1px border and it
+     would read as very slightly narrower than the box it belongs to. */
+  left: -1px;
+  right: -1px;
+  bottom: calc(100% + 8px);
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  max-height: 340px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  animation: emoji-panel-in 0.14s var(--ease);
+}
+/* ⚠ `display: flex` above outranks the `hidden` attribute, which is how the panel
+   is hidden. Without this it is always on screen. */
+.emoji-panel[hidden] { display: none; }
+
+@keyframes emoji-panel-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.99); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .emoji-panel { animation: none; }
+}
+
+/* ── header: search and skin tone ─────────────────────────────────────────── */
+.ep-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 10px 8px;
+}
+.ep-search {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.ep-search:focus-within {
+  border-color: var(--accent-ring);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.ep-search-icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+.ep-search input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+.ep-search input::placeholder { color: var(--text-muted); }
+
+.ep-tone-btn,
+.ep-tone {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-hover);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.ep-tone-btn:hover,
+.ep-tone:hover {
+  background: var(--bg-active);
+  border-color: var(--border-strong);
+}
+.ep-tone.is-active {
+  background: var(--accent-soft);
+  border-color: var(--accent-primary);
+}
+.ep-tones {
+  display: flex;
+  gap: 4px;
+  padding: 0 10px 8px;
+}
+.ep-tones[hidden] { display: none; }
+.ep-tone { width: 30px; height: 30px; font-size: 15px; }
+
+/* ── the category rail ────────────────────────────────────────────────────── */
+.ep-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0 8px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.ep-tab {
+  width: 32px;
+  height: 30px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: .72;
+  transition: background var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+.ep-tab:hover { background: var(--bg-hover); opacity: 1; }
+.ep-tab.is-active { background: var(--accent-soft); opacity: 1; }
+
+/* ── the grid ─────────────────────────────────────────────────────────────── */
+.ep-body {
+  flex: 1;
+  /* ⚠ `min-height: 0` or a flex child refuses to shrink below its content: the
+     body then grows past the panel's max-height and the scrollbar never appears. */
+  min-height: 0;
+  overflow-y: auto;
+  padding: 2px 10px 10px;
+  overscroll-behavior: contain;
+}
+.ep-group-title {
+  /* Sticky, because the panel scrolls a long list and the heading is the only
+     thing that says which category you are in. */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 8px 2px 6px;
+  background: var(--bg-surface);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.ep-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
+  gap: 2px;
+}
+.ep-emoji {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease);
+}
+/* Background only — the house rule is that a hover may not move or resize a
+   control, and a grid of 20px glyphs is the worst place to start. */
+.ep-emoji:hover { background: var(--bg-hover); }
+.ep-empty {
+  padding: 28px 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+
 /* ═══════════════════════════════════════════════════════════════════════════
    9. OVERLAYS
 

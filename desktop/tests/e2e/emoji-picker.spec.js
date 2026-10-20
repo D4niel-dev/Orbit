@@ -26,7 +26,11 @@ const THEMES = [
 
 test.describe('emoji picker theming', () => {
   test('every theme gives the library a look it understands', async () => {
-    const dir = seedNewUI(tmpUserDataDir('emoji-theme'), true);
+    // ⚠ CLASSIC, and it has to be: the library element is what CLASSIC uses now.
+    // The redesign opens its own panel (emoji-panel.spec.js), and in that path the
+    // element is never created — so these assertions would be looking for something
+    // that is deliberately not there.
+    const dir = seedNewUI(tmpUserDataDir('emoji-theme'), false);
     const { app, page } = await launchApp(dir);
     try {
       const res = await page.evaluate(async (themes) => {
@@ -90,7 +94,9 @@ test.describe('emoji picker theming', () => {
   // That is also why every earlier probe was green: they all called `.click()` on
   // the element. The picker has to be driven the way a person drives it.
   test('a real click on the button opens the picker, and an outside click closes it', async () => {
-    const dir = seedNewUI(tmpUserDataDir('emoji-click'), true);
+    // ⚠ CLASSIC — see the note above. This is the library element's own open/close,
+    // which the redesign no longer reaches.
+    const dir = seedNewUI(tmpUserDataDir('emoji-click'), false);
     const { app, page } = await launchApp(dir);
     try {
       const box = await page.evaluate(() => {

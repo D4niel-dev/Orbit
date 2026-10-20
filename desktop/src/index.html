@@ -86,6 +86,17 @@
 
   <!-- Emoji Picker Element -->
   <script type="module" src="../node_modules/emoji-picker-element/index.js"></script>
+  <!-- ⚠ The redesign's OWN picker (js/components/emoji-panel.js) needs the emoji
+       DATA, not the library's UI — the library element's look is inside a shadow
+       root and cannot be restyled. Only its Database is exposed here, and it comes
+       from the same module graph, so nothing extra is fetched. -->
+  <script type="module">
+    // ⚠ DEFAULT import. `database.js` ends with `export { Database as default }`,
+    // so `import { Database }` is undefined — and `new undefined()` fails inside the
+    // panel's catch, which then renders "could not be loaded" with no clue why.
+    import Database from '../node_modules/emoji-picker-element/database.js';
+    window.OrbitEmojiDatabase = Database;
+  </script>
 </head>
 <body>
   <!-- Custom Titlebar -->
@@ -248,6 +259,7 @@
   <script src="js/store.js"></script>
   <script src="js/identity.js"></script>
   <script src="js/components/emoji-picker.js"></script>
+  <script src="js/components/emoji-panel.js"></script>
   <script src="js/components/toast.js"></script>
   <script src="js/components/undo-manager.js"></script>
   <script src="js/components/confirm-modal.js"></script>

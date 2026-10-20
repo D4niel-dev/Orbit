@@ -103,6 +103,9 @@ window.EmojiPicker = {
     // whatever a handler did to the DOM afterwards.
     document.addEventListener('click', (e) => {
       if (!this.isOpen) return;
+      // ⚠ The redesign's panel closes itself. Two closers racing on one click is
+      // exactly how a control ends up opening and closing in the same tick.
+      if (this._useOwnPanel()) return;
       var path = (typeof e.composedPath === 'function') ? e.composedPath() : null;
       var inside;
       if (path && path.length) {
@@ -179,7 +182,32 @@ window.EmojiPicker = {
     else this.open();
   },
 
+  /**
+   * ⚠ THE REDESIGN OPENS ITS OWN PANEL. See emoji-panel.js — the library element
+   * keeps its look inside a shadow root, where no stylesheet of ours can reach it,
+   * so the redesign draws the picker itself and attaches it to the composer.
+   * Classic keeps this one, untouched.
+   *
+   * ⚠ And in the redesign the library ELEMENT IS NEVER CREATED, so nothing fetches
+   * its dataset and the shadow-DOM workarounds below — the theme class, the
+   * scrollbar compensation — never run at all.
+   */
+  _useOwnPanel() {
+    return !!(window.OrbitRedesign && window.OrbitRedesign.isOn() && window.EmojiPanel);
+  },
+
   open() {
+    // ⚠ A caller can reach this before app.js has run init() — a spec poking the
+    // facade right after boot is exactly that — and `this.container` would then be
+    // undefined, which `_ensurePicker` turned into "Cannot read properties of
+    // undefined (reading 'appendChild')". init() assigns the container before it
+    // wires anything, so no container means it has not run at all.
+    if (!this.container) this.init();
+    if (this._useOwnPanel()) {
+      this.isOpen = true;
+      window.EmojiPanel.open(this.targetInput || document.getElementById('chat-input'));
+      return;
+    }
     this._ensurePicker();
     // ⚠ Here rather than in toggle(): open() is the one path into a visible
     // picker, so a caller that opens it directly cannot get a stale look.
@@ -197,7 +225,11 @@ window.EmojiPicker = {
   },
 
   close() {
-    this.container.style.display = 'none';
+    // Whichever of the two is showing. Both are idempotent, and branching on
+    // `_useOwnPanel()` here would strand the panel if the layer were switched off
+    // while it was open.
+    if (window.EmojiPanel && window.EmojiPanel.isOpen) window.EmojiPanel.close();
+    if (this.container) this.container.style.display = 'none';
     this.isOpen = false;
   }
 };
