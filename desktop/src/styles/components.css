@@ -1556,12 +1556,21 @@ button:active,
    so it wins without needing to be repeated in redesign.css.
    ⚠ `color: #fff !important` — the bubble's colour is an INLINE declaration, and
    an `!important` in a sheet is the only thing that reaches one.
+   ⚠⚠ THE GEOMETRY IS PART OF "CLASSIC". The redesign's bubble is 14px with a 5px
+   tail and 9/13 padding; the message box this setting brings back was 16px with a
+   SQUARE tail and 10/14. Leaving the layer's geometry produced a hybrid — classic
+   colour on a redesign-shaped bubble — which is exactly what Dan photographed.
+   ⚠ `:not(.has-call-log)`: a call-log message puts its CARD inside the bubble, and
+   filling that card with the accent turned it into a solid blue slab with the
+   card's own muted text on top. A call log is a card, not a message box.
    ⚠ The links need nothing: `.message-own .msg-link` above is already
    `rgba(255,255,255,.9)`, which is the fill this rule restores. */
-:root[data-classic-bubbles="true"] .message-row.message-own .message-bubble {
+:root[data-classic-bubbles="true"] .message-row.message-own .message-bubble:not(.has-call-log) {
   background: var(--accent-primary) !important;
   border-color: var(--accent-primary) !important;
   color: #fff !important;
+  border-radius: 16px 16px 0 16px !important;
+  padding: 10px 14px !important;
 }
 .message-row:not(.message-own) .msg-link {
   color: var(--accent-primary);

@@ -1148,7 +1148,7 @@ window.ChatPanel = {
           '</div>' +
           '<div class="' + (msg.replyTo ? 'msg-threaded ' : '') + '" style="max-width: 65%; display:flex; flex-direction:column; align-items:flex-end;">' +
             senderName +
-            (_bubbleHasContent ? '<div class="message-bubble" data-msg-id="' + msg.id + '" data-debug="Bubble: ' + msg.id + '" style="position:relative;' + bubbleBgMine + ' ' + bubblePadding + ' border-radius: 16px 16px 0 16px; line-height: 1.4; font-size: 14px; cursor:context-menu; max-width: 100%;">' +
+            (_bubbleHasContent ? '<div class="message-bubble' + (callLogHtml ? ' has-call-log' : '') + '" data-msg-id="' + msg.id + '" data-debug="Bubble: ' + msg.id + '" style="position:relative;' + bubbleBgMine + ' ' + bubblePadding + ' border-radius: 16px 16px 0 16px; line-height: 1.4; font-size: 14px; cursor:context-menu; max-width: 100%;">' +
               '<div class="message-id" style="display:none;font-size:9px;font-family:monospace;color:rgba(255,255,255,0.4);margin-bottom:2px;">#' + String(msg.id).substring(0, 8) + '</div>' +
             actionsBar + replyHtml + textWrapHtml + callLogHtml + linkPreviewHtml + editedBadge +
             (_rxInside ? reactionsHtml : '') +

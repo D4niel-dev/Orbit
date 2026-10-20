@@ -712,22 +712,6 @@ window.SettingsModal = {
                 '<option '+(s.messageBubbles==='Modern'?'selected':'')+'>Modern (Rounded)</option><option '+(s.messageBubbles==='Compact'?'selected':'')+'>Compact (Square)</option>' +
               '</select>' +
             '</div>' +
-            // ⚠ THE DESKTOP NEVER HAD THIS ROW; THE MOBILE DID. "Classic Bubbles"
-            // fills your own bubble with the accent, which is the look the app had
-            // before the redesign. It is shown in BOTH UIs on purpose: the rule
-            // lives in components.css, so it does something in classic too, and a
-            // control that does nothing is worse than one that is not there.
-            '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;">' +
-              '<div style="min-width:0;">' +
-                '<div style="font-size:13px;font-weight:600;color:var(--text-primary);">Classic Bubbles</div>' +
-                '<div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Colour your own messages with the accent</div>' +
-              '</div>' +
-              // The one shared switch — geometry and knob travel live in the layer.
-              '<label class="orbit-switch">' +
-                '<input type="checkbox" id="set-classic-bubbles"' + (s.classicBubbles === true ? ' checked' : '') + '>' +
-                '<span class="orbit-switch-track"><span class="orbit-switch-knob"></span></span>' +
-              '</label>' +
-            '</div>' +
             '<div>' +
               '<label for="set-zoom" style="display:block;font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px;">App Zoom</label>' +
               '<div style="display:flex;align-items:center;gap:10px;">' +
@@ -930,6 +914,15 @@ window.SettingsModal = {
             '<label style="display:flex;align-items:center;gap:12px;font-size:13px;color:var(--text-primary);cursor:pointer;padding:8px 0;border-top:1px solid var(--border-subtle);">' +
               '<input id="set-link-previews" type="checkbox" '+(s.showLinkPreviews!==false?'checked':'')+' style="accent-color:var(--accent-primary);">' +
               '<div><div>Link Previews</div><div style="font-size:11px;color:var(--text-muted);font-weight:400;">Show rich previews for shared links</div></div>' +
+            '</label>' +
+            // ⚠ THE DESKTOP NEVER HAD THIS ROW; THE MOBILE DID, and it belongs with
+            // the other message-appearance toggles rather than under Text & Layout.
+            // ⚠ A CHECKBOX, not the `.orbit-switch` — this section is all checkboxes,
+            // and a lone toggle among them reads as a different kind of control.
+            // The rule lives in components.css, so it does something in BOTH UIs.
+            '<label style="display:flex;align-items:center;gap:12px;font-size:13px;color:var(--text-primary);cursor:pointer;padding:8px 0;border-top:1px solid var(--border-subtle);">' +
+              '<input id="set-classic-bubbles" type="checkbox" '+(s.classicBubbles===true?'checked':'')+' style="accent-color:var(--accent-primary);">' +
+              '<div><div>Classic Bubbles</div><div style="font-size:11px;color:var(--text-muted);font-weight:400;">Colour your own messages with the accent</div></div>' +
             '</label>' +
             '<label style="display:flex;align-items:center;gap:12px;font-size:13px;color:var(--text-primary);cursor:pointer;padding:8px 0;border-top:1px solid var(--border-subtle);">' +
               '<input id="set-compact-spacing" type="checkbox" '+(s.experimentalCompactSpacing?'checked':'')+' style="accent-color:var(--accent-primary);">' +
