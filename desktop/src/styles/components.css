@@ -1318,11 +1318,67 @@ button:active,
   position: relative;
 }
 
-/* Reaction emoji text */
-.reaction-pill span {
+/* ─── Reactions ────────────────────────────────────────────────────────────
+   ⚠ THIS LOOK USED TO BE INLINE ON EVERY PILL, in chat-panel.js — display, gap,
+   padding, radius, background, border, font-size, and a hardcoded `color: white`
+   for the "you reacted" count. Inline styles cannot be restyled by a stylesheet,
+   so the redesign could not touch a control that sits inside the conversation it
+   redesigned. The look is here now, the state is a class (`is-mine`), and the
+   redesign's deltas are in the layer.
+
+   ⚠ `.reaction-emoji`, NOT `span`. The old selector here was `.reaction-pill span`,
+   which also matched the COUNT — with the inline font-size gone, that would have
+   rendered the count at the emoji's 15px. */
+.reactions-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.reaction-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  /* ⚠ The token, not the `12px` literal it used to carry. The ladder is the
+     system; 12 was a one-off that could not follow it. */
+  border-radius: var(--radius-md);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+
+/* ⚠ There was no hover state at all — only `cursor: pointer`, which promises an
+   affordance the UI never showed. Border only: the redesign's rule is that
+   hovering must not move or resize a control. */
+.reaction-pill:hover {
+  border-color: var(--border-strong);
+}
+
+.reaction-pill.is-mine {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.reaction-pill .reaction-emoji {
   font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Android Emoji', 'Twemoji Mozilla', 'EmojiOne Color', sans-serif;
   font-size: 15px;
   line-height: 1;
+}
+
+.reaction-count {
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1;
+}
+
+/* ⚠ The base keeps the white count, because this is the look classic has today
+   and the base has to reproduce it. The redesign replaces the filled pill
+   altogether — see the layer. */
+.reaction-pill.is-mine .reaction-count {
+  color: #fff;
 }
 
 /* Reactions debug overlay */

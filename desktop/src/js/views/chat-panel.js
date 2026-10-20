@@ -910,13 +910,18 @@ window.ChatPanel = {
           grouped[r.emoji].push(r.userId);
         });
         const entries = Object.entries(grouped);
-        reactionsHtml = '<div class="reactions-row" style="display:flex;gap:4px;flex-wrap:wrap;">';
+        // ⚠ THE LOOK IS IN THE STYLESHEETS, NOT HERE. Every declaration used to be
+        // inline on each pill — including a hardcoded `color: white` — which meant
+        // the redesign could not restyle a control that sits inside the conversation
+        // it redesigned. State is a class now: base in components.css so classic
+        // looks the same, deltas in the layer.
+        reactionsHtml = '<div class="reactions-row">';
         entries.forEach(([emoji, users]) => {
           const userMention = users.length <= 2 ? users.map(u => u === myId ? 'You' : u.substring(0, 6)).join(', ') : users.length + ' people';
           const hasReacted = users.includes(myId);
-          reactionsHtml += '<div class="reaction-pill" data-msg-id="' + msg.id + '" data-emoji="' + window.Sanitize.escapeHtml(emoji) + '" data-debug="Reaction: ' + window.Sanitize.escapeHtml(emoji) + ' (' + users.length + ')" style="display:flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;background:' + (hasReacted ? 'var(--accent-primary)' : 'var(--bg-hover)') + ';border:1px solid ' + (hasReacted ? 'var(--accent-primary)' : 'var(--border-subtle)') + ';font-size:12px;cursor:pointer;" title="' + window.Sanitize.escapeHtml(userMention) + '">' +
-            '<span>' + emoji + '</span>' +
-            '<span style="color:' + (hasReacted ? 'white' : 'var(--text-secondary)') + ';font-size:11px;">' + users.length + '</span>' +
+          reactionsHtml += '<div class="reaction-pill' + (hasReacted ? ' is-mine' : '') + '" data-msg-id="' + msg.id + '" data-emoji="' + window.Sanitize.escapeHtml(emoji) + '" data-debug="Reaction: ' + window.Sanitize.escapeHtml(emoji) + ' (' + users.length + ')" title="' + window.Sanitize.escapeHtml(userMention) + '">' +
+            '<span class="reaction-emoji">' + emoji + '</span>' +
+            '<span class="reaction-count">' + users.length + '</span>' +
           '</div>';
         });
         reactionsHtml += '</div>';

@@ -800,6 +800,41 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: .10; }
 }
 
 
+/* ── Reactions ───────────────────────────────────────────────────────────────
+   ⚠ THE BASE IS IN components.css — that is the look BOTH UIs have. Only the
+   deltas are here, and they use the language this layer already settled on for
+   "active": an accent-TINTED surface with an accent glyph, not a filled accent
+   block. (See section 4: "the active item used to be a filled accent SQUARE".)
+
+   ⚠ That is a contrast fix as much as a taste one. "You reacted" was a filled
+   `--accent-primary` pill whose count was hardcoded `white` — the only place in
+   the app where the accent is a background for TEXT, so a gamble on every theme:
+   fine on dark's #0A84FF, poor on light's #5b7fff at 11px. A tint with an accent
+   border and an accent count has no such problem. */
+.reaction-pill {
+  /* Classic's chips are a step smaller; next to 13px message text a 20px chip
+     reads as a leftover from the old UI. */
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+}
+.reaction-pill:hover {
+  border-color: var(--border-strong);
+}
+/* ⚠ `:not(.is-mine)` so a hover can never repaint the tinted state — with equal
+   specificity the winner would be whichever came last, which is the kind of thing
+   that breaks silently the next time this block is reordered. */
+.reaction-pill:not(.is-mine):hover {
+  background: var(--bg-active);
+}
+.reaction-pill.is-mine {
+  background: var(--accent-soft);
+  border-color: var(--accent-primary);
+}
+.reaction-pill.is-mine .reaction-count {
+  color: var(--accent-primary);
+}
+
+
 /* ═══════════════════════════════════════════════════════════════════════════
    8. THE COMPOSER
    ═══════════════════════════════════════════════════════════════════════════ */
