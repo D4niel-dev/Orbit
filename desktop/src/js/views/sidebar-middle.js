@@ -1319,6 +1319,9 @@ window.SidebarMiddle = {
     var overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:center;justify-content:center;';
     overlay.innerHTML =
+      // ⚠ Inline styles cannot express `:hover`, and this modal is built entirely out
+      // of them. One scoped rule, and it leaves with the overlay.
+      '<style>.af-addr-btn:hover{background:var(--bg-hover);color:var(--text-primary);}</style>' +
       '<div style="width:420px;max-width:92vw;background:var(--bg-surface);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-xl);border:1px solid var(--border-subtle);display:flex;flex-direction:column;">' +
         '<div style="flex:1;padding:40px 40px 26px;display:flex;flex-direction:column;gap:20px;">' +
           '<div style="display:flex;align-items:flex-start;gap:16px;">' +
@@ -1432,31 +1435,64 @@ window.SidebarMiddle = {
         var box = overlay.querySelector('#af-your-address');
         // The tab may have been switched, or the modal closed, while that was in flight.
         if (!box || !ips.length) return;
+        // ⚠⚠ MASKED BY DEFAULT. Dan: "maybe hide the users ip ... showing like that is
+        // kinda... you know..." — a full LAN address sitting in a dialog is readable
+        // over a shoulder and permanent in a screenshot, and nobody has to READ it to
+        // use it: the copy button is the whole point. The real value lives in `data-ip`
+        // (not on screen); the eye reveals it deliberately, per row.
+        var MASK = '\u2022\u2022\u2022.\u2022\u2022\u2022.\u2022\u2022\u2022.\u2022\u2022\u2022';
         box.innerHTML =
           '<div style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text-secondary);">Your address</div>' +
           ips.map(function(ip) {
-            return '<button class="af-addr" data-ip="' + window.Sanitize.escapeHtml(ip) + '" title="Copy this address" ' +
-              'style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:9px 12px;margin-top:6px;border-radius:8px;border:1px solid var(--border-subtle);background:var(--bg-base);color:var(--text-primary);font-size:13px;font-family:inherit;cursor:pointer;text-align:left;">' +
-                '<span>' + window.Sanitize.escapeHtml(ip) + '</span>' +
-                '<i data-lucide="copy" style="width:14px;height:14px;color:var(--text-muted);flex-shrink:0;"></i>' +
-              '</button>';
+            return '<div class="af-addr" data-ip="' + window.Sanitize.escapeHtml(ip) + '" ' +
+              'style="display:flex;align-items:center;gap:8px;width:100%;padding:7px 8px 7px 12px;margin-top:6px;border-radius:8px;border:1px solid var(--border-subtle);background:var(--bg-base);">' +
+                '<span class="af-addr-val" style="flex:1;min-width:0;font-size:13px;color:var(--text-primary);letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + MASK + '</span>' +
+                '<button class="af-addr-btn af-reveal" title="Show address" aria-label="Show address" ' +
+                  'style="width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:none;border-radius:6px;background:transparent;color:var(--text-muted);cursor:pointer;flex-shrink:0;">' +
+                  '<i data-lucide="eye" style="width:14px;height:14px;"></i>' +
+                '</button>' +
+                '<button class="af-addr-btn af-copy" title="Copy address" aria-label="Copy address" ' +
+                  'style="width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:none;border-radius:6px;background:transparent;color:var(--text-muted);cursor:pointer;flex-shrink:0;">' +
+                  '<i data-lucide="copy" style="width:14px;height:14px;"></i>' +
+                '</button>' +
+              '</div>';
           }).join('') +
-          '<div style="font-size:11px;color:var(--text-muted);margin-top:8px;line-height:1.45;">Give one of these to the other device — they enter it on their side.</div>';
+          '<div style="font-size:11px;color:var(--text-muted);margin-top:8px;line-height:1.45;">Hidden until you show it. Copy works either way — give one of these to the other device.</div>';
         if (window.lucide) window.lucide.createIcons({ root: box });
 
-        box.querySelectorAll('.af-addr').forEach(function(btn) {
-          btn.addEventListener('click', function() {
-            var ip = btn.getAttribute('data-ip');
+        box.querySelectorAll('.af-addr').forEach(function(row) {
+          var real = row.getAttribute('data-ip');
+          var val = row.querySelector('.af-addr-val');
+          var reveal = row.querySelector('.af-reveal');
+          var copy = row.querySelector('.af-copy');
+          var shown = false;
+
+          reveal.addEventListener('click', function() {
+            shown = !shown;
+            val.textContent = shown ? real : MASK;
+            var label = shown ? 'Hide address' : 'Show address';
+            reveal.setAttribute('title', label);
+            reveal.setAttribute('aria-label', label);
+            // ⚠ Rebuild the icon from scratch: `createIcons` REPLACES the <i> with an
+            // <svg>, so calling it again on the same node finds nothing to swap and the
+            // icon silently stops changing after the first toggle.
+            reveal.innerHTML = '<i data-lucide="' + (shown ? 'eye-off' : 'eye') + '" style="width:14px;height:14px;"></i>';
+            if (window.lucide) window.lucide.createIcons({ root: reveal });
+          });
+
+          copy.addEventListener('click', function() {
             function done() {
-              if (window.Toast) window.Toast.show('Copied', ip + ' copied to clipboard', 'info', 2000);
+              // ⚠ The toast must not name the address — that would put back on screen
+              // exactly what this masking is hiding.
+              if (window.Toast) window.Toast.show('Copied', 'Address copied to clipboard', 'info', 2000);
             }
             if (navigator.clipboard && navigator.clipboard.writeText) {
-              navigator.clipboard.writeText(ip).then(done, function() {
-                try { window.orbitAPI.sendSync('write-clipboard', ip); } catch (e) {}
+              navigator.clipboard.writeText(real).then(done, function() {
+                try { window.orbitAPI.sendSync('write-clipboard', real); } catch (e) {}
                 done();
               });
             } else {
-              try { window.orbitAPI.sendSync('write-clipboard', ip); } catch (e) {}
+              try { window.orbitAPI.sendSync('write-clipboard', real); } catch (e) {}
               done();
             }
           });

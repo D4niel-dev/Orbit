@@ -38,6 +38,8 @@ for (const newUI of [true, false]) {
         return {
           count: rows.length,
           ips: rows.map((b) => b.getAttribute('data-ip')),
+          // ⚠ What is ON SCREEN — the thing that must not be the address.
+          visible: rows.map((b) => b.querySelector('.af-addr-val').textContent),
           says: box ? box.textContent.replace(/\s+/g, ' ').trim() : ''
         };
       });
@@ -47,10 +49,26 @@ for (const newUI of [true, false]) {
       const local = await page.evaluate(() => window.orbitAPI.getLocalIPv4s());
       expect(local.length).toBeGreaterThan(0);
       r.ips.forEach((ip) => expect(local, ip + ' must be a local interface').toContain(ip));
+
+      // ⚠⚠ AND NONE OF THEM MAY BE ON SCREEN. A full LAN address in a dialog is
+      // readable over a shoulder and permanent in a screenshot, and the copy button
+      // means nobody has to read it.
+      r.visible.forEach((text, i) => {
+        expect(text, 'the address must be masked').not.toContain(r.ips[i]);
+        expect(text, 'masked with bullets').toMatch(/^\u2022/);
+      });
+      expect(r.says, 'the address must not appear anywhere in the block').not.toContain(r.ips[0]);
       expect(r.says).toContain('Your address');
 
-      // Copying must not tear the modal down under the user.
-      await page.click('#af-your-address .af-addr');
+      // The eye reveals it, deliberately.
+      await page.click('#af-your-address .af-addr .af-reveal');
+      await page.waitForTimeout(200);
+      const revealed = await page.evaluate(() =>
+        document.querySelector('#af-your-address .af-addr-val').textContent);
+      expect(revealed, 'the eye must show the real address').toBe(r.ips[0]);
+
+      // Copying works while hidden — that is the point of hiding it.
+      await page.click('#af-your-address .af-addr .af-copy');
       await page.waitForTimeout(300);
       expect(await page.evaluate(() => !!document.getElementById('connect-ip-input')),
         'the modal must survive a copy').toBe(true);
