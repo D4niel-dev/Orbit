@@ -125,22 +125,44 @@ window.EmojiPicker = {
     });
   },
 
+  /**
+   * Tell the library which of its two looks to use.
+   *
+   * ⚠⚠ IT ONLY KNOWS TWO — `.light` and `.dark` — AND IT DRIVES `color-scheme` OFF
+   * THEM. Orbit has TEN themes, and this used to pass `data-theme` straight into
+   * the class list, so nord, midnight, sunset, dark-purple and the four seasonals
+   * handed it a name it has never heard of. With no recognised class it falls back
+   * to `color-scheme: light`, which is why the picker had a WHITE scrollbar, caret
+   * and text selection inside a near-black panel — the only light-scheme surface in
+   * the app. The token bridge in components.css covers the colours; `color-scheme`
+   * covers the native chrome, and only the class sets that.
+   *
+   * ⚠ And it ACCUMULATED: only `light`/`dark` were removed before the next name was
+   * added, so switching dark → nord → midnight left `nord midnight` on the element.
+   * `toggle` on both classes replaces, and can never leave a stale one behind.
+   *
+   * Only `light` is a light surface. The other nine are dark, whatever their hue.
+   */
+  _syncTheme() {
+    var picker = this._picker;
+    if (!picker) return;
+    var theme = document.documentElement.getAttribute('data-theme') || 'dark';
+    var isLight = theme === 'light';
+    picker.classList.toggle('light', isLight);
+    picker.classList.toggle('dark', !isLight);
+  },
+
   toggle(targetInput) {
     this.targetInput = targetInput;
-    if (this.isOpen) {
-      this.close();
-    } else {
-      var picker = this._ensurePicker();
-      this.open();
-      // Sync theme
-      const theme = document.documentElement.getAttribute('data-theme') || 'dark';
-      picker.classList.remove('light', 'dark');
-      picker.classList.add(theme);
-    }
+    if (this.isOpen) this.close();
+    else this.open();
   },
 
   open() {
     this._ensurePicker();
+    // ⚠ Here rather than in toggle(): open() is the one path into a visible
+    // picker, so a caller that opens it directly cannot get a stale look.
+    this._syncTheme();
     this.container.style.display = 'block';
     this.isOpen = true;
     var self = this;

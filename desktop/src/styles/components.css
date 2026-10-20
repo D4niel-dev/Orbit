@@ -2296,6 +2296,21 @@ html[data-theme="light"] #chat-welcome-host::before { opacity: 0.3; }
   /* No focus ring: the library draws it on :focus rather than :focus-visible, so it
      reads as a stray white rectangle. Themed hover and active states carry it. */
   --outline-size: 0;
+  /* ⚠ THE LIBRARY'S SCROLLBAR COULD NOT BE STYLED FROM OUTSIDE, AND STILL CANNOT
+     BE — so it is themed the one way that crosses the boundary. Every other
+     scrollbar in the app is themed by base.css, but `::-webkit-scrollbar` does not
+     reach inside a shadow root, and the picker's scrollbar is inside one. It
+     rendered as the raw OS scrollbar: a bright bar against a near-black panel, the
+     only unthemed scrollbar in the window. `scrollbar-color` INHERITS, so the
+     declaration on the host does reach the shadow tree.
+
+     ⚠ COLOUR ONLY — NOT `scrollbar-width: thin`. `_fitToScrollbar()` in
+     emoji-picker.js measures the platform's DEFAULT scrollbar width and widens the
+     picker by exactly that much, because the library draws its grid underneath the
+     scrollbar. A thin scrollbar would be narrower than the number that function
+     measured, and the compensation would leave a strip of dead space on the right.
+     Change the width here and that measurement has to change with it. */
+  scrollbar-color: var(--border-strong) transparent;
   width: 100%;
   /* No height here. The element sizes itself, and a percentage height against an
      auto-height parent is a trap: it collapsed the panel to something taller than
