@@ -2,6 +2,7 @@ const net = require('net');
 const Protocol = require('./protocol');
 const EventEmitter = require('events');
 const dlog = require('../log');
+const { TokenBucket } = require('./rate-limit');
 
 const MAX_PAYLOAD_SIZE = 4194304; // 4 MB — prevent oversized frames
 
@@ -38,6 +39,11 @@ class SocketManager extends EventEmitter {
     this._reconnectTimers = new Map();
     this._reconnectAttempts = new Map();
     this._reconnectEnabled = true;
+
+    // ⚠ Inbound flood guard (v1.0.0 security, pillar 3). 20 packets/second sustained
+    // with a 60-packet burst is far above a human conversation — typing indicators,
+    // read receipts and reactions all arrive well inside it — and far below a flood.
+    this._inboundLimiter = new TokenBucket({ perSecond: 20, burst: 60 });
     this._reconnectInterval = 10000;
     this._peerIps = new Map();
     this._peerPorts = new Map();
@@ -384,6 +390,27 @@ class SocketManager extends EventEmitter {
 
             // Attach sender IP for BEACON IP fallback (Bug #1)
             packet._fromIp = socket.remoteAddress;
+
+            // ⚠⚠ INBOUND RATE LIMIT, BEFORE ANY WORK. Nothing sits in front of this
+            // socket, so a peer can send as fast as the link allows and every packet
+            // costs a JSON parse, a store write and a re-render. Keyed by the peer once
+            // its identity is known and by source IP before that.
+            //
+            // ⚠⚠ PING AND PONG BYPASS IT ON PURPOSE. The heartbeat is the liveness
+            // signal: if a busy peer's pings were dropped it would read as a dead peer
+            // and the reconnect logic would tear down a perfectly healthy connection.
+            // A flood of pings is also the cheapest possible packet to answer.
+            if (packet.type !== Protocol.Types.PING && packet.type !== Protocol.Types.PONG) {
+              var limitKey = currentPeerId || packet._fromIp || 'unknown';
+              if (!this._inboundLimiter.allow(limitKey)) {
+                // ⚠ Logged, but sparsely — a flood would otherwise turn the drop into
+                // a second flood, this time through the log.
+                if (this._inboundLimiter.dropped % 100 === 1) {
+                  dlog('[RECV] rate-limited ' + limitKey + ' (' + this._inboundLimiter.dropped + ' dropped)');
+                }
+                continue;
+              }
+            }
 
             // Track last data time for heartbeat
             if (currentPeerId) {
