@@ -83,7 +83,17 @@
         if (!ld.type) return { state: state, effects: [] };
         if (ld.type === 'offer') {
           if (state !== STATES.LOCAL_OFFER) return { state: state, effects: [] };
-          return { state: state, effects: [{ op: 'send', kind: 'offer', desc: ld }] };
+          // ⚠ SYMMETRIC WITH THE ANSWER BRANCH: set local, then send. The adapter creates
+          // the description and hands it here; it must NOT also call setLocalDescription
+          // itself, or the second call lands on a connection that is already stable and
+          // throws "Called in wrong state: stable". Measured, not theorised.
+          return {
+            state: state,
+            effects: [
+              { op: 'set-local-description', desc: ld },
+              { op: 'send', kind: 'offer', desc: ld }
+            ]
+          };
         }
         if (ld.type === 'answer') {
           // ⚠ Only once, and only while we owe one. A second answer means a duplicate
