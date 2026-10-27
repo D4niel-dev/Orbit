@@ -1308,8 +1308,33 @@ document.addEventListener('DOMContentLoaded', () => {
         var DELAYS = [5000, 7000, 7000, 7000];
         (function show(i) {
           if (i >= TXTS.length) return;
+          // ⚠⚠ THE TOUR IS ONBOARDING TOO, AND BOTH START AT BOOT. The tour's
+          // "File & Image Sharing" step opens THIS chat so the composer is on screen
+          // — so the user arrived at a step pointing at the input box while four
+          // welcome messages were popping in behind it, one every seven seconds.
+          // Dan: "it's outline the chat box but it's show the welcome slide show."
+          //
+          // The sequence waits for the tour to close and then runs. Nothing is lost:
+          // this is cosmetic content, and it resumes within 800ms of the tour ending.
+          // ⚠ Checked BEFORE the typing indicator, or a paused sequence would show a
+          // peer typing forever.
+          if (window.TutorialModal && window.TutorialModal.isOpen) {
+            setTimeout(function() { show(i); }, 800);
+            return;
+          }
           window.TypingState.addUser(CID, UID, UNAME);
           setTimeout(function() {
+            // ⚠⚠ CHECKED AGAIN AT DELIVERY. The guard above runs when a message is
+            // SCHEDULED, and message 0 is scheduled during boot — before the tour
+            // has opened. Without this second check the first message still lands
+            // behind the tour, and the typing indicator added at scheduling time sits
+            // there for as long as the tour is open. Measured: 1 message leaked with
+            // only the first guard in place.
+            if (window.TutorialModal && window.TutorialModal.isOpen) {
+              window.TypingState.removeUser(CID, UID);
+              show(i);
+              return;
+            }
             window.TypingState.removeUser(CID, UID);
             window.store.addMessage(CID, {
               id: 'echo-welcome-' + i + '-' + Date.now(),
