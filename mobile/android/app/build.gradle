@@ -51,6 +51,14 @@ dependencies {
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation project(':capacitor-android')
+    // ⚠ THE WEBRTC LIBRARY, AND WHY THIS ONE. There is no Capacitor WebRTC plugin on npm —
+    // checked: capacitor-webrtc, @capacitor-community/webrtc, @capgo/webrtc and
+    // capacitor-plugin-webrtc are all absent, and cordova-plugin-iosrtc is iOS-only and
+    // untouched since 2023. So the plugin is ours to write, over the maintained Android
+    // build of Google's own library (Google stopped publishing org.webrtc:google-webrtc).
+    // ⚠ The WebView's RTCPeerConnection is NOT an alternative: it dies when Android
+    // backgrounds the app, which is when a messenger most needs to stay connected.
+    implementation 'io.github.webrtc-sdk:android:125.6422.07'
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
