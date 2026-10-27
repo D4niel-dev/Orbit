@@ -260,6 +260,7 @@
   <script src="../../shared/security/content-filter.js"></script>
   <script src="js/utils/profanity.js"></script>
   <script src="js/network/protocol.js"></script>
+  <script src="js/network/webrtc-peers.js"></script>
   <script src="js/store.js"></script>
   <script src="js/identity.js"></script>
   <script src="js/components/emoji-picker.js"></script>
@@ -293,6 +294,12 @@
   <script src="../../shared/network/qr-pairing.js"></script>
   <script src="../../shared/network/update-check.js"></script>
   <script src="../../shared/network/settings-sync.js"></script>
+  <!-- Hybrid transport (v1.0.0 Part 1): signalling, ordering rules, DataChannel, and the
+       renderer-side WAN peer manager. ⚠ Loaded but not yet on the send path — see the note
+       in js/network/webrtc-peers.js. -->
+  <script src="../../shared/network/signaling-client.js"></script>
+  <script src="../../shared/network/webrtc-signaling.js"></script>
+  <script src="../../shared/network/webrtc-transport.js"></script>
   <script src="../../shared/legal/consent.js"></script>
   <script src="../../shared/network/transfer.js"></script>
   <script src="../../shared/ui/audio-player.js"></script>
