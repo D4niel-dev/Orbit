@@ -1589,13 +1589,38 @@ app.whenReady().then(() => {
     }
   });
 
+  // ── WAN routing (v1.0.0 Part 1) ───────────────────────────────────────────
+  // ⚠⚠ THE RENDERER OWNS WAN CHANNELS, AND THIS IS THE SEAM. RTCPeerConnection is a browser
+  // API, so a WebRTC peer cannot be a socket here — but every send in the app funnels
+  // through this one IPC handler. So the renderer registers which peers it has a live WAN
+  // channel to, and when TCP has no route to a peer, the packet is handed back to the
+  // renderer to put on its DataChannel.
+  //
+  // ⚠ That means all 55 call sites keep working unchanged, which is the only sane way to do
+  // this: `window.orbitAPI` is FROZEN (writable:false, non-extensible), so the funnel cannot
+  // be wrapped from the renderer side.
+  const wanPeers = new Set();
+  ipcMain.on('wan-register', (event, peerId) => {
+    if (peerId) wanPeers.add(String(peerId));
+  });
+  ipcMain.on('wan-unregister', (event, peerId) => {
+    if (peerId) wanPeers.delete(String(peerId));
+  });
+
   ipcMain.on('network-send', (event, toPeerId, toIp, type, payload) => {
     if (socketInstance) {
       const success = socketInstance.sendMessage(toPeerId, toIp, type, payload);
-      event.returnValue = success;
-    } else {
-      event.returnValue = false;
+      if (success) { event.returnValue = true; return; }
     }
+    // No TCP route. If the renderer has a WAN channel for this peer, hand the packet back
+    // to it. ⚠ The return value is optimistic: this is a synchronous IPC call and the
+    // DataChannel is asynchronous, so "true" means "accepted for delivery", not "delivered".
+    if (wanPeers.has(String(toPeerId)) && mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('wan-send', String(toPeerId), type, payload);
+      event.returnValue = true;
+      return;
+    }
+    event.returnValue = false;
   });
 
   ipcMain.handle('network-send-file', async (event, toPeerId, toIp, filePath, fileName) => {

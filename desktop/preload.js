@@ -72,6 +72,16 @@ contextBridge.exposeInMainWorld('orbitAPI', {
   checkDiskSpace: () => ipcRenderer.invoke('check-disk-space'),
   networkSetReconnect: (enabled, intervalMs) => ipcRenderer.sendSync('network-set-reconnect', enabled, intervalMs),
 
+  // ── WAN routing (v1.0.0 Part 1) ──────────────────────────────────────────
+  // ⚠ These are NEW METHODS, not a wrapper around the existing ones. `window.orbitAPI` is
+  // frozen and its window property is non-writable, so the send funnel cannot be patched
+  // from the renderer — main has to learn which peers have a live WebRTC channel and fall
+  // back to it when TCP has no route. See the note on 'network-send' in main.js.
+  wanRegister: (peerId) => ipcRenderer.send('wan-register', peerId),
+  wanUnregister: (peerId) => ipcRenderer.send('wan-unregister', peerId),
+  // Main hands a packet back when TCP had no route but a WAN channel exists.
+  onWanSend: (cb) => ipcRenderer.on('wan-send', (event, peerId, type, payload) => cb(peerId, type, payload)),
+
   // OS Integration
   showNotification: (title, body, icon) => ipcRenderer.send('show-notification', title, body, icon),
   toggleDevtools: () => ipcRenderer.send('toggle-devtools'),

@@ -835,7 +835,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.store.setState({ friends: friends });
       });
 
-      window.orbitAPI.on('network-message', (packet) => {
+      var _orbitPacketHandler = (packet) => {
         // ── Trust & reputation (v1.0.0 Part 2, pillar 1) ──────────────────────
         // ⚠ Both are handled and RETURNED here, before any message path can see them:
         // neither carries conversation content, and neither may be treated as one.
@@ -1071,7 +1071,59 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         window.store.handleIncomingPacket(packet);
+      };
+      window.orbitAPI.on('network-message', _orbitPacketHandler);
+      // ⚠⚠ ONE DISPATCHER FOR BOTH TRANSPORTS. A packet arriving on a WebRTC DataChannel is
+      // the same bytes a TCP socket would have delivered, so it must take the same path —
+      // otherwise WAN becomes a second, subtly different app. Exposed for webrtc-peers.js.
+      window.orbitHandleIncomingPacket = _orbitPacketHandler;
+
+      // ── WAN routing (v1.0.0 Part 1) ─────────────────────────────────────────
+      // ⚠ Main hands a packet BACK here when TCP had no route but a WAN channel exists.
+      // It is rebuilt with the same Protocol helpers the TCP path uses, so what goes on the
+      // wire is identical either way — that is what keeps E2EE transport-independent.
+      window.orbitAPI.onWanSend(function (peerId, type, payload) {
+        if (!window.OrbitWan || !window.OrbitWan.isConnected(peerId)) return;
+        try {
+          var user = window.store.getState().currentUser;
+          var pkt = window.Protocol.createPacket(type, user.userId, peerId, payload);
+          // ⚠ PLAIN JSON, NOT Protocol.serialize(). That returns a length-prefixed Buffer,
+          // which is TCP framing for a byte stream. A DataChannel is message-oriented, so
+          // the prefix would be payload. The PACKET is identical either way — only the
+          // framing differs, because the transports differ.
+          window.OrbitWan.send(peerId, JSON.stringify(pkt));
+        } catch (e) { /* a malformed packet must not break the boot block */ }
       });
+
+      /**
+       * Open a WAN channel to a peer through a relay.
+       * ⚠ The room is agreed OUT OF BAND — a code the two people share — because there is
+       * no directory to look anybody up in, and inventing one would put a server back in
+       * the middle of a local-first app.
+       */
+      window.orbitWanConnect = function (peerId, opts) {
+        opts = opts || {};
+        if (!window.OrbitWan) return Promise.reject(new Error('WAN transport not loaded'));
+        var user = window.store.getState().currentUser;
+        return window.OrbitWan.join({
+          relayUrl: opts.relayUrl,
+          room: opts.room,
+          peerId: user.userId,
+          remoteId: peerId,
+          iceServers: opts.iceServers || [],
+          onOpen: function () { if (window.orbitAPI.wanRegister) window.orbitAPI.wanRegister(peerId); },
+          onClose: function () { if (window.orbitAPI.wanUnregister) window.orbitAPI.wanUnregister(peerId); },
+          onError: function (m) { if (window.Toast) window.Toast.show('WAN connection failed', String(m), 'error'); },
+          onPacket: function (text) {
+            try {
+              // ⚠ JSON.parse, not Protocol.parsePacket — the desktop renderer has no
+              // parsePacket (parsing lives in main's socket framing loop).
+              var packet = JSON.parse(text);
+              if (packet && window.orbitHandleIncomingPacket) window.orbitHandleIncomingPacket(packet);
+            } catch (e) { /* a malformed frame is dropped, not fatal */ }
+          }
+        });
+      };
 
       window.orbitAPI.on('file-received', (data) => {
         console.log('File received:', data);
