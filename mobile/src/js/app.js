@@ -7355,6 +7355,11 @@ document.addEventListener('DOMContentLoaded', function() {
           '<input type="number" class="settings-input" id="net-maxsize" value="' + (s.maxFileSize || 500) + '">') +
         card('refresh-cw', 'Auto-Reconnect', 'Reconnect dropped P2P connections',
           '<button class="settings-toggle ' + (s.netAutoReconnect !== false ? 'on' : '') + '" id="net-autoreconnect"></button>') +
+        // ⚠⚠ GATED ON CONSENT — see the click handler in the network bindings. Off
+        // unless someone opted in: it is the one setting that can route traffic
+        // through a relay, which is what the Terms and Privacy Policy describe.
+        card('globe', 'NAT Traversal', 'Reach friends outside your network. Asks you to accept the Terms and Privacy Policy first',
+          '<button class="settings-toggle ' + (s.natEnabled ? 'on' : '') + '" id="set-nat"></button>') +
         card('timer', 'Connection Timeout', 'Seconds',
           sel([{v:'5',l:'5s'},{v:'10',l:'10s'},{v:'30',l:'30s'},{v:'60',l:'60s'}], 'net-timeout', String(s.netTimeout || 30))) +
         card('repeat', 'Reconnect Interval', 'Seconds between reconnect attempts',
@@ -7790,6 +7795,30 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         });
         bindToggle('net-autoreconnect', function(on) { s.netAutoReconnect = on; MStore.save(); }, s.netAutoReconnect !== false);
+        // ⚠⚠ NAT IS GATED ON CONSENT, AND bindToggle CANNOT BE USED FOR IT. bindToggle
+        // flips the class BEFORE calling back, so a dismissed agreement would leave the
+        // switch lit with nothing enabled behind it. Hand-rolled, and the class only
+        // goes on once the user has actually agreed.
+        (function() {
+          var btn = document.getElementById('set-nat');
+          if (!btn) return;
+          function enable() { btn.classList.add('on'); s.natEnabled = true; MStore.save(); }
+          btn.addEventListener('click', function() {
+            if (btn.classList.contains('on')) {
+              btn.classList.remove('on');
+              s.natEnabled = false;
+              MStore.save();
+              return;
+            }
+            if (!window.OrbitLegal || !window.OrbitLegal.needsConsent(s)) { enable(); return; }
+            window.OrbitLegal.openConsent().then(function(agreed) {
+              if (!agreed) return;   // stays off
+              s.natConsentTermsVersion = window.OrbitLegal.TERMS_VERSION;
+              s.natConsentPrivacyVersion = window.OrbitLegal.PRIVACY_VERSION;
+              enable();
+            });
+          });
+        })();
         bindSelect('net-timeout', function(v) { s.netTimeout = parseInt(v, 10); MStore.save(); });
         bindSelect('net-keepalive', function(v) { s.netKeepAlive = parseInt(v, 10); MStore.save(); });
         bindToggle('net-webrtc', function(on) { s.webrtcFallback = on; MStore.save(); }, s.webrtcFallback !== false);

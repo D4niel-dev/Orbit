@@ -1361,7 +1361,11 @@ window.SettingsModal = {
           toggleRow('net-reconnect', 'Auto-Reconnect', 'Automatically retry connection on disconnect', n.netAutoReconnect) +
           '<div id="net-reconnect-opts" style="padding:0 0 8px 24px;display:' + (n.netAutoReconnect ? 'block' : 'none') + ';">' +
             inputRow('net-reconnect-interval', 'Reconnect Interval', n.netReconnectInterval, 's') +
-          '</div>',
+          '</div>' +
+          // ⚠⚠ GATED ON CONSENT — see the change handler below. Off unless someone
+          // opted in, because it is the one setting that can put traffic through a
+          // relay, and the Terms and Privacy Policy describe what that means.
+          toggleRow('net-nat', 'NAT Traversal', 'Reach friends outside your network. Asks you to accept the Terms and Privacy Policy first.', n.natEnabled),
           true
         ) +
 
@@ -1433,6 +1437,34 @@ window.SettingsModal = {
       });
       content.querySelector('#net-timeout').addEventListener('change', function(e) { updateNetwork('netTimeout', parseInt(e.target.value, 10) || 30); });
       content.querySelector('#net-keepalive').addEventListener('change', function(e) { updateNetwork('netKeepAlive', parseInt(e.target.value, 10) || 30); });
+
+      // ⚠⚠ NAT IS GATED ON CONSENT, AND THE SWITCH DOES NOT FLIP UNTIL THE USER AGREES.
+      // Reverting it first and only committing on "I agree" matters: a checkbox that
+      // turns on and then asks has already recorded consent nobody gave, and if the
+      // user dismisses the dialog the setting would be left on by accident.
+      content.querySelector('#net-nat').addEventListener('change', function(e) {
+        var el = e.target;
+        if (!el.checked) { updateNetwork('natEnabled', false); return; }
+
+        el.checked = false;
+        if (!window.OrbitLegal) { updateNetwork('natEnabled', true); el.checked = true; return; }
+
+        var net = window.store.getState().networkSettings || {};
+        if (!window.OrbitLegal.needsConsent(net)) {
+          updateNetwork('natEnabled', true);
+          el.checked = true;
+          return;
+        }
+
+        window.OrbitLegal.openConsent().then(function(agreed) {
+          if (!agreed) return;   // stays off
+          updateNetwork('natConsentTermsVersion', window.OrbitLegal.TERMS_VERSION);
+          updateNetwork('natConsentPrivacyVersion', window.OrbitLegal.PRIVACY_VERSION);
+          updateNetwork('natEnabled', true);
+          el.checked = true;
+        });
+      });
+
       content.querySelector('#net-reconnect').addEventListener('change', function(e) {
         updateNetwork('netAutoReconnect', e.target.checked);
         var opts = content.querySelector('#net-reconnect-opts');
