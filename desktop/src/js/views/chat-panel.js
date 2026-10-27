@@ -1309,6 +1309,18 @@ window.ChatPanel = {
       // messages. (It went to the composer, then the right-hand panel; Dan meant the top
       // of the third panel.) One bar for DMs and groups alike; only the limit differs,
       // and the shared rules decide that from the chat type.
+      // Trust warning (v1.0.0 Part 2 pillar 1). Above the pinned bar on purpose: a
+      // safety notice outranks a pinned message. Same floating-card shape as the pin
+      // bar so it reads as part of the same language rather than an alert dialog.
+      '<div id="trust-warning-bar" style="display:none;align-items:center;gap:8px;' +
+        'padding:8px 12px;margin:8px var(--spacing-lg) 4px;border-radius:12px;' +
+        'border:1px solid var(--accent-warning);background:var(--bg-hover);' +
+        'font-size:13px;color:var(--text-secondary);">' +
+        '<i data-lucide="shield-alert" style="width:14px;height:14px;flex-shrink:0;color:var(--accent-warning);"></i>' +
+        '<span id="trust-warning-text" style="flex:1;min-width:0;"></span>' +
+        '<button id="btn-trust-dismiss" style="background:none;border:none;cursor:pointer;' +
+          'color:var(--text-muted);padding:2px 4px;font-size:11px;font-weight:600;flex-shrink:0;">Dismiss</button>' +
+      '</div>' +
       '<!-- Pinned Messages Bar -->' +
       // A floating card, not a full-width strip: rounded, inset from the edges, with an
       // edge and a shadow, on a surface a step lighter than the chat behind it.
@@ -1448,6 +1460,45 @@ window.ChatPanel = {
         }).catch(function() {});
       }
     });
+
+    // ── Trust warning ─────────────────────────────────────────────────────
+    // ⚠ A verified report from a contact is a WARNING, never a block: it is shown to
+    // the person it would affect and they decide. ⚠ The reporter is NAMED, because
+    // "somebody reported them" with no attribution is an accusation nobody can weigh.
+    // ⚠ Groups get nothing — a report is about a person, not a room.
+    (function () {
+      var bar = document.getElementById('trust-warning-bar');
+      if (!bar) return;
+      var isGroupChat = window.store._isGroupChat(state.activeChatId);
+      var list = (!isGroupChat && window.OrbitTrust)
+        ? window.OrbitTrust.warningsFor(state.activeChatId)
+        : [];
+      if (!list.length || window.ChatPanel._trustDismissedFor === state.activeChatId) {
+        bar.style.display = 'none';
+        return;
+      }
+      var w = list[0];
+      var days = Math.max(0, Math.floor((Date.now() - w.ts) / 86400000));
+      var when = days === 0 ? 'today' : (days === 1 ? 'yesterday' : days + ' days ago');
+      var extra = list.length > 1
+        ? ' ' + (list.length - 1) + ' other contact' + (list.length > 2 ? 's' : '') + ' reported them too.'
+        : '';
+      var text = document.getElementById('trust-warning-text');
+      if (text) {
+        text.textContent = (w.reporterName || 'A contact') + ' reported this person for ' +
+          w.reason + ' ' + when + '.' + extra;
+      }
+      bar.style.display = 'flex';
+      var dismiss = document.getElementById('btn-trust-dismiss');
+      if (dismiss) {
+        // onclick, not addEventListener: this runs on every render and listeners would
+        // stack up on the same element.
+        dismiss.onclick = function () {
+          window.ChatPanel._trustDismissedFor = state.activeChatId;
+          bar.style.display = 'none';
+        };
+      }
+    })();
 
     // Pinned messages bar
     var pinnedBar = document.getElementById('pinned-messages-bar');
