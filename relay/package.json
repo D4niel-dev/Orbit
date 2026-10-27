@@ -1,0 +1,17 @@
+{
+  "name": "orbit-relay",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Signalling-only relay for Orbit's hybrid transport. Carries SDP and ICE candidates, never message content.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "verify": "node verify.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "^8.21.0"
+  }
+}
