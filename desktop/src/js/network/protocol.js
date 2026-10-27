@@ -17,6 +17,14 @@ const Protocol = {
     EDIT_MESSAGE: 'EDIT_MESSAGE',
     SYSTEM: 'SYSTEM',
 
+    // ── Trust & reputation (v1.0.0, Part 2 pillar 1) ──────────────────────
+    // ⚠ IDENTITY_KEY carries the sender's ECDSA **signing** public key. It is NOT
+    // the E2EE key: that one is ECDH and cannot produce a signature. Without this
+    // packet a REPUTATION_ALERT cannot be verified, and the web of trust would be
+    // unverifiable hearsay.
+    IDENTITY_KEY: 'IDENTITY_KEY',
+    REPUTATION_ALERT: 'REPUTATION_ALERT',
+
     // Discovery & presence
     BEACON: 'BEACON',
     DISCOVERY: 'DISCOVERY',
