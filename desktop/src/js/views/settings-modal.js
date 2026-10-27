@@ -1365,7 +1365,11 @@ window.SettingsModal = {
           // ⚠⚠ GATED ON CONSENT — see the change handler below. Off unless someone
           // opted in, because it is the one setting that can put traffic through a
           // relay, and the Terms and Privacy Policy describe what that means.
-          toggleRow('net-nat', 'NAT Traversal', 'Reach friends outside your network. Asks you to accept the Terms and Privacy Policy first.', n.natEnabled),
+          toggleRow('net-nat', 'NAT Traversal', 'Reach friends outside your network. Asks you to accept the Terms and Privacy Policy first.', n.natEnabled) +
+          // ⚠ THE RELAY IS A FIELD, NOT A CONSTANT. Who introduces your connections is a
+          // privacy decision, and hard-coding somebody else's server would make it for
+          // them. Empty means "no relay" — the LAN path needs none.
+          inputRow('net-relay', 'Signalling Relay', n.natRelayUrl || 'ws://127.0.0.1:8787'),
           true
         ) +
 
@@ -1442,6 +1446,10 @@ window.SettingsModal = {
       // Reverting it first and only committing on "I agree" matters: a checkbox that
       // turns on and then asks has already recorded consent nobody gave, and if the
       // user dismisses the dialog the setting would be left on by accident.
+      content.querySelector('#net-relay').addEventListener('change', function(e) {
+        updateNetwork('natRelayUrl', String(e.target.value || '').trim());
+      });
+
       content.querySelector('#net-nat').addEventListener('change', function(e) {
         var el = e.target;
         if (!el.checked) { updateNetwork('natEnabled', false); return; }

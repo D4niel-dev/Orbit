@@ -1900,6 +1900,11 @@ window.SidebarMiddle = {
             { label: 'View Profile', icon: 'user-round', onClick: function() {
               if (window.ProfileSidebar) window.ProfileSidebar.open(friend);
             }},
+            // ⚠ Internet connection is per peer and needs a code the two people share —
+            // see components/wan-connect.js for why the code exists rather than a lookup.
+            { label: 'Connect over the internet\u2026', icon: 'globe', onClick: function() {
+              if (window.WanConnect) window.WanConnect.open(friend);
+            }},
             // ⚠ REPORTING IS ONE HOP AND NEVER BLOCKS. It sends a signed statement to
             // the contacts who have exchanged signing keys with us; it does not block,
             // ban or forward anything. "sent: 0" is a real outcome and the toast says so
