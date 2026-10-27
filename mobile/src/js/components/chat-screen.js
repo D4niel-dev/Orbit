@@ -170,6 +170,42 @@ var OrbitChat = {
       dmPeerId = chat.peerId || (chat.id && chat.id.indexOf('dm_') === 0 ? chat.id.substring(3) : chat.id);
     }
     
+    // ── Trust warning ─────────────────────────────────────────────────────
+    // ⚠ A verified report is a WARNING, never a block: it is shown to the person it
+    // would affect and they decide. ⚠ The reporter is NAMED — "somebody reported them"
+    // with no attribution is an accusation nobody can weigh. ⚠ Groups and the Echo bot
+    // get nothing: a report is about a person, not a room or a bot.
+    (function () {
+      var bar = document.getElementById('trust-warning-bar');
+      if (!bar) return;
+      var list = (dmPeerId && window.OrbitTrust) ? window.OrbitTrust.warningsFor(dmPeerId) : [];
+      if (!list.length || window.OrbitChat._trustDismissedFor === chat.id) {
+        bar.style.display = 'none';
+        return;
+      }
+      var w = list[0];
+      var days = Math.max(0, Math.floor((Date.now() - w.ts) / 86400000));
+      var when = days === 0 ? 'today' : (days === 1 ? 'yesterday' : days + ' days ago');
+      var extra = list.length > 1
+        ? ' ' + (list.length - 1) + ' other contact' + (list.length > 2 ? 's' : '') + ' reported them too.'
+        : '';
+      var text = document.getElementById('trust-warning-text');
+      if (text) {
+        text.textContent = (w.reporterName || 'A contact') + ' reported this person for ' +
+          w.reason + ' ' + when + '.' + extra;
+      }
+      bar.style.display = 'flex';
+      var dismiss = document.getElementById('btn-trust-dismiss');
+      if (dismiss) {
+        // onclick, not addEventListener: this runs on every header render and listeners
+        // would stack up on the same element.
+        dismiss.onclick = function () {
+          window.OrbitChat._trustDismissedFor = chat.id;
+          bar.style.display = 'none';
+        };
+      }
+    })();
+
     // Match old app.js status text format
     var statusText = '';
     var statusDotColor = 'var(--text-muted)';
