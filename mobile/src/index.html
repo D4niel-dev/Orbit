@@ -455,6 +455,10 @@
   <script src="shared/ui/link-preview.js?v=20261007a"></script>
   <script src="shared/ui/app-lock.js?v=20261007a"></script>
   <script src="shared/ui/code-highlight.js?v=20261015a"></script>
+  <!-- ⚠ The SAME presence module the desktop draws its badges with. The phone had
+       coloured dots at four call sites and no shared source, so a status that changed
+       shape on the desktop still looked like a dot here. -->
+  <script src="shared/ui/presence.js?v=20261027a"></script>
   <script src="shared/database/index.js?v=20260912"></script>
   <script src="shared/database/sqlite-mobile.js?v=20260912"></script>
 

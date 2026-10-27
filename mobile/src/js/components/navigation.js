@@ -338,7 +338,15 @@ var OrbitNav = {
 
     if (dot) {
       var status = user.status || 'offline';
-      dot.className = 'presence ' + status;
+      // ⚠ THE BADGE POSITIONS ITSELF (`position:absolute; bottom:-1px; right:-1px`)
+      // against the nearest positioned ancestor, which is `.orbit-avatar-btn`. So the
+      // outer span keeps its id but DROPS `.presence` — leaving it would apply the old
+      // dot's positioning to a wrapper that now contains the positioned badge, and the
+      // two offsets would stack.
+      dot.className = '';
+      dot.innerHTML = window.OrbitPresence
+        ? window.OrbitPresence.badge(status, 12, 'var(--bg-base)')
+        : '';
     }
   },
 

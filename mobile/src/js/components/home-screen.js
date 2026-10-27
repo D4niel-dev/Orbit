@@ -63,7 +63,10 @@ var OrbitHome = {
       
       html += '<div class="online-friend-item" data-peerid="' + OrbitHome._escapeAttr(OrbitHome._friendId(friend)) + '">';
       var isDefOnline = friend.status === 'online' || (friend.lastSeen || 0) > Date.now() - 30000;
-      html += '  <div class="online-friend-avatar">' + avatarHtml + '<span class="online-indicator' + (isDefOnline ? '' : ' idle') + '"></span></div>';
+      html += '  <div class="online-friend-avatar">' + avatarHtml +
+        (window.OrbitPresence
+          ? window.OrbitPresence.badge(isDefOnline ? 'online' : 'offline', 12, 'var(--bg-base)')
+          : '') + '</div>';
       html += '  <span class="online-friend-name">' + OrbitHome._escape(displayName) + '</span>';
       html += '</div>';
     });
@@ -442,12 +445,10 @@ var OrbitHome = {
       // Groups get a squared avatar so they read as groups at a glance.
       html += '  <div class="chat-row-avatar' + (isGroup ? ' sq' : '') + (groupGridHtml ? ' has-group-avatar' : '') + '">' + avatarHtml;
       // Presence dot is for DMs/users only — groups don't have online status
-      if (!isGroup) {
-        if (isOnline) {
-          html += '    <span class="chat-row-status-dot online"></span>';
-        } else {
-          html += '    <span class="chat-row-status-dot offline"></span>';
-        }
+      // Presence badge is for DMs/users only — groups don't have online status.
+      // ⚠ The shared module draws the glyph, so the shape matches the desktop's.
+      if (!isGroup && window.OrbitPresence) {
+        html += '    ' + window.OrbitPresence.badge(isOnline ? 'online' : 'offline', 12, 'var(--bg-base)');
       }
       html += '  </div>';
       html += '  <div class="chat-row-info">';

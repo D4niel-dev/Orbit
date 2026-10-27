@@ -113,7 +113,9 @@ var OrbitAccounts = {
     // Current account — tapping it opens the profile editor.
     h += '  <div class="acct-current" data-act="profile" role="button" tabindex="0">';
     h += '    <div class="acct-pic">' + self._avatarHtml(current, 44) +
-         '<span class="presence ' + self._escape((current && current.status) || 'offline') + '"></span></div>';
+         (window.OrbitPresence
+           ? window.OrbitPresence.badge((current && current.status) || 'offline', 12, 'var(--bg-surface)')
+           : '') + '</div>';
     h += '    <div class="acct-info">';
     h += '      <div class="acct-name">' + self._escape(current ? current.name : 'User') + '</div>';
     h += '      <div class="acct-tag">' + self._escape(self._tag(current)) + '</div>';

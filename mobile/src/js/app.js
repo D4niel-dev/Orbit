@@ -7170,7 +7170,7 @@ document.addEventListener('DOMContentLoaded', function() {
       html +=
         '<div class="settings-account-row" id="settings-account-row" role="button" tabindex="0">' +
           '<div class="acct-pic">' + _acctPic + _acctFrameHtml +
-            '<span class="presence ' + escapeHtml(_acct.status || 'offline') + '"></span></div>' +
+            (window.OrbitPresence ? window.OrbitPresence.badge(_acct.status || 'offline', 12, 'var(--bg-surface)') : '') + '</div>' +
           '<div class="acct-info">' +
             '<div class="acct-name">' + escapeHtml(_acct.name || 'User') + '</div>' +
             '<div class="acct-tag">' + escapeHtml(_acctTag) + '</div>' +

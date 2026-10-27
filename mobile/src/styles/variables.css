@@ -14,6 +14,18 @@
   --bg-hover: #22252C;
   --text-primary: #F4F5F7;
 
+  /* ⚠⚠ PRESENCE GLYPH COLOURS — AND THEY WERE MISSING HERE.
+     shared/ui/presence.js paints its SVGs with `color: var(--presence-online)` and
+     friends. Those tokens existed only in the DESKTOP's variables.css, so on the
+     phone every one of them resolved to nothing, the SVG fell back to the inherited
+     colour, and all four states drew in the same accent blue — a badge that looked
+     like a dot in the wrong colour. Mapped to the tokens the old dots already used,
+     so the colours do not change, only the shapes. */
+  --presence-online: var(--accent-success);
+  --presence-away: var(--accent-warning);
+  --presence-busy: var(--accent-danger);
+  --presence-offline: var(--text-muted);
+
   /* Spacing */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
