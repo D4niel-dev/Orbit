@@ -29,6 +29,10 @@ public class MainActivity extends BridgeActivity {
         // Checks and requests the runtime permissions the app needs. The web layer
         // owns the sheet that explains them; this only answers and raises dialogs.
         registerPlugin(com.orbit.app.plugins.OrbitPermissionsPlugin.class);
+        // Native WebRTC DataChannel for the hybrid transport. ⚠ There is no Capacitor WebRTC
+        // plugin to adopt (checked npm), and the WebView's RTCPeerConnection dies when the
+        // app is backgrounded — so the connection has to live in native code.
+        registerPlugin(com.orbit.app.plugins.OrbitWebRTCPlugin.class);
 
         super.onCreate(savedInstanceState);
 
