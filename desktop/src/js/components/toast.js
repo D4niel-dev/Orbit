@@ -2,6 +2,14 @@
 
 window.Toast = {
   init() {
+    // ⚠⚠ INIT RUNS MORE THAN ONCE, AND THIS USED TO MINT A SECOND CONTAINER WITH THE
+    // SAME ID. Measured: two `#toast-container` elements in the DOM, `getElementById`
+    // returning the FIRST (empty) one while `Toast.container` pointed at the second.
+    // So the toasts worked and anything that read the DOM to confirm feedback saw
+    // nothing — which is how it fooled me twice before I counted the containers.
+    var existing = document.getElementById('toast-container');
+    if (existing) { this.container = existing; return; }
+
     this.container = document.createElement('div');
     this.container.id = 'toast-container';
     this.container.style.cssText = 'position:fixed;bottom:96px;right:24px;display:flex;flex-direction:column;gap:12px;z-index:9999;pointer-events:none;'  // 96px clears the composer: at 24px the stack sat over the send button, and the close button swallowed the click;

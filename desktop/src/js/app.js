@@ -809,10 +809,17 @@ document.addEventListener('DOMContentLoaded', () => {
       var reconnectEnabled = state.settings.netAutoReconnect !== false;
       var reconnectIntervalMs = (state.settings.netReconnectInterval || 10) * 1000;
       window.orbitAPI.networkStart(state.currentUser, reconnectEnabled, reconnectIntervalMs);
+      // Load (or mint) this device's signing key. Nothing signs until something asks;
+      // this just warms it so the first report does not wait on key generation.
+      if (window.OrbitTrust) window.OrbitTrust.init();
 
       window.orbitAPI.on('peer-found', (peer) => {
         console.log('[Renderer] peer-found:', peer.username, 'IP:', peer.ip);
         window.store.addOrUpdatePeer(peer);
+        // ⚠ Exchange signing keys the moment a peer appears. A report can only be
+        // verified if the reporter's key is already here, so this has to happen before
+        // any report could be sent — not when one is.
+        if (window.OrbitTrust) window.OrbitTrust.announce(peer);
       });
 
       window.orbitAPI.on('peer-gone', (peerId) => {
@@ -829,6 +836,17 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       window.orbitAPI.on('network-message', (packet) => {
+        // ── Trust & reputation (v1.0.0 Part 2, pillar 1) ──────────────────────
+        // ⚠ Both are handled and RETURNED here, before any message path can see them:
+        // neither carries conversation content, and neither may be treated as one.
+        if (packet.type === window.Protocol.Types.IDENTITY_KEY) {
+          if (window.OrbitTrust) window.OrbitTrust.onIdentityKey(packet);
+          return;
+        }
+        if (packet.type === window.Protocol.Types.REPUTATION_ALERT) {
+          if (window.OrbitTrust) window.OrbitTrust.onAlert(packet);
+          return;
+        }
         if (packet.type === window.Protocol.Types.FILE_TRANSFER_RESUME) {
           // Receiver asked the sender to resume a partial chunked transfer.
           // The main process only forwards this when no main-process send

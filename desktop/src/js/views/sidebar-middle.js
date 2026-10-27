@@ -1867,6 +1867,29 @@ window.SidebarMiddle = {
           var friend = state.friends.find(function(f) { return f.userId === id; });
           if (!friend) return;
           var isPinned = state.pinnedDMs && state.pinnedDMs[id];
+
+          // ⚠ Signs with this device's key and sends to the contacts who have already
+          // exchanged signing keys with us. ZERO is a real outcome — with no keys
+          // exchanged there is nobody who could verify the claim — and saying so beats
+          // a toast that congratulates the user on a report nobody received.
+          var doReport = function(subjectId, reason) {
+            if (!window.OrbitTrust) return;
+            window.OrbitTrust.report(subjectId, reason).then(function(sent) {
+              if (!window.Toast) return;
+              if (sent > 0) {
+                window.Toast.show('Report sent',
+                  'Sent to ' + sent + ' contact' + (sent === 1 ? '' : 's') + ' who can verify it.',
+                  'success', 5000);
+              } else {
+                window.Toast.show('Report saved',
+                  'Nobody in your contacts has exchanged signing keys with you yet, so there is no one to tell.',
+                  'info', 6000);
+              }
+            }).catch(function() {
+              if (window.Toast) window.Toast.show('Could not report', 'The report could not be signed.', 'error');
+            });
+          };
+
           var items = [
             { label: (isPinned ? 'Unpin' : 'Pin') + ' DM', icon: 'pin', onClick: function() {
               window.store.togglePinDM(id);
@@ -1877,6 +1900,22 @@ window.SidebarMiddle = {
             { label: 'View Profile', icon: 'user-round', onClick: function() {
               if (window.ProfileSidebar) window.ProfileSidebar.open(friend);
             }},
+            // ⚠ REPORTING IS ONE HOP AND NEVER BLOCKS. It sends a signed statement to
+            // the contacts who have exchanged signing keys with us; it does not block,
+            // ban or forward anything. "sent: 0" is a real outcome and the toast says so
+            // rather than claiming success — with no keys exchanged there is nobody who
+            // could verify the claim.
+            // ⚠ Null for the Echo bot, and the array is filtered below: reporting a
+            // built-in bot is meaningless, and ContextMenu does not skip falsy items.
+            (id === 'local-echo' ? null : { label: 'Report\u2026', icon: 'flag', color: 'var(--accent-danger)', onClick: function() {
+              var reasons = [
+                { label: 'Harassment', icon: 'message-square-warning', onClick: function() { doReport(id, 'harassment'); } },
+                { label: 'Spam', icon: 'mail-warning', onClick: function() { doReport(id, 'spam'); } },
+                { label: 'Scam', icon: 'shield-alert', onClick: function() { doReport(id, 'scam'); } },
+                { label: 'Something else', icon: 'circle-help', onClick: function() { doReport(id, 'other'); } }
+              ];
+              window.ContextMenu.show(e.clientX, e.clientY, reasons);
+            }}),
             'separator',
             { label: 'Copy ID', icon: 'copy', onClick: function() {
               navigator.clipboard.writeText(id);
@@ -1891,7 +1930,7 @@ window.SidebarMiddle = {
               : { label: 'Close DM', icon: 'x', color: 'var(--accent-danger)', onClick: function() {
                   window.store.closeDM(id);
                 }})
-          ];
+          ].filter(Boolean);
           self._appendFolderMenuItems(items, { kind: 'friend', id: id });
           window.ContextMenu.show(e.clientX, e.clientY, items);
         }
