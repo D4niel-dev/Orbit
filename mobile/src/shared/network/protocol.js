@@ -24,6 +24,15 @@ Orbit.Protocol = {
     IDENTITY_KEY: 'IDENTITY_KEY',
     REPUTATION_ALERT: 'REPUTATION_ALERT',
 
+    // ── Hybrid transport: WebRTC signalling (v1.0.0, Part 1) ──────────────
+    // ⚠ These carry SDP and ICE candidates, never message content. The DataChannel they
+    // establish carries the same E2EE ciphertext the TCP path does — the app-level
+    // encryption sits ABOVE the transport, so switching transports must not change what
+    // a message looks like on the wire.
+    WEBRTC_OFFER: 'WEBRTC_OFFER',
+    WEBRTC_ANSWER: 'WEBRTC_ANSWER',
+    WEBRTC_CANDIDATE: 'WEBRTC_CANDIDATE',
+
     // Discovery & presence
     BEACON: 'BEACON',
     DISCOVERY: 'DISCOVERY',
