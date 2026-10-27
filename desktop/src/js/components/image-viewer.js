@@ -36,6 +36,7 @@ window.ImageViewer = {
           <button id="iv-btn-save" style="background:transparent; border:none; color:white; cursor:pointer;" title="Quick Save"><i data-lucide="save"></i></button>
           <button id="iv-btn-download" style="background:transparent; border:none; color:white; cursor:pointer;" title="Download"><i data-lucide="download"></i></button>
           <button id="iv-btn-forward" style="background:transparent; border:none; color:white; cursor:pointer;" title="Resend to Active Chat"><i data-lucide="forward"></i></button>
+          <button id="iv-btn-report" style="background:transparent; border:none; color:white; cursor:pointer;" title="Hide this image and its exact copies"><i data-lucide="flag"></i></button>
           <button id="iv-btn-close" style="background:transparent; border:none; color:white; cursor:pointer; margin-left: 16px;" title="Close"><i data-lucide="x"></i></button>
         </div>
       </div>
@@ -63,6 +64,36 @@ window.ImageViewer = {
     document.getElementById('iv-btn-zoom-out').addEventListener('click', () => {
       self.zoomLevel = Math.max(0.25, self.zoomLevel - 0.25);
       self.updateZoom();
+    });
+
+    // Report this image: hash it, put the hash on the local list, and re-render so the
+    // thumbnail is masked. ⚠ This is pillar 2's FILTER, not pillar 1's report — it makes
+    // no claim about anybody and sends nothing; it only hides these exact bytes from the
+    // person who asked. Saying so in the toast matters, because "Report" in a messenger
+    // normally means "tell someone".
+    document.getElementById('iv-btn-report').addEventListener('click', function () {
+      if (!self.currentImg || !window.OrbitContentFilter) return;
+      var F = window.OrbitContentFilter;
+      var key = self.currentImg.id || self.currentImg.url;
+      F.ensureHash({ id: key, url: self.currentImg.url }).then(function (r) {
+        if (!r.hash) {
+          if (window.Toast) window.Toast.show('Could not hide it', 'The file could not be read.', 'error');
+          return;
+        }
+        F.flag(r.hash, { name: self.currentImg.name, mimeType: self.currentImg.mimeType });
+        // Seed the renderer's cache under the attachment id too, so the grid masks this
+        // thumbnail immediately instead of re-hashing the file to discover it.
+        if (self.currentImg.id) F.remember(self.currentImg.id, r.hash);
+        self.close();
+        if (window.ChatPanel) window.ChatPanel.renderChat(window.store.getState());
+        if (window.Toast) {
+          window.Toast.show('Hidden on this device',
+            'Exact copies of this file will be hidden too. Nothing was sent to anyone.',
+            'success', 5000);
+        }
+      }).catch(function () {
+        if (window.Toast) window.Toast.show('Could not hide it', 'The file could not be read.', 'error');
+      });
     });
 
     document.getElementById('iv-btn-save').addEventListener('click', async () => {

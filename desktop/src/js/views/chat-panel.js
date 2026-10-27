@@ -1691,7 +1691,76 @@ window.ChatPanel = {
     // Initialize audio player visualizers
     if (window.OrbitAudioPlayer) window.OrbitAudioPlayer.init(this.container);
     if (window.OrbitVideoPlayer) window.OrbitVideoPlayer.init(this.container);
+
+    // ⚠ LAST, because it rewrites thumbnails in place: anything that reads the original
+    // <img> (the grid's proportions, the click-to-open handler) must have run first.
+    this._applyContentFilter();
   },
+
+  /**
+   * Hide attachments whose bytes the user has flagged (v1.0.0 Part 2, pillar 2).
+   *
+   * ⚠ SYNCHRONOUS CHECK FIRST, cache only. The render path must never wait on a digest or
+   * the message list stalls while an image is hashed. Attachments not seen before get ONE
+   * async hash; if it comes back flagged, the thumbnail is masked then.
+   */
+  _applyContentFilter() {
+    if (!window.OrbitContentFilter || !this.container) return;
+    var F = window.OrbitContentFilter;
+    var self = this;
+    this.container.querySelectorAll('[data-open-image]').forEach(function (el) {
+      var attId = el.getAttribute('data-open-image');
+      if (!attId) return;
+      if (F.shouldHide(attId) && !self._revealed[attId]) { self._maskAttachment(el, attId); return; }
+      var img = el.querySelector('img');
+      if (!img || !img.getAttribute('src')) return;
+      F.ensureHash({ id: attId, url: img.getAttribute('src') }).then(function (r) {
+        if (r && r.flagged && !self._revealed[attId]) self._maskAttachment(el, attId);
+      }).catch(function () { /* an unreadable attachment is simply not flagged */ });
+    });
+  },
+
+  /**
+   * Replace a flagged thumbnail with a placeholder.
+   *
+   * ⚠ `data-open-image` IS REMOVED, or the viewer would happily open the exact image the
+   * user asked not to see.
+   *
+   * ⚠ AND THERE IS A WAY BACK. This is the user's own list; a hide with no undo is a trap,
+   * and they may have flagged the wrong file. "Show anyway" is per-attachment and does NOT
+   * unflag the hash — other copies of the same bytes stay hidden.
+   */
+  _maskAttachment(el, attId) {
+    if (!el || el.getAttribute('data-masked') === '1') return;
+    el.setAttribute('data-masked', '1');
+    el.removeAttribute('data-open-image');
+    el.style.cursor = 'default';
+    el.innerHTML =
+      '<div style="width:100%;height:100%;min-height:110px;display:flex;flex-direction:column;' +
+        'align-items:center;justify-content:center;gap:6px;padding:10px;text-align:center;' +
+        'background:var(--bg-hover);color:var(--text-muted);font-size:12px;box-sizing:border-box;">' +
+        '<i data-lucide="eye-off" style="width:20px;height:20px;"></i>' +
+        '<span>Hidden \u2014 you flagged this content</span>' +
+        '<button type="button" class="att-reveal-btn" style="background:none;border:none;cursor:pointer;' +
+          'color:var(--accent-primary);font-size:11px;font-weight:600;padding:2px 4px;">Show anyway</button>' +
+      '</div>';
+    if (window.lucide && window.lucide.createIcons) {
+      try { window.lucide.createIcons({ root: el }); } catch (e) { /* non-fatal */ }
+    }
+    var self = this;
+    var btn = el.querySelector('.att-reveal-btn');
+    if (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        self._revealed[attId] = true;
+        window.ChatPanel.renderChat(window.store.getState());
+      });
+    }
+  },
+
+  // Attachment ids the user chose to reveal in this session. Not persisted: "show anyway"
+  // is a look, not a policy change.
+  _revealed: {},
 
   _positionMessageActions() {
     if (window._performanceMode) return;
