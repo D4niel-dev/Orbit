@@ -10690,12 +10690,49 @@ vBlock('0.8.7-beta', '', [
     var items = [];
     var callbacks = {};
 
+    // ⚠ REPORTING IS ONE HOP AND NEVER BLOCKS. It signs a statement with this device's
+    // key and sends it to the contacts who have exchanged signing keys with us. "0
+    // reached" is a real outcome — with no keys exchanged nobody could verify the claim —
+    // and the toast says so instead of congratulating the user on a report nobody got.
+    function _doReport(subjectId, reason) {
+      if (!window.OrbitTrust) return;
+      window.OrbitTrust.report(subjectId, reason).then(function (sent) {
+        if (sent > 0) {
+          showToast('Report sent to ' + sent + ' contact' + (sent === 1 ? '' : 's') + ' who can verify it.', 'success');
+        } else {
+          showToast('Report saved. Nobody in your contacts has exchanged signing keys yet, so there is no one to tell.', 'info');
+        }
+      }).catch(function () {
+        showToast('Could not report — the report could not be signed.', 'error');
+      });
+    }
+
     // View Profile — works for friends and group members (showProfileOverlay resolves both)
     items.push({ icon: 'user-round', label: 'View Profile', subtext: u.status || '', action: 'user_view_profile' });
     callbacks['user_view_profile'] = function() {
       if (typeof showProfileOverlay === 'function') showProfileOverlay(u.id);
       else showToast(u.name + ' — ' + (u.status || 'offline'), 'info');
     };
+
+    // Report — the reason is a closed set, because it is part of the signed statement.
+    if (window.OrbitTrust && String(u.id).indexOf('local-echo') !== 0) {
+      items.push({ icon: 'flag', label: 'Report…', action: 'user_report' });
+      callbacks['user_report'] = function() {
+        var reasons = [
+          { icon: 'message-square-warning', label: 'Harassment', action: 'rep_harassment' },
+          { icon: 'mail-warning', label: 'Spam', action: 'rep_spam' },
+          { icon: 'shield-alert', label: 'Scam', action: 'rep_scam' },
+          { icon: 'circle-help', label: 'Something else', action: 'rep_other' }
+        ];
+        var reasonCbs = {};
+        [['rep_harassment', 'harassment'], ['rep_spam', 'spam'], ['rep_scam', 'scam'], ['rep_other', 'other']]
+          .forEach(function (pair) {
+            reasonCbs[pair[0]] = function () { _doReport(u.id, pair[1]); };
+          });
+        OrbitSheet.show(reasons);
+        OrbitSheet._callbacks = reasonCbs;
+      };
+    }
 
     // Message — open the DM (creates it if the store has none)
     items.push({ icon: 'message-circle', label: 'Message', action: 'user_message' });
@@ -15837,6 +15874,18 @@ vBlock('0.8.7-beta', '', [
       debugLog('P2P', 'Parsed packet type=' + packet.type + ' from=' + (packet.from || packet.senderId || '?'), packet.payload);
       if (MStore.settings.logNetworkPackets) console.log('[NET] P2P recv <-', data.connectionId, packet);
 
+      // ── Trust & reputation (v1.0.0 Part 2, pillar 1) ──────────────────────
+      // ⚠ Handled FIRST and returned: neither carries conversation content, and neither
+      // may be allowed to fall through into a message path.
+      if (packet.type === Orbit.Protocol.Types.IDENTITY_KEY) {
+        if (window.OrbitTrust) window.OrbitTrust.onIdentityKey(packet, data.connectionId);
+        return;
+      }
+      if (packet.type === Orbit.Protocol.Types.REPUTATION_ALERT) {
+        if (window.OrbitTrust) window.OrbitTrust.onAlert(packet, data.connectionId);
+        return;
+      }
+
       // Handle PING — respond with PONG
       if (packet.type === Orbit.Protocol.Types.PING) {
         var pongPkt = Orbit.Protocol.createPacket(Orbit.Protocol.Types.PONG, MStore.user ? MStore.user.id : '', data.connectionId, { ts: Date.now() });
@@ -15896,6 +15945,10 @@ vBlock('0.8.7-beta', '', [
         if (!peerId || (MStore.user && peerId === MStore.user.id)) return;
         var peerName = bp.username || bp.name || data.connectionId;
         var peerTag = bp.usertag || bp.tag || '';
+        // ⚠ Exchange signing keys the moment a peer identifies itself. A report can only
+        // be verified if the reporter's key is already here, so sending it when a report
+        // is needed would be too late by definition.
+        if (window.OrbitTrust) window.OrbitTrust.announce(peerId);
         // Add or update friend — with peer merging (Bug #2)
         var existing = MStore.friends.find(function(f) { return f.id === peerId; });
         // Also search by connectionId to catch host:port-based peers
