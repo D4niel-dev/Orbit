@@ -132,8 +132,12 @@ test.describe('update notice', () => {
     await page.click('#update-card-open');
     await expect(page.locator('#update-notice-modal')).toBeVisible();
 
-    // The button names the platform it will fetch.
-    await expect(page.locator('#update-modal-download')).toContainText('Download for Windows');
+    // The platform it will fetch is named — in the SUBTITLE now, not on the button.
+    // ⚠ The label is short on purpose: "Download for Windows · 80.8 MB" wrapped onto
+    // two lines at 480px beside Skip and Release notes. The information moved; it did
+    // not go away, which is what this asserts.
+    await expect(page.locator('#update-modal-download')).toContainText('Download');
+    await expect(page.locator('#update-notice-modal')).toContainText('Windows installer');
     await page.click('#update-modal-download');
 
     // The in-app downloader takes over: a progress area appears and nothing is

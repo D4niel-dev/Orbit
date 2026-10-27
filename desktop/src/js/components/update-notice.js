@@ -195,6 +195,20 @@ window.UpdateNotice = {
     var platformLabel = this._platformLabel(res.platform);
     var hasAsset = !!(res.asset && res.asset.url);
 
+    // ⚠ The channel, as a badge rather than the "· pre-release" text it used to be
+    // tacked onto the subtitle. Same treatment as the What's New panel's version tag,
+    // so "which channel am I looking at" reads the same in both places.
+    var channelBadge =
+      '<span style="font-size:10px;font-weight:700;letter-spacing:.03em;color:#fff;' +
+      'background:var(--accent-primary);border-radius:4px;padding:2px 6px;margin-left:8px;' +
+      'vertical-align:middle;text-transform:uppercase;">' +
+      (res.prerelease ? 'Beta' : 'Stable') + '</span>';
+
+    // ⚠ The size belongs BEFORE the click, not on the progress bar. The engine has
+    // carried `asset.size` all along and the modal never showed it, so the first
+    // thing you learned about the download was how big it turned out to be.
+    var sizeLabel = (res.asset && res.asset.size) ? ' \u00b7 ' + this._bytes(res.asset.size) : '';
+
     var highlightsHtml;
     if (res.highlights && res.highlights.length) {
       highlightsHtml = '<div style="display:flex;flex-direction:column;gap:10px;">' +
@@ -230,11 +244,12 @@ window.UpdateNotice = {
           '</div>' +
           '<div style="flex:1;min-width:0;">' +
             '<div style="font-weight:700;font-size:16px;color:var(--text-primary);">' +
-              'Orbit v' + this._esc(res.latest) + ' is available' +
+              'Orbit v' + this._esc(res.latest) + ' is available' + channelBadge +
             '</div>' +
             '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">' +
               'You\u2019re on v' + this._esc(res.current) +
-              (res.prerelease ? ' \u00b7 pre-release' : '') +
+              (hasAsset ? ' \u00b7 ' + this._esc(platformLabel) + ' installer' : '') +
+              sizeLabel +
             '</div>' +
           '</div>' +
           '<button id="update-modal-close" style="background:transparent;border:none;cursor:pointer;' +
@@ -253,14 +268,18 @@ window.UpdateNotice = {
         '<div style="padding:16px 24px 20px;border-top:1px solid var(--border-subtle);' +
           'display:flex;align-items:center;gap:10px;">' +
           '<button id="update-modal-skip" style="background:transparent;border:none;cursor:pointer;' +
-            'color:var(--text-muted);font-size:12px;padding:6px 0;">Skip this version</button>' +
+            'color:var(--text-muted);font-size:12px;padding:6px 0;white-space:nowrap;">Skip this version</button>' +
           '<div style="flex:1;"></div>' +
           '<button id="update-modal-notes" style="padding:9px 16px;border-radius:9px;' +
             'border:1px solid var(--border-subtle);background:transparent;color:var(--text-secondary);' +
-            'font-size:13px;font-weight:500;cursor:pointer;">Release notes</button>' +
+            'font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;">Release notes</button>' +
           '<button id="update-modal-download" style="padding:9px 18px;border-radius:9px;border:none;' +
-            'background:var(--accent-primary);color:#fff;font-size:13px;font-weight:600;cursor:pointer;">' +
-            (hasAsset ? 'Download for ' + this._esc(platformLabel) : 'Open release page') +
+            'background:var(--accent-primary);color:#fff;font-size:13px;font-weight:600;cursor:pointer;' +
+            'white-space:nowrap;">' +
+            // ⚠ The label is short ON PURPOSE: platform and size moved to the subtitle.
+            // "Download for Windows · 80.8 MB" is 29 characters in a footer that already
+            // holds two other actions, and it wrapped onto two lines at 480px.
+            (hasAsset ? 'Download' : 'Open release page') +
           '</button>' +
         '</div>' +
       '</div>';
