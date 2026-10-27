@@ -48,21 +48,35 @@ public final class OrbitNotifications {
      * muting and importance are unchanged.
      */
     public enum Kind {
-        MESSAGE   (CH_MESSAGES,   NotificationCompat.PRIORITY_HIGH),
-        MENTION   (CH_MENTIONS,   NotificationCompat.PRIORITY_HIGH),
-        CALL      (CH_CALLS,      NotificationCompat.PRIORITY_MAX),
-        VIDEO_CALL(CH_CALLS,      NotificationCompat.PRIORITY_MAX),
-        UPDATE    (CH_UPDATES,    NotificationCompat.PRIORITY_DEFAULT),
-        PROGRESS  (CH_BACKGROUND, NotificationCompat.PRIORITY_LOW),
-        ERROR     (CH_MESSAGES,   NotificationCompat.PRIORITY_HIGH),
-        SUCCESS   (CH_MESSAGES,   NotificationCompat.PRIORITY_DEFAULT);
+        // ⚠ THE LAST FIELD IS HOW LONG THE NOTIFICATION LIVES. Dan: "some of the
+        // notification outside of the app just stays there and won't close after awhile,
+        // make them close after awhile - except for the replying notification."
+        // A shade full of week-old messages is how people stop reading notifications, and
+        // the ones that linger are exactly the ones already dealt with.
+        //
+        // The replyable notification is the exception and is handled in post(): a reply
+        // typed with Orbit closed is QUEUED and the notification is the only record that
+        // it has not been sent yet. Expiring it would silently drop that.
+        MESSAGE   (CH_MESSAGES,   NotificationCompat.PRIORITY_HIGH,    30 * 60 * 1000L),
+        MENTION   (CH_MENTIONS,   NotificationCompat.PRIORITY_HIGH,    30 * 60 * 1000L),
+        // Longer, because a missed call is the one thing here somebody may come back for.
+        CALL      (CH_CALLS,      NotificationCompat.PRIORITY_MAX,     60 * 60 * 1000L),
+        VIDEO_CALL(CH_CALLS,      NotificationCompat.PRIORITY_MAX,     60 * 60 * 1000L),
+        UPDATE    (CH_UPDATES,    NotificationCompat.PRIORITY_DEFAULT, 10 * 60 * 1000L),
+        // ⚠ Not short: this tracks work the user started. If it is still going after half
+        // an hour, something is wrong anyway.
+        PROGRESS  (CH_BACKGROUND, NotificationCompat.PRIORITY_LOW,     30 * 60 * 1000L),
+        ERROR     (CH_MESSAGES,   NotificationCompat.PRIORITY_HIGH,    10 * 60 * 1000L),
+        SUCCESS   (CH_MESSAGES,   NotificationCompat.PRIORITY_DEFAULT, 10 * 60 * 1000L);
 
         public final String channel;
         public final int priority;
+        public final long timeoutMs;
 
-        Kind(String channel, int priority) {
+        Kind(String channel, int priority, long timeoutMs) {
             this.channel = channel;
             this.priority = priority;
+            this.timeoutMs = timeoutMs;
         }
     }
 
@@ -197,6 +211,23 @@ public final class OrbitNotifications {
                     .setColor(ACCENT)
                     .setPriority(kind.priority)
                     .setAutoCancel(true);
+
+            // ⚠⚠ A NOTIFICATION THAT OUTLIVES ITS MOMENT IS NOISE, AND THE NOISE IS WHAT
+            // MAKES PEOPLE TURN NOTIFICATIONS OFF. Every kind expires on its own schedule
+            // (see Kind), with one deliberate exception below.
+            //
+            // ⚠ THE REPLYABLE NOTIFICATION IS THE EXCEPTION. A reply typed while Orbit is
+            // closed is QUEUED by OrbitReplyReceiver and sent when the app next opens; the
+            // notification is the only record that it has not gone yet. Expiring it would
+            // drop the user's reply silently, which is far worse than a lingering card.
+            //
+            // ⚠ setTimeoutAfter is a no-op below API 26 (Android 8). minSdk here is 24, so
+            // on 7.x these notifications still sit until tapped or swiped. The platform
+            // offers no equivalent, and the alternative — a handler that cancels by id —
+            // would race the app being killed.
+            if (replyToChatId == null || replyToChatId.isEmpty()) {
+                b.setTimeoutAfter(kind.timeoutMs);
+            }
             android.graphics.Bitmap large = decodeAvatar(avatarDataUrl);
             if (large != null) b.setLargeIcon(large);
             if (pi != null) b.setContentIntent(pi);
