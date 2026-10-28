@@ -622,7 +622,7 @@ Orbit is a **1.0 app for desktop and Android** aimed at trusted private networks
 * **Test Suites** — Unit assertions remain **267/267**; the desktop Playwright E2E suite remains **34/34**.
 
 </details>
-  <details>
+<details>
 <summary>v0.6.1-beta</summary>
 
 * **Notifications Never Appeared** — `POST_NOTIFICATIONS` was never declared in the manifest, so on Android 13+ the permission could not be granted, the `SecurityException` was swallowed with a comment asserting the user had declined, and the system discarded every notification before it reached the status bar. Declared, and requested at runtime on API 33+ from `MainActivity`.
@@ -892,6 +892,7 @@ Orbit is a **1.0 app for desktop and Android** aimed at trusted private networks
 * ⚠ **Internet connections are desktop-only in this release** — the Android plugin compiles and has never opened a DataChannel on a device, so nothing in the phone app calls it. Reaching two different networks needs a relay and STUN server you host
 * **Desktop test suite** — 106 checks
 
+</details>
 </details>
 
 See [CHANGELOG.md](CHANGELOG.md) for the full version history.
