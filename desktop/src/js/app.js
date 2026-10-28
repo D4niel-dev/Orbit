@@ -1083,7 +1083,13 @@ document.addEventListener('DOMContentLoaded', () => {
       // It is rebuilt with the same Protocol helpers the TCP path uses, so what goes on the
       // wire is identical either way — that is what keeps E2EE transport-independent.
       window.orbitAPI.onWanSend(function (peerId, type, payload) {
-        if (!window.OrbitWan || !window.OrbitWan.isConnected(peerId)) return;
+        if (!window.OrbitWan || !window.OrbitWan.isConnected(peerId)) {
+          // ⚠ THE CHANNEL CLOSED BETWEEN MAIN'S CHECK AND THIS CALL. `network-send` already
+          // answered true, so without this the packet would simply vanish. Retry over TCP
+          // through a path that cannot come back here.
+          if (window.orbitAPI.networkSendDirect) window.orbitAPI.networkSendDirect(peerId, '', type, payload);
+          return;
+        }
         try {
           var user = window.store.getState().currentUser;
           var pkt = window.Protocol.createPacket(type, user.userId, peerId, payload);
@@ -1091,7 +1097,9 @@ document.addEventListener('DOMContentLoaded', () => {
           // which is TCP framing for a byte stream. A DataChannel is message-oriented, so
           // the prefix would be payload. The PACKET is identical either way — only the
           // framing differs, because the transports differ.
-          window.OrbitWan.send(peerId, JSON.stringify(pkt));
+          if (!window.OrbitWan.send(peerId, JSON.stringify(pkt))) {
+            if (window.orbitAPI.networkSendDirect) window.orbitAPI.networkSendDirect(peerId, '', type, payload);
+          }
         } catch (e) { /* a malformed packet must not break the boot block */ }
       });
 

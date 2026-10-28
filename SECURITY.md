@@ -31,3 +31,33 @@ All official Orbit releases include:
 - `SHA256SUMS.txt.sig` — GPG signature of the checksums file
 
 See [security/README.md](security/README.md) for full verification instructions.
+
+## NAT Traversal: What the Relay Sees
+
+Orbit's internet path uses a **signalling relay** to introduce two peers, then a direct
+peer-to-peer WebRTC connection. The relay's role is deliberately narrow, and the security
+properties follow from where the encryption sits.
+
+**What the relay carries.** SDP and ICE candidates only — the information two peers need to
+find each other. It is not a message path. Once the DataChannel is open, both sides stop
+talking to it.
+
+**What the relay can see.** Which two IP addresses are pairing, when, and how much
+signalling traffic passes. That is unavoidable for anything that introduces two peers, and
+it is why the relay URL is a setting rather than a hard-coded default: you decide who, if
+anyone, gets to see that.
+
+**What the relay cannot see.** Message content, attachments, contact names, or your identity
+keys. End-to-end encryption sits **above** the transport, so every packet is already
+ciphertext before the relay — or the DataChannel — sees it. This is also why the two
+transports (LAN TCP and WAN WebRTC) carry byte-identical payloads.
+
+**A stolen pairing code is a denial of service, not a disclosure.** A room holds two peers,
+so somebody who learns your code can take the second seat and prevent the real connection.
+They still cannot read a single message: they hold no keys. The worst case is an interrupted
+connection, not a leak.
+
+**Not yet configured in this build.** `iceServers` defaults to empty, so only host
+candidates are used — Orbit connects over a LAN and over loopback, but **not yet between two
+different networks**. Reaching that requires STUN (and TURN for symmetric NAT) plus a relay
+you host yourself.

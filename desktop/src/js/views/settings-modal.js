@@ -1369,7 +1369,15 @@ window.SettingsModal = {
           // ⚠ THE RELAY IS A FIELD, NOT A CONSTANT. Who introduces your connections is a
           // privacy decision, and hard-coding somebody else's server would make it for
           // them. Empty means "no relay" — the LAN path needs none.
-          inputRow('net-relay', 'Signalling Relay', n.natRelayUrl || 'ws://127.0.0.1:8787'),
+          inputRow('net-relay', 'Signalling Relay', n.natRelayUrl || 'ws://127.0.0.1:8787') +
+          // ⚠ THE MOST COMMON "IT DOESN'T WORK" IS AN UNREACHABLE RELAY, and there is no way
+          // to tell that apart from a friend who is simply offline. One button turns it into
+          // a self-serve answer instead of a support message.
+          '<div style="display:flex;align-items:center;gap:10px;margin:-4px 0 12px;padding-left:2px;">' +
+            '<button id="net-relay-test" style="padding:5px 12px;border-radius:7px;border:1px solid var(--border-subtle);' +
+              'background:transparent;color:var(--text-secondary);font-size:11px;font-weight:600;cursor:pointer;">Test relay</button>' +
+            '<span id="net-relay-status" style="font-size:11px;color:var(--text-muted);"></span>' +
+          '</div>',
           true
         ) +
 
@@ -1448,6 +1456,35 @@ window.SettingsModal = {
       // user dismisses the dialog the setting would be left on by accident.
       content.querySelector('#net-relay').addEventListener('change', function(e) {
         updateNetwork('natRelayUrl', String(e.target.value || '').trim());
+      });
+
+      // ⚠ Opens a real socket to the relay and reports what happened. It is not a ping —
+      // a relay that accepts the connection but refuses the join would look healthy here and
+      // still fail in use, so this says "reachable", not "working".
+      content.querySelector('#net-relay-test').addEventListener('click', function() {
+        var status = content.querySelector('#net-relay-status');
+        var url = String((content.querySelector('#net-relay') || {}).value || '').trim();
+        if (!url) { status.textContent = 'No relay set — LAN only.'; return; }
+        if (!/^wss?:\/\//i.test(url)) { status.textContent = 'Needs ws:// or wss://'; status.style.color = 'var(--accent-warning)'; return; }
+        status.textContent = 'Testing\u2026';
+        status.style.color = 'var(--text-muted)';
+        var settled = false;
+        var socket;
+        try { socket = new WebSocket(url); } catch (err) {
+          status.textContent = 'Unreachable — ' + err.message;
+          status.style.color = 'var(--accent-danger)';
+          return;
+        }
+        var finish = function (text, colour) {
+          if (settled) return;
+          settled = true;
+          status.textContent = text;
+          status.style.color = colour;
+          try { socket.close(); } catch (e) {}
+        };
+        var timer = setTimeout(function () { finish('No answer after 6s.', 'var(--accent-warning)'); }, 6000);
+        socket.onopen = function () { clearTimeout(timer); finish('Reachable.', 'var(--accent-success)'); };
+        socket.onerror = function () { clearTimeout(timer); finish('Unreachable — check the address and that the relay is running.', 'var(--accent-danger)'); };
       });
 
       content.querySelector('#net-nat').addEventListener('change', function(e) {

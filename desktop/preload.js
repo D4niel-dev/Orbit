@@ -81,6 +81,8 @@ contextBridge.exposeInMainWorld('orbitAPI', {
   wanUnregister: (peerId) => ipcRenderer.send('wan-unregister', peerId),
   // Main hands a packet back when TCP had no route but a WAN channel exists.
   onWanSend: (cb) => ipcRenderer.on('wan-send', (event, peerId, type, payload) => cb(peerId, type, payload)),
+  // ⚠ TCP ONLY — the retry path when a WAN send turns out to have failed. See main.js.
+  networkSendDirect: (toPeerId, toIp, type, payload) => ipcRenderer.sendSync('network-send-direct', toPeerId, toIp, type, payload),
 
   // OS Integration
   showNotification: (title, body, icon) => ipcRenderer.send('show-notification', title, body, icon),

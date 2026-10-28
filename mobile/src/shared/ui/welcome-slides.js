@@ -73,7 +73,13 @@
       return window.OrbitEmpty.html({
         icon: 'message-circle',
         title: 'Select a friend to start chatting',
-        hint: 'Your messages stay on your devices \u2014 nothing is stored on a server.',
+        // \u26a0\u26a0 THE ONE SENTENCE THAT PREVENTS "IT'S BROKEN". Orbit has no server, so a peer
+        // is only reachable while they are actually online \u2014 and a new user's first
+        // experience is adding somebody and seeing nothing happen. Saying it here, where
+        // they are already looking at an empty panel, costs one line and saves the whole
+        // first impression.
+        hint: 'Nothing is stored on a server, so a friend appears only while they are online \u2014 ' +
+              'instantly on the same Wi-Fi, or across the internet through a relay.',
         muted: true
       });
     }

@@ -1623,6 +1623,16 @@ app.whenReady().then(() => {
     event.returnValue = false;
   });
 
+  // ⚠ TCP ONLY, AND IT EXISTS FOR ONE REASON: the WAN path answers `true` optimistically
+  // (a DataChannel send is asynchronous, this IPC is not). If the channel closed between
+  // the registration check and the send, the renderer calls this to retry over TCP. Without
+  // it the packet would be dropped AFTER network-send had already reported success — a
+  // message that vanishes after a tick, which is the fastest way to lose trust in a
+  // messenger. It deliberately cannot reach the WAN branch, so the retry cannot loop.
+  ipcMain.on('network-send-direct', (event, toPeerId, toIp, type, payload) => {
+    event.returnValue = !!(socketInstance && socketInstance.sendMessage(toPeerId, toIp, type, payload));
+  });
+
   ipcMain.handle('network-send-file', async (event, toPeerId, toIp, filePath, fileName) => {
     if (transferInstance) {
       try {

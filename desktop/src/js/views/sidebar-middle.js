@@ -661,11 +661,28 @@ window.SidebarMiddle = {
       if (window.lucide) lucide.createIcons({ root: displayBtn });
 
       if (rows.length === 0) {
+        // ⚠⚠ THE FIRST-RUN MOMENT, AND IT USED TO SAY ONLY "No friends yet". A local-first
+        // messenger cannot behave like WhatsApp on first launch — there is no directory, and
+        // nobody appears until they are actually reachable. That reads as broken unless the
+        // empty state says so and offers the one action that fixes it.
+        var noFriends = friends.length === 0;
         listEl.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;padding:32px 20px;text-align:center;color:var(--text-muted);gap:10px;">' +
           '<i data-lucide="users-round" style="width:34px;height:34px;opacity:0.3;"></i>' +
-          '<div style="font-size:13px;">' + (friends.length === 0 ? 'No friends yet' : 'Nobody matches that') + '</div>' +
+          '<div style="font-size:13px;">' + (noFriends ? 'No friends yet' : 'Nobody matches that') + '</div>' +
+          (noFriends
+            ? '<div style="font-size:11px;line-height:1.55;max-width:230px;">Add someone on the same Wi-Fi and they appear straight away. Across the internet, one of you needs a relay.</div>' +
+              '<button id="btn-empty-add-friend" style="margin-top:2px;padding:7px 14px;border-radius:8px;border:none;' +
+                'background:var(--accent-primary);color:#fff;font-size:12px;font-weight:600;cursor:pointer;">Add a friend</button>'
+            : '') +
         '</div>';
         if (window.lucide) lucide.createIcons({ root: listEl });
+        var emptyAdd = document.getElementById('btn-empty-add-friend');
+        if (emptyAdd) {
+          emptyAdd.addEventListener('click', function () {
+            var plus = document.getElementById('btn-add-friend');
+            if (plus) plus.click();
+          });
+        }
         return;
       }
 
