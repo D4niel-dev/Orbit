@@ -1,5 +1,45 @@
 # Orbit Changelog
 
+## v1.0.0 — **Stable Release**
+
+> **Note:** Orbit is 1.0. The release that makes it work the way a messenger is supposed to: **a friend outside your network is reachable**, a person you have been warned about is **shown to you rather than blocked for you**, and content you have asked not to see **stays hidden**. Everything underneath is still local-first — the LAN path has no server in it at all, and the internet path only borrows one to introduce two people. Alongside that: the release is now **tested in CI**, the empty states explain what Orbit is, and a set of silent failures that could have cost a message were found and closed.
+
+### Features
+
+- **Part 1 — Friends Outside Your Network** — The app was LAN-only: two machines on the same Wi-Fi or nothing. It now has a **hybrid transport**: the LAN path is still plain TCP with no server anywhere, and when that has no route the same packet goes over a **WebRTC DataChannel** instead. ⚠ The packet is byte-identical on both paths — end-to-end encryption sits **above** the transport, so switching transports cannot change what a message looks like.
+- **Connect Over the Internet, With a Code You Share** — Friend menu → **Connect over the internet…** → a pairing code → Connect. ⚠ The code is a shared secret, not decoration: the room name derives from it, and anyone who knows the room can take the second seat. It is generated and exchanged out of band rather than being the two user ids, which everyone who has ever messaged you already knows.
+- **A Signalling Relay** — `relay/server.js`, small enough to read in one sitting. It carries **SDP and ICE candidates only** — no message, no attachment, no name. It does see which two addresses pair and when, which is why the relay URL is a setting rather than a hard-coded default.
+- **Part 2 — A Web of Trust** — Report a peer, and the report is **signed** with your identity key and sent to the contacts who have exchanged keys with you. Reports **expire**, are limited to **one hop**, and are **rate-limited** per peer so a flood cannot be mistaken for a consensus. ⚠ **Nothing is ever auto-blocked.** A verified report shows a quiet banner — *"Ava Chen reported this person for harassment 3 days ago"* — naming the reporter, because "somebody reported them" with no attribution is an accusation nobody can weigh.
+- **The Warning Banner, on Both Platforms** — Under the chat header, above the pinned bar, in the same floating-card shape as everything else. Dismissible per chat; groups and bots get nothing, because a report is about a person, not a room.
+- **Content Filtering by Hash** — Report an image from the viewer and its **SHA-256** goes on a local list; the same bytes are hidden wherever they appear. ⚠ Exact copies only — re-encode a file and the hash changes completely. It is a filter, not a detector, and the app says so. There is always a **Show anyway**, and using it does not unflag anything.
+- **Notifications Expire** — Every notification now has a lifetime: messages and mentions 30 minutes, calls an hour, updates and results ten. ⚠ **Except the replyable one**, which is a queue record rather than a reminder — a reply typed with Orbit closed is waiting in it, and expiring it would drop your reply silently.
+- **NAT Is a Setting, Behind a Consent Gate** — Turning it on asks you to accept the Terms and Privacy Policy first, and reverting it on dismissal rather than after: a checkbox that turns on and then asks has already recorded consent nobody gave.
+- **The Phone Draws the Desktop's Presence Shapes** — Four silhouettes instead of a tinted dot, so presence reads the same on both screens.
+
+### Improved
+
+- **The Release Is Tested in CI** — ⚠ The unit tests **were not in the repository at all**: `/tests/` was in `.gitignore`, so all 17 files existed on one machine while `package.json` ran every one of them. A fresh clone failed on the first file. They are committed now, and a `test-unit` job runs them on every pull request — E2EE key handling and interop, the web of trust, rate limiting, the transfer state machine, WebRTC signalling, the content filter, QR pairing and account transfer.
+- **The Empty States Explain Orbit** — "No friends yet" now says how Orbit actually connects — same Wi-Fi straight away, a relay across the internet — and offers an **Add a friend** button. A local-first messenger cannot behave like WhatsApp on first launch; saying so costs one sentence and saves the first impression.
+- **Test Relay** — Settings → Network can open a real socket to the relay and report whether it answers. The most common "it doesn't work" is an unreachable relay, which until now was indistinguishable from a friend who is simply offline. It says *reachable*, not *working*.
+- **The Update Modal Says Which Channel and How Big** — A stable build and a beta are different promises, and the download size is the difference between "yes" and "later".
+- **The Welcome Sequence Waits for the Tour** — It could run while the tour was still open, so a first-run user was being taught twice at once.
+
+### Fixed
+
+- **A WAN Send Could Report Success and Drop the Packet** — The IPC is synchronous and a DataChannel send is not, so a channel that closed in between lost the message with no retry. There is a TCP-only retry path now, which cannot loop back into WAN. A message that vanishes after a tick is the fastest way to lose trust in a messenger.
+- **`setLocalDescription` Was Called Twice** — Once by the adapter and once by the signalling state machine, so the answer threw *"Called in wrong state: stable"*. 36 unit checks were green because they only tested one side of that contract.
+- **An Offer Could Be Made Into an Empty Room** — The relay rejected it, and the state machine was left in `local-offer`, so when the real peer arrived no offer was ever made. Both sides sat at "not connected" with no error anywhere.
+- **The Signalling Client Addressed Itself** — Every offer was delivered back to its sender, which ignored it as glare, and the answerer never saw anything.
+- **A Report From a Peer Whose Key You Do Not Have Is Refused** — It has to be: an unverifiable report is hearsay and must not be able to mark anybody.
+- **The CSP Blocked the Relay Socket** — `connect-src` allows `ws://127.0.0.1` and `ws://localhost` deliberately, not a blanket `wss:`. Which origins the app may connect to is a security decision, and a production relay has to be added on purpose.
+
+### Notes
+
+- ⚠ **Internet connections are a desktop feature in this release.** The Android plugin compiles and has never opened a DataChannel on a device, so nothing in the phone app calls it — it cannot be reached by accident. The phone still reaches friends over the LAN.
+- ⚠ **Reaching two different networks needs infrastructure you host**: a relay, plus STUN (and TURN for symmetric NAT). This build defaults to no ICE servers, so it connects on a LAN and over loopback, not yet between two homes.
+- ⚠ **A stolen pairing code is a denial of service, not a disclosure.** A room holds two peers, so someone who learns your code can take the second seat and interrupt the connection — and still cannot read a single message, because they hold no keys. This is the strongest argument for the design: the transport does not have to be trusted.
+- **Version: Bumped to v1.0.0.** ⚠ Written as `1.0.0`, not `1.0.0-stable` — a `-stable` suffix sorts **below** `1.0.0` in semver, so the updater would treat plain `1.0.0` as newer and could offer it forever.
+
 ## v0.9.0-beta — **Stable Release**
 
 > **Note:** The first **Stable** release since v0.8.0, and the largest change to the desktop since Orbit started. **A new look**, shipped as a beta you switch on rather than one you are given — every surface rebuilt: settings, the Activity Center, the gallery, the call screen, the profile sidebar, the boot skeleton. The composer becomes Orbit's own, with an emoji picker that hangs off the message box and a dataset that travels with the app. Plus the phone's **Classic Bubbles** on the desktop, an "Add a Friend" dialog that also tells you how to be found, and a long run of silent failures that only appeared when something was measured.

@@ -14,7 +14,37 @@ window.Changelog = {
         '<button id="changelog-close" style="background:transparent;border:none;cursor:pointer;color:var(--text-secondary);padding:4px;"><i data-lucide="x" style="width:20px;height:20px;"></i></button>' +
       '</div>' +
       '<div style="display:flex;flex-direction:column;gap:20px;">' +
-                versionBlock('0.9.0-beta', 'Stable', [
+                versionBlock('1.0.0', 'Stable', [
+          ['New', [
+            'Friends outside your network. Orbit used to be LAN-only — two machines on the same Wi-Fi or nothing. When there is no local route, the same packet now travels over a direct peer-to-peer connection instead. The encryption sits above the transport, so a message looks identical either way.',
+            'Connect over the internet. Friend menu, then "Connect over the internet", then a pairing code you both type. The code is a shared secret: the room name comes from it, and anyone who knows the room can take the second seat. It is generated for you and meant to be sent out of band.',
+            'A web of trust. Report a peer and the report is signed with your identity key and sent to the contacts who have exchanged keys with you. Reports expire, travel one hop, and are rate-limited per peer.',
+            'A quiet warning instead of a verdict. When a contact you trust reports someone, the chat says so — by name, with the reason and how long ago. Nothing is ever blocked automatically, and you can dismiss it.',
+            'Reported content stays hidden. Report an image from the viewer and the same bytes are hidden wherever they appear. Exact copies only — re-encoding a file changes it completely — and there is always a Show anyway.',
+            'Notifications now expire: messages and mentions after 30 minutes, calls after an hour, updates and results after ten.',
+            'NAT traversal is a setting behind a consent gate, so you choose whether Orbit may use a relay at all.',
+            'Test relay, in Settings, Network. It opens a real socket and tells you whether the relay answers — the most common "it does not work" is an unreachable relay, which used to look exactly like a friend who is simply offline.',
+          ]],
+          ['Improved', [
+            'The empty states explain the app. "No friends yet" now says how Orbit connects — instantly on the same Wi-Fi, or through a relay across the internet — and offers an Add a friend button.',
+            'The update dialog tells you which channel a build is and how big the download is.',
+            'The welcome sequence waits for the tour to finish, instead of teaching a first-run user two things at once.',
+            'The phone draws the desktop\u2019s four presence shapes, so presence reads the same on both screens.',
+          ]],
+          ['Fixes', [
+            'A packet sent over the internet connection could report success and then be dropped if the connection closed in the same instant. It now falls back to the local route instead of vanishing.',
+            'The connection handshake set its own description twice, so the answer failed with "called in wrong state" — and the tests were green because they only checked one side of it.',
+            'An offer could be made before the other person had joined the room, which left both sides waiting with no error to show for it.',
+            'A report from someone whose key we do not have is now refused. An unverifiable report cannot mark anybody.',
+            'The app\u2019s own security policy blocked the relay connection outright.',
+          ]],
+          ['Version', [
+            'Version: Bumped to v1.0.0.',
+            'Internet connections are desktop-only in this release. The phone still reaches friends over the local network.',
+            'Reaching two different networks needs a relay and STUN server you host yourself — this build is set up for a LAN and for testing, not yet for two homes.',
+          ]]
+        ]) +
+versionBlock('0.9.0-beta', 'Stable', [
           ['New', [
             'A new look for the desktop — Settings, Advanced, Experimental Features, then "New look". It confirms and restarts, and the original UI is still what the app opens on.',
             'The settings modal and the Activity Center are rebuilt. Both were written entirely in inline styles, so nothing else could reach them.',

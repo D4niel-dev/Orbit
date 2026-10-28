@@ -14,26 +14,24 @@
 </p>
 
 <p align="center">
-  <strong>Current version:</strong> <a href="CHANGELOG.md#v090-beta">v0.9.0-beta</a>
+  <strong>Current version:</strong> <a href="CHANGELOG.md#v100--stable-release">v1.0.0</a>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android-0078D6?style=flat-square&logo=electron&logoColor=white" alt="Platform: Windows | macOS | Linux | Android">
   <img src="https://img.shields.io/badge/Electron-32-47848F?style=flat-square&logo=electron&logoColor=white" alt="Electron 32">
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License: MIT">
-  <img src="https://img.shields.io/badge/status-beta-orange?style=flat-square" alt="Status: Beta">
+  <img src="https://img.shields.io/badge/status-1.0-blue?style=flat-square" alt="Status: 1.0.0">
 </p>
 
 ## Release Status
 
-| Channel           | Version     | Status                                                                                                                                                                                                                        |
-| ----------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Latest / Stable** | v0.9.0-beta | **A new look for the desktop** — a nav rail that collapses to icons, one corner radius and one shadow across every panel, and a rebuilt settings modal, Activity Center, gallery, call screen and profile sidebar, shipped as a beta you switch on with the original UI still the default. The composer is Orbit's own now: the emoji picker hangs off the message box instead of floating over the window, and its dataset ships with the app, so a fresh install has emoji with no network |
-| **Previous**      | v0.8.7-beta | The "+" finally has one door instead of five, Orbit asks for the permissions it needs **once** — and only for the ones that are missing, no longer opening the camera on every launch to provoke the dialog — and four bugs are gone: a dismissed link preview that stayed dismissed, a contact menu that opened empty, a contacts grid wider than the screen, and a staged attachment that vanished on the desktop |
-|                   | v0.8.5-beta | The phone catches up with the desktop — Orbit is in the Android share sheet, a notification can be answered without opening the app, and there is a PIN lock, plus link previews, a real image viewer and a network map that shows faces instead of letters |
-|                   | v0.8.4-beta | A group of images of different sizes no longer goes ragged — the attachment grid now follows Discord’s layouts.  One tap on Send was also starting the mic — Android’s synthetic mouse events land on whatever is under your finger by then, which was the mic, so it recorded and sent a voice note on repeat |
-| Previous **Stable** | v0.8.0-beta | Your theme and custom colours follow you between your own devices, message search runs on SQLite FTS5, and the update progress bar actually moves                                                                             |
-| Legacy **Stable** | v0.1.1-beta | Legacy stable release                                                                                                                                                                                                         |
+| Channel             | Version     | Status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Latest / Stable** | v1.0.0      | **Friends outside your network.** The LAN path is still plain TCP with no server anywhere; when there is no local route, the same packet travels over a direct peer-to-peer connection instead, arranged with a pairing code the two of you share. Plus **a web of trust** — signed reports that expire, are rate-limited, and are shown to you rather than blocked for you — **hash-based content filtering** you can always override, and notifications that close themselves. ⚠ Internet connections are desktop-only in this release; the phone still reaches friends over the LAN |
+| **Previous**        | v0.9.0-beta | **A new look for the desktop** — a nav rail that collapses to icons, one corner radius and one shadow across every panel, and a rebuilt settings modal, Activity Center, gallery, call screen and profile sidebar, shipped as a beta you switch on with the original UI still the default. The composer is Orbit's own now: the emoji picker hangs off the message box instead of floating over the window, and its dataset ships with the app, so a fresh install has emoji with no network                                                                                           |
+|                     | v0.8.7-beta | The "+" finally has one door instead of five, Orbit asks for the permissions it needs **once** — and only for the ones that are missing, no longer opening the camera on every launch to provoke the dialog — and four bugs are gone: a dismissed link preview that stayed dismissed, a contact menu that opened empty, a contacts grid wider than the screen, and a staged attachment that vanished on the desktop                                                                                                                                                                    |
+| Legacy **Stable**   | v0.1.1-beta | Legacy stable release                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed release notes.
 
@@ -84,20 +82,29 @@ Whether you are sharing files at home, coordinating in a small office, or experi
 | **No cloud lock-in**    | No required SaaS backend, no vendor account, no subscription gate.            |
 | **Open & approachable** | MIT-licensed, readable stack (Electron + SQLite), built for transparency.     |
 
-Orbit is a **beta-stage app for desktop and Android** aimed at trusted private networks — not a replacement for hardened internet-scale messengers yet, but a serious step toward practical local messaging.
+Orbit is a **1.0 app for desktop and Android** aimed at trusted private networks. The local path needs no server at all; the internet path borrows one only to introduce two peers, and carries no message content. It is not yet a replacement for hardened internet-scale messengers — see the notes below on what this release does and does not do.
 
-## Highlights (v0.9.0-beta)
+## Highlights (v1.0.0)
 
-* **A new look for the desktop, as a beta you switch on.** Every surface rebuilt — the settings modal and the Activity Center, the gallery, the call screen, the profile sidebar, the boot skeleton, and a settings nav that collapses to icons. **The original UI is still what the app opens on**; the new look lives in Settings → Advanced → Experimental Features, confirms before applying, and restarts, because it swaps the stylesheet the whole window is painted from.
-* **The composer is Orbit's own now.** The emoji picker was a library element inside a **shadow root**, so no stylesheet of ours could reach it and it floated at a fixed offset against the *window* rather than against the message box that opened it. It is a panel that is a **child of the composer** now — exactly as wide as it, sitting directly on top of it — with search, nine categories, a frequently-used tab and skin tones, and an emoji lands **at the caret** instead of being appended.
-* **The emoji dataset ships with the app.** It used to come from a CDN, so a fresh install with no network had **no emoji at all**. Measured on a clean profile with the CDN blocked: **171 emoji and zero network requests**.
-* **The call screen has a surface of its own.** It was `rgba(0,0,0,0.85)` with text on it, so 15% of whatever chat was open showed through and the caller's name sat on top of the messages behind it. A call is a mode, not a dialog over the app.
-* **Add a Friend tells you how to be found.** It shows **your own address** — masked until you ask for it, with copy doing the work — and takes **`host:port`**, which the app has always supported underneath and the dialog always threw away. A restart also warns you now when a call is live.
-* **Classic Bubbles comes to the desktop**, from the phone: your own messages fill with the accent instead of being tinted. ⚠ It restores the **shape** as well as the colour — 16px with a square tail and wider padding — because changing only the fill produced a hybrid that matched neither look.
-* **Presence is a shape, not just a colour** — four distinct silhouettes instead of a filled dot, because two pairs of states shared a hue on purpose and red already meant two different things.
-* **And a run of silent failures.** The emoji button did nothing in **both** UIs: the click starts on the icon inside the button, and opening the picker swapped that icon, so the target was detached by the time the click arrived. The settings rail toggle repainted the entire app. Two overlays sat on top of the chat's own Send button. And a group's custom avatar was lost on every restart, because the save used `INSERT OR REPLACE` with a column list that omitted it.
+* **Friends outside your network.** Orbit used to be LAN-only: two machines on the same Wi-Fi or nothing. It now has a **hybrid transport** — the local path is still plain TCP with no server anywhere, and when that has no route the same packet goes over a direct **WebRTC DataChannel** instead. ⚠ The packet is **byte-identical** on both paths, because end-to-end encryption sits *above* the transport: switching transports cannot change what a message looks like.
+* **Connect over the internet, with a code you share.** Friend menu → **Connect over the internet…** → a pairing code → Connect. ⚠ The code is a shared secret, not decoration: the room name derives from it, so anyone who knows the room can take the second seat. It is generated for you and meant to be sent out of band — **not** the two user ids, which everyone who has ever messaged you already knows.
+* **A web of trust.** Report a peer and the report is **signed** with your identity key, sent to the contacts who have exchanged keys with you, limited to **one hop**, and **expiring**. ⚠ **Nothing is ever auto-blocked.** A verified report shows a quiet banner — *"Ava Chen reported this person for harassment 3 days ago"* — naming the reporter, because "somebody reported them" with no attribution is an accusation nobody can weigh. A report from a peer whose key you do not have is **refused**.
+* **Content filtering by hash.** Report an image from the viewer and its **SHA-256** goes on a local list; the same bytes are hidden wherever they appear. ⚠ Exact copies only — re-encoding a file changes it completely — and there is always a **Show anyway** that does not unflag anything.
+* **Notifications close themselves** — messages and mentions after 30 minutes, calls after an hour, updates and results after ten. ⚠ **Except the replyable one**, which is a queue record rather than a reminder: a reply typed with Orbit closed is waiting in it, and expiring it would drop your reply silently.
+* **The release is tested in CI.** ⚠ The unit tests **were not in the repository at all** — `/tests/` was in `.gitignore`, so all 17 files existed on one machine while `package.json` ran every one of them, and a fresh clone failed on the first file. They are committed now, with a `test-unit` job on every pull request.
+* **The empty states explain Orbit.** "No friends yet" now says how it actually connects — instantly on the same Wi-Fi, or through a relay across the internet — and offers an **Add a friend** button. A local-first messenger cannot behave like WhatsApp on first launch; saying so costs one sentence.
+* **And the failures that would have cost a message.** A packet sent over the internet connection could report success and be dropped if the channel closed in the same instant; the handshake set its own description twice, which failed with *"called in wrong state"* while 36 green tests watched; and an offer could be made into an empty room, leaving both sides waiting with no error anywhere.
+
+### What v1.0.0 does not do yet
+
+* **Internet connections are desktop-only.** The Android plugin compiles and has never opened a DataChannel on a device, so nothing in the phone app calls it — it cannot be reached by accident. The phone still reaches friends over the LAN.
+* **Two different networks need infrastructure you host** — a relay, plus STUN (and TURN for symmetric NAT). This build defaults to no ICE servers, so it connects on a LAN and over loopback, not yet between two homes.
+* **A stolen pairing code is a denial of service, not a disclosure.** A room holds two peers, so someone who learns your code can interrupt the connection — and still cannot read a single message, because they hold no keys. That is the strongest argument for the design: the transport does not have to be trusted.
 
 ## Version History
+
+<details>
+<summary>Beta Phase</summary>
 
 <details>
 <summary>v0.0.1-beta</summary>
@@ -782,7 +789,6 @@ Orbit is a **beta-stage app for desktop and Android** aimed at trusted private n
 
 </details>
 
-
 <details>
 <summary>v0.8.2-beta</summary>
 
@@ -792,7 +798,6 @@ Orbit is a **beta-stage app for desktop and Android** aimed at trusted private n
 * **Mobile test suite** — 66 → 160 checks
 
 </details>
-
 
 <details>
 <summary>v0.8.3-beta</summary>
@@ -853,7 +858,7 @@ Orbit is a **beta-stage app for desktop and Android** aimed at trusted private n
 
 </details>
 
-<details open>
+<details>
 <summary>v0.9.0-beta (Stable)</summary>
 
 * **A new look for the desktop, as a beta you switch on** — the settings modal and Activity Center rebuilt, a profile sidebar with a real banner (it rendered as a **319×0 box**), a gallery sharing the app's shell, a call screen with a surface of its own, a boot skeleton that matches what loads, a settings nav that collapses to icons, and presence drawn as four distinct shapes. The original UI is still what the app opens on
@@ -868,6 +873,27 @@ Orbit is a **beta-stage app for desktop and Android** aimed at trusted private n
 
 </details>
 
+</details>
+
+<details open>
+<summary>Full-release Phase</summary>
+
+<details open>
+<summary>v1.0.0 (Stable)</summary>
+
+* **Friends outside your network** — a hybrid transport: the local path is still plain TCP with no server, and when there is no local route the same packet goes over a direct WebRTC DataChannel. The packet is byte-identical on both paths, because E2EE sits above the transport
+* **Connect over the internet, with a code you share** — the room name derives from the code, so it is a shared secret rather than the two user ids everyone already knows. Generated for you, sent out of band
+* **A web of trust** — reports are signed with your identity key, travel one hop, expire, and are rate-limited per peer. **Nothing is auto-blocked**: a verified report shows a quiet banner naming the reporter. A report from a peer whose key you do not have is refused
+* **Content filtering by hash** — report an image and its SHA-256 is hidden wherever those bytes appear. Exact copies only, and there is always a Show anyway that does not unflag anything
+* **Notifications expire** — 30 minutes for messages and mentions, an hour for calls, ten for updates. **Except the replyable one**, which is a queue record: expiring it would drop your reply silently
+* **The release is tested in CI** — ⚠ the 17 unit test files had never been in the repository at all (`/tests/` was gitignored), so a fresh clone failed on the first one. Committed now, with a `test-unit` job on every pull request
+* **The empty states explain Orbit** — how it connects, and an Add a friend button, instead of a bare "No friends yet"
+* **Fixed:** a packet sent over the internet connection could report success and be dropped if the channel closed in the same instant; the handshake set its own description twice (*"called in wrong state"*) while 36 green tests watched; an offer could be made into an empty room, leaving both sides waiting with no error anywhere
+* ⚠ **Internet connections are desktop-only in this release** — the Android plugin compiles and has never opened a DataChannel on a device, so nothing in the phone app calls it. Reaching two different networks needs a relay and STUN server you host
+* **Desktop test suite** — 106 checks
+
+</details>
+
 See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 
 ## Quick Start
@@ -876,11 +902,11 @@ See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 
 Pre-built Windows installers are published on [GitHub Releases](https://github.com/D4niel-dev/Orbit-beta/releases).
 
-| Release                                                                          | Platform                    | Notes                                                                                                                                              |
-| -------------------------------------------------------------------------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [All releases](https://github.com/D4niel-dev/Orbit-beta/releases)                | Win / Mac / Linux / Android | Most recent build first                                                                                                                            |
-| [v0.0.2-beta](https://github.com/D4niel-dev/Orbit-beta/releases/tag/v0.0.2-beta) | Windows                     | SQLite storage, privacy mode, large file transfers                                                                                                 |
-| [v0.0.1-beta](https://github.com/D4niel-dev/Orbit-beta/releases/tag/v0.0.1-beta) | Windows                     | Original release                                                                                                                                   |
+| Release                                                                          | Platform                    | Notes                                              |
+| -------------------------------------------------------------------------------- | --------------------------- | -------------------------------------------------- |
+| [All releases](https://github.com/D4niel-dev/Orbit-beta/releases)                | Win / Mac / Linux / Android | Most recent build first                            |
+| [v0.0.2-beta](https://github.com/D4niel-dev/Orbit-beta/releases/tag/v0.0.2-beta) | Windows                     | SQLite storage, privacy mode, large file transfers |
+| [v0.0.1-beta](https://github.com/D4niel-dev/Orbit-beta/releases/tag/v0.0.1-beta) | Windows                     | Original release                                   |
 
 > The **Releases** page is the source of truth — every current release is a prerelease (`-beta`), and GitHub's `releases/latest` shortcut deliberately skips prereleases, so it will not resolve to an Orbit build.
 

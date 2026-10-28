@@ -8801,7 +8801,28 @@ document.addEventListener('DOMContentLoaded', function() {
         // changelog.js is the other hand-maintained copy; they are separate files
         // and both have to be updated. A release is not done until this block is
         // added, which is why `npm run test:mobile` now asserts it.
-                vBlock('0.9.0-beta', 'Stable', [
+                vBlock('1.0.0', 'Stable', [
+          ['New', [
+            'A contact who has been reported now says so, quietly. If someone you have exchanged keys with reports a peer, the chat header shows it \u2014 by name, with the reason and how long ago. Nothing is ever blocked for you; you decide, and you can dismiss it.',
+            'You can report a peer yourself: long-press a contact, then Report. The report is signed with your identity key and sent to the contacts who have exchanged keys with you. It travels one hop, it expires, and it reaches nobody if you have not exchanged keys yet \u2014 the app tells you which of those happened.',
+            'Notifications close themselves now: messages and mentions after 30 minutes, calls after an hour, updates and results after ten. The one exception is a message you can reply to from the notification \u2014 that one stays, because a reply typed while Orbit is closed is waiting in it.',
+            'Presence is drawn as the desktop\u2019s four shapes, so online, away, busy and offline look the same on both screens.',
+            'NAT traversal is a setting behind a consent gate, so you choose whether Orbit may use a relay at all.',
+          ]],
+          ['Improved', [
+            'The desktop can now reach friends outside your network: when there is no local route, the same packet travels over a direct peer-to-peer connection instead, arranged with a pairing code the two of you share. The phone still reaches friends over the local network in this release.',
+            'The empty states explain how Orbit connects \u2014 instantly on the same Wi-Fi, or through a relay across the internet \u2014 instead of leaving you to guess why nobody has appeared.',
+            'The desktop\u2019s update dialog tells you which channel a build is and how big the download is.',
+          ]],
+          ['Fixes', [
+            'A report from someone whose key we do not have is refused. An unverifiable report cannot mark anybody.',
+            'A message sent over the desktop\u2019s internet connection could report success and then be dropped; it falls back to the local route now.',
+          ]],
+          ['Version', [
+            'Version: Bumped to v1.0.0.',
+          ]]
+        ]) +
+vBlock('0.9.0-beta', 'Stable', [
           ['New', [
             'Classic Bubbles matches the desktop now: your own messages fill with the accent instead of being tinted, with the classic box\u2019s shape as well as its colour.',
             'The desktop got a new look — the settings modal and Activity Center rebuilt, a profile sidebar with a real banner, a gallery that shares the app\u2019s shell, a call screen with a surface of its own, a boot skeleton that matches what loads, a settings nav that collapses to icons, and presence drawn as four distinct shapes rather than a coloured dot. It is opt-in there: Settings, Advanced, Experimental Features, then "New look".',
