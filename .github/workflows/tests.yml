@@ -1,10 +1,30 @@
-name: E2E Tests
+name: Tests
 
 on:
   pull_request:
   workflow_dispatch:
 
 jobs:
+  # ⚠ THIS JOB EXISTS BECAUSE THE UNIT TESTS WERE NEVER RUN IN CI — and, until the ignore
+  # rule was removed, were not in the repository at all. They cover the shared modules the
+  # two platforms both depend on: crypto, reputation, rate limiting, the transfer state
+  # machine, WebRTC signalling and the content filter. A change that breaks any of those
+  # would have shipped green.
+  test-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Plain Node — `global.window = global` then require the module. No install step,
+      # because these tests deliberately have no dependencies.
+      - name: Run unit tests
+        run: npm run test:unit
+
   test-desktop:
     runs-on: windows-latest
     env:

@@ -9,7 +9,9 @@
 # Playwright E2E artifacts (desktop/)
 desktop/test-results/
 desktop/playwright-report/
-/tests/
+# ⚠ /tests/ USED TO BE IGNORED HERE, WHICH SILENTLY KEPT THE UNIT TESTS OUT OF THE REPO.
+# `package.json` runs all 17 of them from `tests/unit/`, so a fresh clone failed on the
+# first file — and they existed only on one machine. Tests are source; they belong in git.
 
 # Android
 mobile/.android/
